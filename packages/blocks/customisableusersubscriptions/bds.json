@@ -1,0 +1,24 @@
+{
+  "bds": {
+    "name": "customisableusersubscriptions",
+    "id": "customisableusersubscriptions",
+    "platform": [
+      "desktop",
+      "mobile"
+    ],
+    "author": "CMT",
+    "summary": null,
+    "license": "BSD",
+    "version": "1.0.0",
+    "pages": [
+      {
+        "Customisableusersubscriptions": {
+          "hotspots": []
+        },
+        "SubscriptionDetails": {
+          "hotspots": []
+        }
+      }
+    ]
+  }
+}

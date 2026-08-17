@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "817894847449",
+    "project_id": "localshows-eaeb5",
+    "storage_bucket": "localshows-eaeb5.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:817894847449:android:911ad4aa49b51891a79fc8",
+        "android_client_info": {
+          "package_name": "com.localshows.events.events"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCqzubGsuKR2uFpX21CyhoS1tqCVcgF4ag"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

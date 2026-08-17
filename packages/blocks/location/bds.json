@@ -1,0 +1,15 @@
+{
+  "bds": {
+    "name": "location",
+    "id": "location",
+    "platform": [
+      "mobile",
+      "web"
+    ],
+    "author": "CMT",
+    "summary": null,
+    "license": "BSD",
+    "version": "1.0.0",
+    "pages": []
+  }
+}

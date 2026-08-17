@@ -1,0 +1,65 @@
+{
+  "id": "savesearch",
+  "version": "0.0.2",
+  "status": "preAlpha",
+  "path": "./packages/blocks/savesearch",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Savesearch"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Savesearch": {
+        "file": "Savesearch.tsx",
+        "extends": "SavesearchController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "SavesearchController",
+            "path": "./SavesearchController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./SavesearchController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Savesearch"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Savesearch": {
+        "file": "Savesearch.web.tsx",
+        "extends": "SavesearchController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "SavesearchController",
+            "path": "./SavesearchController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./SavesearchController"
+          }
+        ]
+      }
+    }
+  }
+}

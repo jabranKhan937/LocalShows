@@ -1,0 +1,14 @@
+{
+  "id": "email-account-registration",
+  "label": "Email Account Registration",
+  "author": "CMT",
+  "license": "BSD",
+  "summary": "",
+  "version": "2.0.0",
+  "platform": [
+    "mobile",
+    "web"
+  ],
+  "mobile": [],
+  "web": []
+}

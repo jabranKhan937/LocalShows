@@ -1,0 +1,67 @@
+{
+  "id": "RequestManagement",
+  "version": "0.0.1",
+  "status": "preAlpha",
+  "path": "./packages/blocks/RequestManagement",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "RequestManagement"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "RequestManagement": {
+        "file": "RequestManagement.tsx",
+        "extends": "RequestManagementController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "RequestManagementController",
+            "path": "./RequestManagementController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./RequestManagementController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "RequestManagement"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "RequestManagement": {
+        "file": "RequestManagement.web.tsx",
+        "extends": "RequestManagementController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "RequestManagementController",
+            "path": "./RequestManagementController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./RequestManagementController"
+          }
+        ]
+      }
+    }
+  }
+}

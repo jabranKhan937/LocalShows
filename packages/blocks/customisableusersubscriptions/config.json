@@ -1,0 +1,99 @@
+{
+  "id": "customisableusersubscriptions",
+  "verion": "0.0.1",
+  "status": "preAlpha",
+  "path": "./packages/blocks/customisableusersubscriptions",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Customisableusersubscriptions",
+      "SubscriptionDetails"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Customisableusersubscriptions": {
+        "file": "Customisableusersubscriptions.tsx",
+        "extends": "CustomisableusersubscriptionsController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "CustomisableusersubscriptionsController",
+            "path": "./CustomisableusersubscriptionsController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./CustomisableusersubscriptionsController"
+          }
+        ]
+      }
+    },
+    "SubscriptionDetails": {
+      "file": "SubscriptionDetails.tsx",
+      "extends": "CustomisableusersubscriptionsController",
+      "configURL": "",
+      "validationRulesURL": "",
+      "imports": [
+        {
+          "value": "CustomisableusersubscriptionsController",
+          "path": "./CustomisableusersubscriptionsController"
+        },
+        {
+          "value": "{Props}",
+          "path": "./CustomisableusersubscriptionsController"
+        }
+      ]
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Customisableusersubscriptions",
+      "SubscriptionDetails"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "CustomisableusersubscriptionsBlock": {
+        "file": "CustomisableusersubscriptionsBlock.tsx",
+        "extends": "CustomisableusersubscriptionsController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "CustomisableusersubscriptionsController",
+            "path": "./CustomisableusersubscriptionsController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./CustomisableusersubscriptionsController"
+          }
+        ]
+      },
+      "SubscriptionDetails": {
+        "file": "SubscriptionDetails.tsx",
+        "extends": "CustomisableusersubscriptionsController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "CustomisableusersubscriptionsController",
+            "path": "./CustomisableusersubscriptionsController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./CustomisableusersubscriptionsController"
+          }
+        ]
+      }
+    }
+  }
+}

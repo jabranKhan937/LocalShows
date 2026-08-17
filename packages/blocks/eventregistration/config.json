@@ -1,0 +1,65 @@
+{
+  "id": "eventregistration",
+  "version": "0.0.2",
+  "status": "preAlpha",
+  "path": "./packages/blocks/eventregistration",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Eventregistration"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Eventregistration": {
+        "file": "Eventregistration.tsx",
+        "extends": "EventregistrationController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "EventregistrationController",
+            "path": "./EventregistrationController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./EventregistrationController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Eventregistration"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Eventregistration": {
+        "file": "Eventregistration.web.tsx",
+        "extends": "EventregistrationController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "EventregistrationController",
+            "path": "./EventregistrationController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./EventregistrationController"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "id": "filteritems",
+  "verion": "0.0.1",
+  "status": "preAlpha",
+  "path": "./packages/blocks/filteritems",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Filteritems",
+      "Filteroptions"
+    ],
+    "assembler-dependencies": ["\"@ptomasroos/react-native-multi-slider\": \"^2.2.2\""],
+    "catalog-dependencies": [
+      "core",
+      "catalogue"
+     ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Filteritems": {
+        "file": "Filteritems.tsx",
+        "extends": "FilteritemsController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "FilteritemsController",
+            "path": "./FilteritemsController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./FilteritemsController"
+          }
+        ]
+      },
+      "Filteroptions": {
+        "file": "Filteroptions.tsx",
+        "extends": "FilteroptionsController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "FilteroptionsController",
+            "path": "./FilteroptionsController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./FilteroptionsController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Filteritems",
+      "Filteroptions"
+    ],
+    "assembler-dependencies": ["\"@ptomasroos/react-native-multi-slider\": \"^2.2.2\""],
+    "catalog-dependencies": [
+      "core",
+      "catalogue"
+     ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "FilteritemsBlock": {
+        "file": "FilteritemsBlock.tsx",
+        "extends": "FilteritemsController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "FilteritemsController",
+            "path": "./FilteritemsController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./FilteritemsController"
+          }
+        ]
+      },
+      "Filteroptions": {
+        "file": "Filteroptions.tsx",
+        "extends": "FilteroptionsController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "FilteroptionsController",
+            "path": "./FilteroptionsController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./FilteroptionsController"
+          }
+        ]
+      }
+    }
+  }
+}

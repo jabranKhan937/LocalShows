@@ -1,0 +1,83 @@
+{
+  "id": "favourites",
+  "verion": "1.0.0",
+  "status": "",
+  "path": "./packages/blocks/favourites",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Favourites",
+      "AddFavourites"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Favourites": {
+        "file": "Favourites.tsx",
+        "extends": "FavouritesController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "FavouritesController",
+            "path": "./FavouritesController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./FavouritesController"
+          }
+        ]
+      },
+      "AddFavourites": {
+        "file": "AddFavourites.tsx",
+        "extends": "FavouritesController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "FavouritesController",
+            "path": "./FavouritesController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./FavouritesController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Favourites",
+      "AddFavourites"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "FavouritesBlock": {
+        "file": "Favourites.tsx",
+        "extends": "FavouritesController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "FavouritesController",
+            "path": "./FavouritesController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./FavouritesController"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "geofence",
+  "id": "geofence",
+  "platform": [
+    "desktop",
+    "mobile"
+  ],
+  "author": "CMT",
+  "summary": null,
+  "license": "BSD",
+  "version": "1.0.0",
+  "pages": [],
+  "mobile": [
+    {
+      "Geofence": {
+        "label": "Geofence"
+      }
+    }
+  ]
+}

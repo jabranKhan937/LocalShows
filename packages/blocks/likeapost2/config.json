@@ -1,0 +1,65 @@
+{
+  "id": "likeapost2",
+  "version": "0.0.2",
+  "status": "preAlpha",
+  "path": "./packages/blocks/likeapost2",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Likeapost2"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Likeapost2": {
+        "file": "Likeapost2.tsx",
+        "extends": "Likeapost2Controller",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "Likeapost2Controller",
+            "path": "./Likeapost2Controller"
+          },
+          {
+            "value": "{Props}",
+            "path": "./Likeapost2Controller"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Likeapost2"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Likeapost2": {
+        "file": "Likeapost2.web.tsx",
+        "extends": "Likeapost2Controller",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "Likeapost2Controller",
+            "path": "./Likeapost2Controller"
+          },
+          {
+            "value": "{Props}",
+            "path": "./Likeapost2Controller"
+          }
+        ]
+      }
+    }
+  }
+}

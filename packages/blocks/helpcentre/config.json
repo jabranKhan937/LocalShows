@@ -1,0 +1,133 @@
+{
+  "id": "helpcentre",
+  "verion": "0.0.1",
+  "status": "preAlpha",
+  "path": "./packages/blocks/helpcentre",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "HelpCentre",
+      "HelpCentreQA",
+      "HelpCentreSub"
+    ],
+    "assembler-dependencies": ["\"react-native-gesture-handler\": \"^1.10.3\""],
+    "catalog-dependencies": [
+      "core"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "HelpCentre": {
+        "file": "HelpCentre.tsx",
+        "extends": "HelpCentreController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "HelpCentreController",
+            "path": "./HelpCentreController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./HelpCentreController"
+          }
+        ]
+      },
+      "HelpCentreQA": {
+        "file": "HelpCentreQA.tsx",
+        "extends": "HelpCentreController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "HelpCentreController",
+            "path": "./HelpCentreController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./HelpCentreController"
+          }
+        ]
+      },
+      "HelpCentreSub": {
+        "file": "HelpCentreSub.tsx",
+        "extends": "HelpCentreController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "HelpCentreController",
+            "path": "./HelpCentreController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./HelpCentreController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "HelpCentre",
+      "HelpCentreQA",
+      "HelpCentreSub"
+    ],
+    "assembler-dependencies": ["\"react-native-gesture-handler\": \"^1.10.3\""],
+    "catalog-dependencies": [
+      "core"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "HelpCentre": {
+        "file": "HelpCentre.tsx",
+        "extends": "HelpCentreController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "HelpCentreController",
+            "path": "./HelpCentreController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./HelpCentreController"
+          }
+        ]
+      },
+      "HelpCentreQA": {
+        "file": "HelpCentreQA.tsx",
+        "extends": "HelpCentreController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "HelpCentreController",
+            "path": "./HelpCentreController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./HelpCentreController"
+          }
+        ]
+      },
+      "HelpCentreSub": {
+        "file": "HelpCentreSub.tsx",
+        "extends": "HelpCentreController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "HelpCentreController",
+            "path": "./HelpCentreController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./HelpCentreController"
+          }
+        ]
+      }
+    }
+  }
+}

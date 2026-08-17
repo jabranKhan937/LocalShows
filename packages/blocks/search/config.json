@@ -1,0 +1,65 @@
+{
+  "id": "search",
+  "verion": "1.0.0",
+  "status": "",
+  "path": "./packages/blocks/search",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Search"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Search": {
+        "file": "Search.tsx",
+        "extends": "SearchController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "SearchController",
+            "path": "./SearchController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./SearchController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Search"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Search": {
+        "file": "Search.web.tsx",
+        "extends": "SearchController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "SearchController",
+            "path": "./SearchController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./SearchController"
+          }
+        ]
+      }
+    }
+  }
+}

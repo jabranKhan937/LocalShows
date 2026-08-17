@@ -1,0 +1,61 @@
+{
+  "id": "PhotoLibrary",
+  "version": "0.0.1",
+  "status": "preAlpha",
+  "path": "./packages/blocks/PhotoLibrary",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": ["PhotoLibrary"],
+    "assembler-dependencies": [
+      "\"react-native-image-crop-picker\": \"^0.37.3\""
+    ],
+    "catalog-dependencies": ["core", "utilities"],
+    "assembler-devDependencies": [
+    ],
+    "merge-engine-screens": {
+      "PhotoLibrary": {
+        "file": "PhotoLibrary.tsx",
+        "extends": "PhotoLibraryController",
+        "imports": [
+          {
+            "value": "PhotoLibraryController",
+            "path": "./PhotoLibraryController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./PhotoLibraryController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": ["PhotoLibrary"],
+    "assembler-dependencies": [
+      "\"react-native-image-crop-picker\": \"^0.37.3\""
+    ],
+    "catalog-dependencies": ["core", "utilities"],
+    "assembler-devDependencies": [
+    ],
+    "merge-engine-screens": {
+      "PhotoLibrary": {
+        "file": "PhotoLibrary.web.tsx",
+        "extends": "PhotoLibraryController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "PhotoLibraryController",
+            "path": "./PhotoLibraryController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./PhotoLibraryController"
+          }
+        ]
+      }
+    }
+  }
+}

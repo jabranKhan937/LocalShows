@@ -1,0 +1,86 @@
+{
+  "id": "comment",
+  "verion": "0.0.1",
+  "status": "preAlpha",
+  "path": "./packages/blocks/comment",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Comments",
+      "CreateComment"
+    ],
+    "assembler-dependencies": [
+    ],
+    "catalog-dependencies": [
+      "core",
+      "postcreation"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Comment": {
+        "file": "Comment.tsx",
+        "extends": "CommentsController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "CommentsController",
+            "path": "./CommentsController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./CommentsController"
+          }
+        ]
+      }
+    },
+    "CreateComment": {
+      "file": "CreateComment.tsx",
+      "extends": "CommentsController",
+      "configURL": "",
+      "validationRulesURL": "",
+      "imports": [
+        {
+          "value": "CommentsController",
+          "path": "./CommentsController"
+        },
+        {
+          "value": "{Props}",
+          "path": "./CommentsController"
+        }
+      ]
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Comment",
+      "CreateComment"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "postcreation"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Comment": {
+        "file": "Comment.tsx",
+        "extends": "CommentsController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "CommentsController",
+            "path": "./CommentsController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./CommentsController"
+          }
+        ]
+      }
+    }
+  }
+}

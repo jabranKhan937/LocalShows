@@ -1,0 +1,27 @@
+{
+  "bds": {
+    "name": "PostCreation",
+    "id": "PostCreation",
+    "platform": [
+      "desktop",
+      "mobile"
+    ],
+    "author": "CMT",
+    "summary": null,
+    "license": "BSD",
+    "version": "1.0.0",
+    "pages": [
+      {
+        "PostCreation": {
+          "hotspots": []
+        },
+        "Posts": {
+          "hotspots": []
+        },
+        "PostDetails": {
+          "hotspots": []
+        }
+      }
+    ]
+  }
+}

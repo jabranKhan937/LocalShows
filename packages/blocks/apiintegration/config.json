@@ -1,0 +1,65 @@
+{
+  "id": "ApiIntegration",
+  "version": "0.0.1",
+  "status": "preAlpha",
+  "path": "./packages/blocks/ApiIntegration",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "ApiIntegration"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "ApiIntegration": {
+        "file": "ApiIntegration.tsx",
+        "extends": "ApiIntegrationController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "ApiIntegrationController",
+            "path": "./ApiIntegrationController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./ApiIntegrationController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "ApiIntegration"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "ApiIntegration": {
+        "file": "ApiIntegration.tsx",
+        "extends": "ApiIntegrationController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "ApiIntegrationController",
+            "path": "./ApiIntegrationController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./ApiIntegrationController"
+          }
+        ]
+      }
+    }
+  }
+}

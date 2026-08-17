@@ -1,0 +1,65 @@
+{
+  "id": "settings2",
+  "version": "0.0.2",
+  "status": "preAlpha",
+  "path": "./packages/blocks/settings2",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Settings2"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Settings2": {
+        "file": "Settings2.tsx",
+        "extends": "Settings2Controller",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "Settings2Controller",
+            "path": "./Settings2Controller"
+          },
+          {
+            "value": "{Props}",
+            "path": "./Settings2Controller"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Settings2"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Settings2": {
+        "file": "Settings2.web.tsx",
+        "extends": "Settings2Controller",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "Settings2Controller",
+            "path": "./Settings2Controller"
+          },
+          {
+            "value": "{Props}",
+            "path": "./Settings2Controller"
+          }
+        ]
+      }
+    }
+  }
+}

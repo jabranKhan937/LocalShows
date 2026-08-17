@@ -1,0 +1,65 @@
+{
+  "id": "customisableuserprofiles2",
+  "version": "0.0.2",
+  "status": "preAlpha",
+  "path": "./packages/blocks/customisableuserprofiles2",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Customisableuserprofiles2"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Customisableuserprofiles2": {
+        "file": "Customisableuserprofiles2.tsx",
+        "extends": "Customisableuserprofiles2Controller",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "Customisableuserprofiles2Controller",
+            "path": "./Customisableuserprofiles2Controller"
+          },
+          {
+            "value": "{Props}",
+            "path": "./Customisableuserprofiles2Controller"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Customisableuserprofiles2"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Customisableuserprofiles2": {
+        "file": "Customisableuserprofiles2.web.tsx",
+        "extends": "Customisableuserprofiles2Controller",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "Customisableuserprofiles2Controller",
+            "path": "./Customisableuserprofiles2Controller"
+          },
+          {
+            "value": "{Props}",
+            "path": "./Customisableuserprofiles2Controller"
+          }
+        ]
+      }
+    }
+  }
+}

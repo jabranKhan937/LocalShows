@@ -1,0 +1,4 @@
+include:
+  - project: "builder/builder-bx/Bx/blocks/ci-pipelines/blocks-pipelines-main"
+    ref: master
+    file: "/pipelines/blocks-react.yml"

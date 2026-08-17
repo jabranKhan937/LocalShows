@@ -1,0 +1,22 @@
+{
+  "bds": {
+    "name": "notificationsettings",
+    "id": "notificationsettings",
+    "platform": [
+      "desktop",
+      "mobile"
+    ],
+    "author": "CMT",
+    "summary": null,
+    "license": "BSD",
+    "version": "1.0.0",
+    "pages": [
+      {
+        "notificationsettings": {
+          "hotspots": [
+          ]
+        }
+      }
+    ]
+  }
+}

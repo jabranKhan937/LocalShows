@@ -1,0 +1,65 @@
+{
+  "id": "notificationsettings",
+  "verion": "0.0.1",
+  "status": "preAlpha",
+  "path": "./packages/blocks/notificationsettings",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Notificationsettings"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Notificationsettings": {
+        "file": "Notificationsettings.tsx",
+        "extends": "NotificationsettingsController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "NotificationsettingsController",
+            "path": "./NotificationsettingsController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./NotificationsettingsController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Notificationsettings"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "NotificationsettingsBlock": {
+        "file": "NotificationsettingsBlock.tsx",
+        "extends": "NotificationsettingsController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "NotificationsettingsController",
+            "path": "./NotificationsettingsController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./NotificationsettingsController"
+          }
+        ]
+      }
+    }
+  }
+}

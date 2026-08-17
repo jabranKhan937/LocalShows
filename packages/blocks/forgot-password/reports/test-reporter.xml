@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testExecutions version="1">
+    <file path="/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/packages/blocks/forgot-password/__tests__/step-definitions/forgot-password.steps.tsx">
+        <testCase name="forgot-password User navigates to ForgotPassword" duration="612"/>
+        <testCase name="forgot-password User navigates to ForgotPasswordOTP" duration="181"/>
+        <testCase name="forgot-password User navigates to NewPassword" duration="298"/>
+    </file>
+</testExecutions>

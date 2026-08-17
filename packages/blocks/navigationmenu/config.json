@@ -1,0 +1,65 @@
+{
+  "id": "NavigationMenu",
+  "version": "1.0.0",
+  "status": "",
+  "path": "./packages/blocks/NavigationMenu",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "NavigationMenu"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "NavigationMenu": {
+        "file": "NavigationMenu.tsx",
+        "extends": "NavigationMenuController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "NavigationMenuController",
+            "path": "./NavigationMenuController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./NavigationMenuController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "NavigationMenu"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "NavigationMenuBlock": {
+        "file": "NavigationMenuBlock.tsx",
+        "extends": "NavigationMenuController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "NavigationMenuController",
+            "path": "./NavigationMenuController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./NavigationMenuController"
+          }
+        ]
+      }
+    }
+  }
+}

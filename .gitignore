@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# iOS CocoaPods
+Pods/
+ios/Pods/
+
+# Android build outputs
+android/build/
+android/app/build/
+android/.gradle/
+android/app/.cxx/
+android/.kotlin/
+android/local.properties
+
+# OS files
+.DS_Store

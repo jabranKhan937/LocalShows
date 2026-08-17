@@ -1,0 +1,539 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`customisableusersubscriptions User navigates to customisableusersubscriptions 1`] = `
+<ScrollViewMock
+  keyboardShouldPersistTaps="always"
+  style={
+    Object {
+      "backgroundColor": "#ffffffff",
+      "flex": 1,
+      "marginLeft": "auto",
+      "marginRight": "auto",
+      "maxWidth": 650,
+      "padding": 16,
+      "width": "100%",
+    }
+  }
+>
+  <TouchableWithoutFeedback
+    onPress={[Function]}
+  >
+    <View
+      style={
+        Object {
+          "alignItems": "center",
+          "flexDirection": "row",
+          "justifyContent": "space-between",
+          "paddingHorizontal": 10,
+          "paddingVertical": 20,
+        }
+      }
+    >
+      <View
+        style={
+          Object {
+            "alignItems": "center",
+            "flexDirection": "row",
+          }
+        }
+      >
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={[Function]}
+          style={
+            Object {
+              "paddingHorizontal": 5,
+            }
+          }
+        >
+          <Image
+            source={
+              Object {
+                "testUri": "../../../packages/blocks/customisableusersubscriptions/assets/backIcon.png",
+              }
+            }
+            style={
+              Object {
+                "height": 14,
+                "width": 7,
+              }
+            }
+          />
+        </TouchableOpacity>
+        <Text
+          style={
+            Object {
+              "fontSize": 22,
+              "fontWeight": "600",
+              "marginLeft": 10,
+            }
+          }
+        >
+          Subscriptions
+        </Text>
+        <Text />
+      </View>
+    </View>
+    <Text
+      style={
+        Object {
+          "fontSize": 14,
+          "fontWeight": "500",
+          "marginLeft": 15,
+        }
+      }
+    >
+      Choose from the list of subscriptions
+    </Text>
+    <SubscriptionListView
+      data={Array []}
+      id="Customisableusersubscriptions"
+      navigation={
+        Object {
+          "goBack": [MockFunction],
+          "navigate": [MockFunction],
+          "pop": [MockFunction],
+          "push": [MockFunction],
+          "replace": [MockFunction],
+        }
+      }
+      route={Object {}}
+    />
+  </TouchableWithoutFeedback>
+</ScrollViewMock>
+`;
+
+exports[`customisableusersubscriptions User navigates to customisableusersubscriptions 2`] = `
+<ScrollViewMock
+  keyboardShouldPersistTaps="always"
+  style={
+    Object {
+      "backgroundColor": "#ffffffff",
+      "flex": 1,
+      "marginLeft": "auto",
+      "marginRight": "auto",
+      "maxWidth": 650,
+      "padding": 16,
+      "width": "100%",
+    }
+  }
+>
+  <TouchableWithoutFeedback
+    onPress={[Function]}
+  >
+    <View
+      style={
+        Object {
+          "alignItems": "center",
+          "flexDirection": "row",
+          "justifyContent": "space-between",
+          "paddingHorizontal": 10,
+          "paddingVertical": 20,
+        }
+      }
+    >
+      <View
+        style={
+          Object {
+            "alignItems": "center",
+            "flexDirection": "row",
+          }
+        }
+      >
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={[Function]}
+          style={
+            Object {
+              "paddingHorizontal": 5,
+            }
+          }
+        >
+          <Image
+            source={
+              Object {
+                "testUri": "../../../packages/blocks/customisableusersubscriptions/assets/backIcon.png",
+              }
+            }
+            style={
+              Object {
+                "height": 14,
+                "width": 7,
+              }
+            }
+          />
+        </TouchableOpacity>
+        <Text
+          style={
+            Object {
+              "fontSize": 22,
+              "fontWeight": "600",
+              "marginLeft": 10,
+            }
+          }
+        >
+          Subscriptions
+        </Text>
+        <Text />
+      </View>
+    </View>
+    <Text
+      style={
+        Object {
+          "fontSize": 14,
+          "fontWeight": "500",
+          "marginLeft": 15,
+        }
+      }
+    >
+      Choose from the list of subscriptions
+    </Text>
+    <SubscriptionListView
+      data={
+        Array [
+          Object {
+            "attributes": Object {
+              "description": "Description of the subscription",
+              "expired": false,
+              "image_link": null,
+              "name": "Test Subscription",
+              "price": "100.0",
+              "subscribed": false,
+              "valid_up_to": "2022-02-02",
+            },
+            "id": "1",
+            "type": "subscription",
+          },
+          Object {
+            "attributes": Object {
+              "description": "This is a month iPad App",
+              "expired": true,
+              "image_link": "/rails/active_storage/blobs/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBCZz09IiwiZXhwIjpudWxsLCJwdXIiOiJibG9iX2lkIn19--0c99d2419f59ed2dbe813a272bfb342861d45cfd/Home.png",
+              "name": "iPad App",
+              "price": "500.0",
+              "subscribed": false,
+              "valid_up_to": "2016-02-03",
+            },
+            "id": "2",
+            "type": "subscription",
+          },
+          Object {
+            "attributes": Object {
+              "description": "Desc",
+              "expired": false,
+              "image_link": null,
+              "name": "New test sub",
+              "price": "888.0",
+              "subscribed": false,
+              "valid_up_to": "2024-10-18",
+            },
+            "id": "3",
+            "type": "subscription",
+          },
+        ]
+      }
+      id="Customisableusersubscriptions"
+      navigation={
+        Object {
+          "goBack": [MockFunction],
+          "navigate": [MockFunction],
+          "pop": [MockFunction],
+          "push": [MockFunction],
+          "replace": [MockFunction],
+        }
+      }
+      route={Object {}}
+    />
+  </TouchableWithoutFeedback>
+</ScrollViewMock>
+`;
+
+exports[`customisableusersubscriptions User navigates to subscriptiondetails 1`] = `
+<View
+  style={
+    Object {
+      "backgroundColor": "#fff",
+      "flex": 1,
+    }
+  }
+>
+  <ImageBackground
+    source={
+      Object {
+        "uri": "https://akm-img-a-in.tosshub.com/sites/btmt/images/stories/goldcoin_660_102616075839.jpg",
+      }
+    }
+    style={
+      Object {
+        "height": 206,
+        "width": "100%",
+      }
+    }
+  >
+    <View
+      style={
+        Object {
+          "alignItems": "center",
+          "flexDirection": "row",
+          "marginLeft": 15,
+          "marginTop": 20,
+        }
+      }
+    >
+      <Text
+        style={
+          Object {
+            "color": "white",
+            "fontSize": 22,
+            "fontWeight": "600",
+          }
+        }
+      >
+        Subscription Details
+      </Text>
+    </View>
+  </ImageBackground>
+  <ScrollViewMock
+    showsVerticalScrollIndicator={false}
+    style={
+      Object {
+        "paddingHorizontal": 15,
+      }
+    }
+  >
+    <View
+      style={
+        Object {
+          "alignItems": "center",
+          "flexDirection": "row",
+          "justifyContent": "space-between",
+          "marginTop": 20,
+        }
+      }
+    >
+      <Text
+        numberOfLines={1}
+        style={
+          Object {
+            "fontSize": 26,
+            "fontWeight": "700",
+            "maxWidth": "70%",
+          }
+        }
+      />
+      <Text
+        style={
+          Object {
+            "fontSize": 20,
+            "fontWeight": "600",
+          }
+        }
+      >
+        ₹
+        0
+      </Text>
+    </View>
+    <Text
+      style={
+        Object {
+          "fontSize": 14,
+          "fontWeight": "700",
+          "marginTop": 25,
+        }
+      }
+    >
+      Valid Upto: 
+    </Text>
+    <Text
+      style={
+        Object {
+          "fontSize": 14,
+          "fontWeight": "700",
+          "marginBottom": 20,
+          "marginTop": 25,
+        }
+      }
+    >
+      Subscription Details
+    </Text>
+    <Text
+      style={
+        Object {
+          "fontSize": 14,
+          "fontWeight": "500",
+        }
+      }
+    />
+    <TouchableOpacity
+      activeOpacity={0.7}
+      style={
+        Object {
+          "backgroundColor": "#cd960c",
+          "height": 50,
+          "justifyContent": "center",
+          "marginBottom": 40,
+          "marginTop": 50,
+        }
+      }
+    >
+      <Text
+        style={
+          Object {
+            "alignSelf": "center",
+            "color": "#fff",
+            "fontSize": 16,
+            "fontWeight": "500",
+          }
+        }
+      >
+        Confirm Subscription
+      </Text>
+    </TouchableOpacity>
+  </ScrollViewMock>
+</View>
+`;
+
+exports[`customisableusersubscriptions User navigates to subscriptiondetails 2`] = `
+<View
+  style={
+    Object {
+      "backgroundColor": "#fff",
+      "flex": 1,
+    }
+  }
+>
+  <ImageBackground
+    source={
+      Object {
+        "uri": "https://akm-img-a-in.tosshub.com/sites/btmt/images/stories/goldcoin_660_102616075839.jpg",
+      }
+    }
+    style={
+      Object {
+        "height": 206,
+        "width": "100%",
+      }
+    }
+  >
+    <View
+      style={
+        Object {
+          "alignItems": "center",
+          "flexDirection": "row",
+          "marginLeft": 15,
+          "marginTop": 20,
+        }
+      }
+    >
+      <Text
+        style={
+          Object {
+            "color": "white",
+            "fontSize": 22,
+            "fontWeight": "600",
+          }
+        }
+      >
+        Subscription Details
+      </Text>
+    </View>
+  </ImageBackground>
+  <ScrollViewMock
+    showsVerticalScrollIndicator={false}
+    style={
+      Object {
+        "paddingHorizontal": 15,
+      }
+    }
+  >
+    <View
+      style={
+        Object {
+          "alignItems": "center",
+          "flexDirection": "row",
+          "justifyContent": "space-between",
+          "marginTop": 20,
+        }
+      }
+    >
+      <Text
+        numberOfLines={1}
+        style={
+          Object {
+            "fontSize": 26,
+            "fontWeight": "700",
+            "maxWidth": "70%",
+          }
+        }
+      />
+      <Text
+        style={
+          Object {
+            "fontSize": 20,
+            "fontWeight": "600",
+          }
+        }
+      >
+        ₹
+        0
+      </Text>
+    </View>
+    <Text
+      style={
+        Object {
+          "fontSize": 14,
+          "fontWeight": "700",
+          "marginTop": 25,
+        }
+      }
+    >
+      Valid Upto: 
+    </Text>
+    <Text
+      style={
+        Object {
+          "fontSize": 14,
+          "fontWeight": "700",
+          "marginBottom": 20,
+          "marginTop": 25,
+        }
+      }
+    >
+      Subscription Details
+    </Text>
+    <Text
+      style={
+        Object {
+          "fontSize": 14,
+          "fontWeight": "500",
+        }
+      }
+    />
+    <TouchableOpacity
+      activeOpacity={0.7}
+      style={
+        Object {
+          "backgroundColor": "#cd960c",
+          "height": 50,
+          "justifyContent": "center",
+          "marginBottom": 40,
+          "marginTop": 50,
+        }
+      }
+    >
+      <Text
+        style={
+          Object {
+            "alignSelf": "center",
+            "color": "#fff",
+            "fontSize": 16,
+            "fontWeight": "500",
+          }
+        }
+      >
+        Confirm Subscription
+      </Text>
+    </TouchableOpacity>
+  </ScrollViewMock>
+</View>
+`;

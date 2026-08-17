@@ -1,0 +1,151 @@
+require_relative '../../../node_modules/react-native/scripts/react_native_pods'
+require_relative '../../../node_modules/@react-native-community/cli-platform-ios/native_modules'
+platform :ios, '15.0'
+permissions_path = '../../../node_modules/react-native-permissions/ios'
+
+target 'LocalShowsApp' do
+  config = use_native_modules!
+  use_modular_headers!
+
+  use_react_native!(
+    :path => config[:reactNativePath],
+    # to enable hermes on iOS, change `false` to `true` and then install pods
+    :hermes_enabled => false
+  )
+
+  # Pods for LocalShowsApp
+  pod 'react-native-image-picker', :path => '../../../node_modules/react-native-image-picker/react-native-image-picker.podspec'
+  pod 'RNFastImage', :path => '../../../node_modules/react-native-fast-image/RNFastImage.podspec'
+
+  pod 'FBSDKCoreKit'
+  pod 'FBSDKLoginKit'
+  pod 'FBSDKShareKit'
+
+  pod 'GoogleSignIn', '~> 5.0.2'
+  pod 'Firebase/Analytics'
+
+  pod 'react-native-google-maps', :path => '../../../node_modules/react-native-maps/react-native-google-maps.podspec'
+
+  pod 'GoogleMaps'  # Uncomment this line if you want to support GoogleMaps on iOS
+  pod 'Google-Maps-iOS-Utils' # Uncomment this line if you want to support GoogleMaps on iOS
+  pod 'RNImageCropPicker', :path => '../../../node_modules/react-native-image-crop-picker'
+
+  pod 'react-native-webview', :path => '../../../node_modules/react-native-webview'
+
+  pod 'RNGestureHandler', :path => '../../../node_modules/react-native-gesture-handler'
+
+  pod 'react-native-geolocation-service', :path => '../../../node_modules/react-native-geolocation-service'
+
+  pod 'RNSVG', :path => '../../../node_modules/react-native-svg'
+
+  pod 'RNCalendarEvents', :path => '../../../node_modules/react-native-calendar-events'
+
+  pod 'RNCPicker', :path => '../../../node_modules/@react-native-picker/picker'
+
+  pod 'RNCAsyncStorage', :path => '../../../node_modules/@react-native-async-storage/async-storage'
+  pod 'react-native-radar', :path => '../../../node_modules/react-native-radar'
+
+  target 'LocalShowsAppTests' do
+    inherit! :complete
+    # Pods for testing
+  end
+
+  use_native_modules!
+end
+
+target 'LocalShowsApp-tvOS' do
+  # Pods for LocalShowsApp-tvOS
+
+  target 'LocalShowsApp-tvOSTests' do
+    inherit! :search_paths
+    # Pods for testing
+  end
+
+end
+
+post_install do |installer|
+  ## Fix for XCode 12.5
+  find_and_replace("../node_modules/react-native/React/CxxBridge/RCTCxxBridge.mm",
+  "_initializeModules:(NSArray<id<RCTBridgeModule>> *)modules", "_initializeModules:(NSArray<Class> *)modules")
+  find_and_replace("../node_modules/react-native/ReactCommon/turbomodule/core/platform/ios/RCTTurboModuleManager.mm",
+  "RCTBridgeModuleNameForClass(module))", "RCTBridgeModuleNameForClass(Class(module)))")
+  find_and_replace("../node_modules/react-native/ReactCommon/turbomodule/core/platform/ios/RCTTurboModuleManager.mm",
+  "RCTBridgeModuleNameForClass(strongModule))", "RCTBridgeModuleNameForClass(Class(strongModule)))")
+  find_and_replace("../../../node_modules/react-native/React/CxxBridge/RCTCxxBridge.mm",
+  "_initializeModules:(NSArray<id<RCTBridgeModule>> *)modules", "_initializeModules:(NSArray<Class> *)modules")
+  find_and_replace("../../../node_modules/react-native/ReactCommon/turbomodule/core/platform/ios/RCTTurboModuleManager.mm",
+  "RCTBridgeModuleNameForClass(module))", "RCTBridgeModuleNameForClass(Class(module)))")
+  find_and_replace("../../../node_modules/react-native/ReactCommon/turbomodule/core/platform/ios/RCTTurboModuleManager.mm",
+  "RCTBridgeModuleNameForClass(strongModule))", "RCTBridgeModuleNameForClass(Class(strongModule)))")
+  find_and_replace("../../../node_modules/react-native/Libraries/Image/RCTUIImageViewAnimated.m",
+  "_currentFrame.CGImage;","_currentFrame.CGImage ;} else { [super displayLayer:layer];")
+  find_and_replace("../../../node_modules/react-native/ReactCommon/yoga/yoga/Yoga.cpp",
+  "node->getLayout().hadOverflow() |","node->getLayout().hadOverflow()  ||")
+
+  installer.pods_project.targets.each do |target|
+    # Make it build with XCode 14
+    if target.respond_to?(:product_type) and target.product_type == "com.apple.product-type.bundle"
+      target.build_configurations.each do |config|
+          config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+      end
+    end
+    # Make it work with GoogleDataTransport
+    if target.name.start_with? "GoogleDataTransport"
+      target.build_configurations.each do |config|
+        config.build_settings['CLANG_WARN_STRICT_PROTOTYPES'] = 'NO'
+      end
+    end
+  end
+
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings["EXCLUDED_ARCHS[sdk=iphonesimulator*]"] = "arm64"
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
+    end
+    case target.name
+    when 'RCT-Folly'
+      target.build_configurations.each do |config|
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '9.0'
+      end
+    end
+  end
+
+  react_native_post_install(installer)
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+    end
+  end
+end
+
+def find_and_replace(dir, findstr, replacestr)
+  Dir[dir].each do |name|
+      text = File.read(name)
+      replace = text.gsub(findstr,replacestr)
+      if text != replace
+          puts "Fix: " + name
+          File.open(name, "w") { |file| file.puts replace }
+          STDOUT.flush
+      end
+  end
+  Dir[dir + '*/'].each(&method(:find_and_replace))
+  
+  bitcode_strip_path = `xcrun --find bitcode_strip`.chop!
+  def strip_bitcode_from_framework(bitcode_strip_path, framework_relative_path)
+    framework_path = File.join(Dir.pwd, framework_relative_path)
+    command = "#{bitcode_strip_path} #{framework_path} -r -o #{framework_path}"
+    puts "Stripping bitcode: #{command}"
+    system(command)
+  end
+  
+  # To disable bitcode for a specific Pod copty line and replace LibraryA, LibraryB or LibraryC based on pathing, then remove comment.
+  framework_paths = [
+    # "Pods/LibraryA/LibraryA/dynamic/LibraryA.xcframework/ios-arm64_armv7/LibraryA.framework/LibraryA",
+    # "Pods/LibraryB/LibraryB.xcframework/ios-arm64_armv7/LibraryB.framework/LibraryB," 
+    # "Pods/LibraryC/dist/LibraryC.xcframework/ios-arm64_armv7/LibraryC.framework/LibraryC"
+    "Pods/RadarSDK/dist/RadarSDK.xcframework/ios-arm64_armv7/RadarSDK.framework/RadarSDK",  
+  ]
+  
+  framework_paths.each do |framework_relative_path|
+    strip_bitcode_from_framework(bitcode_strip_path, framework_relative_path)
+  end
+end

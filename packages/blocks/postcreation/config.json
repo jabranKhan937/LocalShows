@@ -1,0 +1,81 @@
+{
+  "id": "postcreation",
+  "verion": "0.0.1",
+  "status": "preAlpha",
+  "path": "./packages/blocks/postcreation",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "PostCreation",
+      "Posts",
+      "PostDetails"
+    ],
+    "assembler-dependencies": [
+      "\"react-native-material-dropdown\": \"^0.11.1\"",
+      "\"react-native-image-crop-picker\": \"^0.35.2\"",
+      "\"react-select\": \"^4.3.1\""
+    ],
+    "catalog-dependencies": [
+        "core",
+        "categoriessubcategories"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "PostCreation": {
+        "file": "PostCreation.tsx",
+        "extends": "PostCreationController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "PostCreationController",
+            "path": "./PostCreationController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./PostCreationController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "PostCreation",
+      "Posts",
+      "PostDetails"
+    ],
+    "assembler-dependencies": [
+      "\"react-select\": \"^3.0.8\"",
+      "\"react-native-material-dropdown\": \"^0.11.1\"",
+      "\"react-native-image-crop-picker\": \"^0.35.2\""
+    ],
+    "catalog-dependencies": [
+        "core",
+        "categoriessubcategories"
+    ],
+    "assembler-devDependencies": [
+      "\"@types/react-select\": \"^3.0.10\""
+    ],
+    "merge-engine-screens": {
+      "PostCreationBlock": {
+        "file": "PostCreationBlock.tsx",
+        "extends": "PostCreationController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "PostCreationController",
+            "path": "./PostCreationController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./PostCreationController"
+          }
+        ]
+      }
+    }
+  }
+}

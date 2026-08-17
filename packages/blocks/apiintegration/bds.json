@@ -1,0 +1,32 @@
+{
+  "bds": {
+    "name": "ApiIntegration",
+    "id": "ApiIntegration",
+    "platform": [
+      "desktop",
+      "mobile"
+    ],
+    "author": "CMT",
+    "summary": null,
+    "license": "BSD",
+    "version": "1.0.0",
+    "pages": [
+      {
+        "ApiIntegration": {
+          "hotspots": [
+            {
+              "type": "navigation",
+              "id": "btnExample",
+              "options": [
+                "target",
+                "navigationTransition",
+                "navigationType",
+                "enabled"
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

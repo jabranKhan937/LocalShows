@@ -1,0 +1,65 @@
+{
+  "id": "hamburgermenu",
+  "version": "0.0.2",
+  "status": "preAlpha",
+  "path": "./packages/blocks/hamburgermenu",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Hamburgermenu"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Hamburgermenu": {
+        "file": "Hamburgermenu.tsx",
+        "extends": "HamburgermenuController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "HamburgermenuController",
+            "path": "./HamburgermenuController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./HamburgermenuController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Hamburgermenu"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Hamburgermenu": {
+        "file": "Hamburgermenu.web.tsx",
+        "extends": "HamburgermenuController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "HamburgermenuController",
+            "path": "./HamburgermenuController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./HamburgermenuController"
+          }
+        ]
+      }
+    }
+  }
+}

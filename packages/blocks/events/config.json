@@ -1,0 +1,61 @@
+{
+  "id": "Events",
+  "verion": "0.0.1",
+  "status": "preAlpha",
+  "path": "./packages/blocks/Events",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "AddEventDetailScreen",
+      "AddEventLocation",
+      "AllEventDetailScreen",
+      "AllEventScreen",
+      "Events"
+    ],
+    "assembler-dependencies": [
+      "\"react-native-geocoding\": \"0.5.0\"",
+      "\"react-native-datepicker\": \"^1.7.2\"",
+      "\"lodash\": \"^4.17.21\""
+    ],
+    "catalog-dependencies": [],
+    "assembler-devDependencies": [
+      "\"@types/react-native-datepicker\": \"^1.7.0\"",
+      "\"@types/lodash\": \"^4.14.169\""
+    ],
+    "merge-engine-screens": {
+      "Events": {
+        "file": "Events.tsx",
+        "extends": "EventsController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "EventsController",
+            "path": "./EventsController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./EventsController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+    ],
+    "assembler-dependencies": [
+      "\"react-native-geocoding\": \"0.5.0\"",
+      "\"react-native-datepicker\": \"^1.7.2\"",
+      "\"lodash\": \"^4.17.21\""
+    ],
+    "catalog-dependencies": [],
+    "assembler-devDependencies": [
+      "\"@types/react-native-datepicker\": \"^1.7.0\"",
+      "\"@types/lodash\": \"^4.14.169\""
+    ],
+    "merge-engine-screens": {}
+  }
+}

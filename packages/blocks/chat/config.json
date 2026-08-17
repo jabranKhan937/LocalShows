@@ -1,0 +1,181 @@
+{
+  "id": "chat",
+  "version": "0.0.1",
+  "status": "preAlpha",
+  "path": "./packages/blocks/chat",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Chat",
+      "ViewChat"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Chat": {
+        "file": "Chat.tsx",
+        "extends": "ChatController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "ui-elements": [
+          {
+            "testID": "inputRoomName",
+            "props": "{...this.inputRoomNameProps}",
+            "elementType": "TextInput"
+          },
+          {
+            "testID": "createChatSubmitBtn",
+            "props": "{...this.btnAddRoomProps}",
+            "elementType": "TouchableOpacity"
+          },
+          {
+            "testID": "btnCloseModal",
+            "props": "{...this.btnCloseModalProps}",
+            "elementType": "TouchableOpacity"
+          },
+          {
+            "testID": "btnShowChat",
+            "props": "{...this.btnShowChatProps}",
+            "elementType": "TouchableOpacity"
+          },
+          {
+            "testID": "hideKeyboard",
+            "props": "{onPress: ()=> this.hideKeyboard()}",
+            "elementType": "TouchableWithoutFeedback"
+          },
+          {
+            "testID": "createChatRoomBtn",
+            "props": "{...this.btnShowAddModalProps}",
+            "elementType": "TouchableOpacity"
+          }
+        ],
+        "imports": [
+          {
+            "value": "ChatController",
+            "path": "./ChatController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./ChatController"
+          }
+        ]
+      },
+      "ViewChat": {
+        "file": "ViewChat.tsx",
+        "extends": "ViewChatController",
+        "ui-elements": [
+          {
+            "testID": "inputAccountID",
+            "props": "{...this.inputAccountIDProps}",
+            "elementType": "TextInput"
+          },
+          {
+            "testID": "btnAddAccount",
+            "props": "{...this.btnAddAccountProps}",
+            "elementType": "TouchableOpacity"
+          },
+          {
+            "testID": "btnCloseModal",
+            "props": "{...this.btnCloseModalProps}",
+            "elementType": "TouchableOpacity"
+          },
+          {
+            "testID": "inputMessage",
+            "props": "{...this.inputMessageProps}",
+            "elementType": "TextInput"
+          },
+          {
+            "testID": "btnToggleMute",
+            "props": "{...this.btnMuteProps}",
+            "elementType": "TouchableOpacity"
+          },
+          {
+            "testID": "hideKeyboard",
+            "props": "{onPress: () => this.hideKeyboard()}",
+            "elementType": "TouchableWithoutFeedback"
+          },
+          {
+            "testID": "btnShowAddModal",
+            "props": "{...this.btnShowAddModalProps}",
+            "elementType": "TouchableOpacity"
+          },
+          {
+            "testID": "btnLeaveChat",
+            "props": "{...this.btnLeaveChatProps}",
+            "elementType": "TouchableOpacity"
+          },
+          {
+            "testID": "btnSendMessage",
+            "props": "{...this.btnSendMessageProps}",
+            "elementType": "TouchableOpacity"
+          }
+        ],
+        "imports": [
+          {
+            "value": "ViewChatController",
+            "path": "./ViewChatController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./ViewChatController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Chat",
+      "ViewChat"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Chat": {
+        "file": "Chat.web.tsx",
+        "extends": "ChatController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "ui-elements": [
+        ],
+        "imports": [
+          {
+            "value": "ChatController",
+            "path": "./ChatController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./ChatController"
+          }
+        ]
+      },
+      "ViewChat": {
+        "file": "ViewChat.web.tsx",
+        "extends": "ViewChatController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "ui-elements": [
+        ],
+        "imports": [
+          {
+            "value": "ViewChatController",
+            "path": "./ViewChatController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./ViewChatController"
+          }
+        ]
+      }
+    }
+  }
+}

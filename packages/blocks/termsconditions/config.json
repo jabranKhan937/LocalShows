@@ -1,0 +1,174 @@
+{
+  "id": "terms-conditions",
+  "version": "0.0.1",
+  "status": "preAlpha",
+  "path": "./packages/blocks/terms-conditions",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "TermsConditions",
+      "TermsConditionsDetail",
+      "TermsConditionsUsers"
+    ],
+    "assembler-dependencies": [
+      "\"react-native-markdown-display\": \"^7.0.0-alpha.2\"",
+      "\"@uiw/react-md-editor\": \"3.3.4\""
+    ],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "TermsConditions": {
+        "file": "TermsConditions.tsx",
+        "extends": "TermsConditionsController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "TermsConditionsController",
+            "path": "./TermsConditionsController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./TermsConditionsController"
+          }
+        ]
+      },
+      "TermsConditionsDetail": {
+        "file": "TermsConditionsDetail.tsx",
+        "extends": "TermsConditionsDetailController",
+        "imports": [
+          {
+            "value": "TermsConditionsDetailController",
+            "path": "./TermsConditionsDetailController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./TermsConditionsDetailController"
+          }
+        ]
+      },
+      "TermsConditionsUsers": {
+        "file": "TermsConditionsUsers.tsx",
+        "extends": "TermsConditionsUsersController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "TermsConditionsUsersController",
+            "path": "./TermsConditionsUsersController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./TermsConditionsUsersController"
+          }
+        ]
+      },
+      "TermsConditionsEdit": {
+        "file": "TermsConditionsEdit.tsx",
+        "extends": "TermsConditionsEditController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "TermsConditionsEditController",
+            "path": "./TermsConditionsEditController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./TermsConditionsEditController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "TermsConditions",
+      "TermsConditionsDetail",
+      "TermsConditionsUsers"
+    ],
+    "assembler-dependencies": [
+      "\"react-native-markdown-display\": \"^7.0.0-alpha.2\"",
+      "\"@uiw/react-md-editor\": \"3.3.4\""
+    ],
+    "catalog-dependencies": [
+      "core"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "TermsConditions": {
+        "file": "TermsConditions.web.tsx",
+        "extends": "TermsConditionsController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "ui-elements": [
+        ],
+        "imports": [
+          {
+            "value": "TermsConditionsController",
+            "path": "./TermsConditionsController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./TermsConditionsController"
+          }
+        ]
+      },
+      "TermsConditionsDetail": {
+        "file": "TermsConditionsDetail.tsx",
+        "extends": "TermsConditionsDetailController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "ui-elements": [
+        ],
+        "imports": [
+          {
+            "value": "TermsConditionsDetailController",
+            "path": "./TermsConditionsDetailController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./TermsConditionsDetailController"
+          }
+        ]
+      },
+      "TermsConditionsUsers": {
+        "file": "TermsConditionsUsers.tsx",
+        "extends": "TermsConditionsUsersController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "TermsConditionsUsersController",
+            "path": "./TermsConditionsUsersController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./TermsConditionsUsersController"
+          }
+        ]
+      },
+      "TermsConditionsEdit": {
+        "file": "TermsConditionsEdit.web.tsx",
+        "extends": "TermsConditionsEditController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "TermsConditionsEditController",
+            "path": "./TermsConditionsEditController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./TermsConditionsEditController"
+          }
+        ]
+      }
+    }
+  }
+}

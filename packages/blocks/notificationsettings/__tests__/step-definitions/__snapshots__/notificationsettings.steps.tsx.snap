@@ -1,0 +1,363 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`notificationsettings Set notification settings active or inactive 1`] = `
+<ScrollViewMock
+  keyboardShouldPersistTaps="always"
+  style={
+    Object {
+      "backgroundColor": "#f7f9fa",
+      "flex": 1,
+      "marginLeft": "auto",
+      "marginRight": "auto",
+      "maxWidth": 650,
+      "padding": 16,
+      "width": "100%",
+    }
+  }
+>
+  <TouchableWithoutFeedback
+    onPress={[Function]}
+  >
+    <View />
+  </TouchableWithoutFeedback>
+</ScrollViewMock>
+`;
+
+exports[`notificationsettings Set notification settings group active or inactive 1`] = `
+<ScrollViewMock
+  keyboardShouldPersistTaps="always"
+  style={
+    Object {
+      "backgroundColor": "#f7f9fa",
+      "flex": 1,
+      "marginLeft": "auto",
+      "marginRight": "auto",
+      "maxWidth": 650,
+      "padding": 16,
+      "width": "100%",
+    }
+  }
+>
+  <TouchableWithoutFeedback
+    onPress={[Function]}
+  >
+    <View />
+  </TouchableWithoutFeedback>
+</ScrollViewMock>
+`;
+
+exports[`notificationsettings Set notification settings sub group active or inactive 1`] = `
+<ScrollViewMock
+  keyboardShouldPersistTaps="always"
+  style={
+    Object {
+      "backgroundColor": "#f7f9fa",
+      "flex": 1,
+      "marginLeft": "auto",
+      "marginRight": "auto",
+      "maxWidth": 650,
+      "padding": 16,
+      "width": "100%",
+    }
+  }
+>
+  <TouchableWithoutFeedback
+    onPress={[Function]}
+  >
+    <View />
+  </TouchableWithoutFeedback>
+</ScrollViewMock>
+`;
+
+exports[`notificationsettings User navigates to notificationsettings 1`] = `
+<ScrollViewMock
+  keyboardShouldPersistTaps="always"
+  style={
+    Object {
+      "backgroundColor": "#f7f9fa",
+      "flex": 1,
+      "marginLeft": "auto",
+      "marginRight": "auto",
+      "maxWidth": 650,
+      "padding": 16,
+      "width": "100%",
+    }
+  }
+>
+  <TouchableWithoutFeedback
+    onPress={[Function]}
+  >
+    <View />
+  </TouchableWithoutFeedback>
+</ScrollViewMock>
+`;
+
+exports[`notificationsettings User navigates to notificationsettings 2`] = `
+<ScrollViewMock
+  keyboardShouldPersistTaps="always"
+  style={
+    Object {
+      "backgroundColor": "#f7f9fa",
+      "flex": 1,
+      "marginLeft": "auto",
+      "marginRight": "auto",
+      "maxWidth": 650,
+      "padding": 16,
+      "width": "100%",
+    }
+  }
+>
+  <TouchableWithoutFeedback
+    onPress={[Function]}
+  >
+    <View>
+      <View
+        key="0"
+      >
+        <View
+          style={
+            Object {
+              "backgroundColor": "#ffffffff",
+              "flex": 1,
+              "flexDirection": "row",
+              "justifyContent": "space-between",
+              "marginLeft": "auto",
+              "marginRight": "auto",
+              "marginTop": 5,
+              "maxWidth": 650,
+              "padding": 16,
+              "width": "100%",
+            }
+          }
+        >
+          <Text
+            style={
+              Object {
+                "fontSize": 16,
+                "marginVertical": 4,
+                "textAlign": "left",
+              }
+            }
+            testID="notification0"
+          >
+            Settings #1 update
+          </Text>
+          <CustomCheckBox
+            isChecked={true}
+            onChangeValue={[Function]}
+            testID="CustomCheckBox0"
+          />
+        </View>
+        <View
+          key="0"
+        >
+          <View
+            style={
+              Object {
+                "backgroundColor": "#ffffffff",
+                "flex": 1,
+                "flexDirection": "row",
+                "justifyContent": "space-between",
+                "marginLeft": "auto",
+                "marginRight": "auto",
+                "marginTop": 5,
+                "maxWidth": 650,
+                "padding": 16,
+                "width": "100%",
+              }
+            }
+          >
+            <Text
+              style={
+                Object {
+                  "fontSize": 16,
+                  "marginVertical": 4,
+                  "textAlign": "left",
+                }
+              }
+              testID="notificationGroup10"
+            >
+              group #3
+            </Text>
+            <CustomCheckBox
+              isChecked={true}
+              onChangeValue={[Function]}
+              testID="CustomCheckBox0"
+            />
+          </View>
+          <View
+            key="0"
+            style={
+              Object {
+                "backgroundColor": "#ffffffff",
+                "flex": 1,
+                "flexDirection": "row",
+                "justifyContent": "space-between",
+                "marginLeft": "auto",
+                "marginRight": "auto",
+                "maxWidth": 650,
+                "paddingHorizontal": 16,
+                "paddingVertical": 10,
+                "width": "100%",
+              }
+            }
+          >
+            <Text
+              style={
+                Object {
+                  "fontSize": 14,
+                  "marginVertical": 4,
+                  "textAlign": "left",
+                }
+              }
+              testID="notificationSubGroup0"
+            >
+              name 4
+            </Text>
+            <CustomCheckBox
+              isChecked={false}
+              onChangeValue={[Function]}
+              testID="CustomCheckBox0"
+            />
+          </View>
+        </View>
+      </View>
+    </View>
+  </TouchableWithoutFeedback>
+</ScrollViewMock>
+`;
+
+exports[`notificationsettings User navigates to notificationsettings 3`] = `
+<ScrollViewMock
+  keyboardShouldPersistTaps="always"
+  style={
+    Object {
+      "backgroundColor": "#f7f9fa",
+      "flex": 1,
+      "marginLeft": "auto",
+      "marginRight": "auto",
+      "maxWidth": 650,
+      "padding": 16,
+      "width": "100%",
+    }
+  }
+>
+  <TouchableWithoutFeedback
+    onPress={[Function]}
+  >
+    <View>
+      <View
+        key="0"
+      >
+        <View
+          style={
+            Object {
+              "backgroundColor": "#ffffffff",
+              "flex": 1,
+              "flexDirection": "row",
+              "justifyContent": "space-between",
+              "marginLeft": "auto",
+              "marginRight": "auto",
+              "marginTop": 5,
+              "maxWidth": 650,
+              "padding": 16,
+              "width": "100%",
+            }
+          }
+        >
+          <Text
+            style={
+              Object {
+                "fontSize": 16,
+                "marginVertical": 4,
+                "textAlign": "left",
+              }
+            }
+            testID="notification0"
+          >
+            Settings #1 update
+          </Text>
+          <CustomCheckBox
+            isChecked={true}
+            onChangeValue={[Function]}
+            testID="CustomCheckBox0"
+          />
+        </View>
+        <View
+          key="0"
+        >
+          <View
+            style={
+              Object {
+                "backgroundColor": "#ffffffff",
+                "flex": 1,
+                "flexDirection": "row",
+                "justifyContent": "space-between",
+                "marginLeft": "auto",
+                "marginRight": "auto",
+                "marginTop": 5,
+                "maxWidth": 650,
+                "padding": 16,
+                "width": "100%",
+              }
+            }
+          >
+            <Text
+              style={
+                Object {
+                  "fontSize": 16,
+                  "marginVertical": 4,
+                  "textAlign": "left",
+                }
+              }
+              testID="notificationGroup10"
+            >
+              group #3
+            </Text>
+            <CustomCheckBox
+              isChecked={true}
+              onChangeValue={[Function]}
+              testID="CustomCheckBox0"
+            />
+          </View>
+          <View
+            key="0"
+            style={
+              Object {
+                "backgroundColor": "#ffffffff",
+                "flex": 1,
+                "flexDirection": "row",
+                "justifyContent": "space-between",
+                "marginLeft": "auto",
+                "marginRight": "auto",
+                "maxWidth": 650,
+                "paddingHorizontal": 16,
+                "paddingVertical": 10,
+                "width": "100%",
+              }
+            }
+          >
+            <Text
+              style={
+                Object {
+                  "fontSize": 14,
+                  "marginVertical": 4,
+                  "textAlign": "left",
+                }
+              }
+              testID="notificationSubGroup0"
+            >
+              name 4
+            </Text>
+            <CustomCheckBox
+              isChecked={false}
+              onChangeValue={[Function]}
+              testID="CustomCheckBox0"
+            />
+          </View>
+        </View>
+      </View>
+    </View>
+  </TouchableWithoutFeedback>
+</ScrollViewMock>
+`;

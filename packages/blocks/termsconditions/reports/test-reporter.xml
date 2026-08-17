@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testExecutions version="1">
+    <file path="/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/packages/blocks/termsconditions/__tests__/step-definitions/TermsConditionsUsers.steps.tsx">
+        <testCase name="TermsConditionsUsers User navigates to TermsConditions" duration="236">
+            <failure message="Error: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:"><![CDATA[Error: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+    at resolveDispatcher (/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/node_modules/react/cjs/react.development.js:1476:13)
+    at useMemo (/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/node_modules/react/cjs/react.development.js:1531:20)
+    at VirtualizedListContextProvider (/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/node_modules/react-native/Libraries/Lists/VirtualizedListContext.js:99:26)
+    at processChild (/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/node_modules/react-dom/cjs/react-dom-server.node.development.js:3353:14)
+    at resolve (/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/node_modules/react-dom/cjs/react-dom-server.node.development.js:3270:5)
+    at ReactDOMServerRenderer.render (/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/node_modules/react-dom/cjs/react-dom-server.node.development.js:3753:22)
+    at ReactDOMServerRenderer.read (/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/node_modules/react-dom/cjs/react-dom-server.node.development.js:3690:29)
+    at Object.renderToStaticMarkup (/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/node_modules/react-dom/cjs/react-dom-server.node.development.js:4314:27)
+    at Object.render (/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/packages/blocks/termsconditions/node_modules/enzyme-adapter-react-16/src/ReactSixteenAdapter.js:835:31)
+    at ShallowWrapper.<anonymous> (/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/packages/blocks/termsconditions/node_modules/enzyme/src/ShallowWrapper.js:1108:23)]]></failure>
+        </testCase>
+    </file>
+    <file path="/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/packages/blocks/termsconditions/__tests__/step-definitions/TermsConditionsDetail.steps.tsx">
+        <testCase name="TermsConditionsDetail User navigates to TermsConditions" duration="417"/>
+    </file>
+    <file path="/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/packages/blocks/termsconditions/__tests__/step-definitions/TermsConditionsEdit.steps.tsx">
+        <testCase name="TermsConditionsEdit User navigates to TermsConditions" duration="375"/>
+    </file>
+    <file path="/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/packages/blocks/termsconditions/__tests__/step-definitions/TermsConditionsDetail.web.steps.tsx">
+        <testCase name="TermsConditionsDetail User navigates to TermsConditions" duration="440"/>
+    </file>
+    <file path="/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/packages/blocks/termsconditions/__tests__/step-definitions/TermsConditionsEdit.web.steps.tsx">
+        <testCase name="TermsConditionsEdit User navigates to TermsConditions" duration="438"/>
+    </file>
+    <file path="/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/packages/blocks/termsconditions/__tests__/step-definitions/TermsConditions.web.steps.tsx">
+        <testCase name="TermsConditions User navigates to TermsConditions" duration="225">
+            <failure message="Error: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:"><![CDATA[Error: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+    at resolveDispatcher (/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/node_modules/react/cjs/react.development.js:1476:13)
+    at useMemo (/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/node_modules/react/cjs/react.development.js:1531:20)
+    at VirtualizedListContextProvider (/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/node_modules/react-native/Libraries/Lists/VirtualizedListContext.js:99:26)
+    at processChild (/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/node_modules/react-dom/cjs/react-dom-server.node.development.js:3353:14)
+    at resolve (/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/node_modules/react-dom/cjs/react-dom-server.node.development.js:3270:5)
+    at ReactDOMServerRenderer.render (/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/node_modules/react-dom/cjs/react-dom-server.node.development.js:3753:22)
+    at ReactDOMServerRenderer.read (/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/node_modules/react-dom/cjs/react-dom-server.node.development.js:3690:29)
+    at Object.renderToStaticMarkup (/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/node_modules/react-dom/cjs/react-dom-server.node.development.js:4314:27)
+    at Object.render (/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/packages/blocks/termsconditions/node_modules/enzyme-adapter-react-16/src/ReactSixteenAdapter.js:835:31)
+    at ShallowWrapper.<anonymous> (/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/packages/blocks/termsconditions/node_modules/enzyme/src/ShallowWrapper.js:1108:23)]]></failure>
+        </testCase>
+    </file>
+    <file path="/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/packages/blocks/termsconditions/__tests__/step-definitions/TermsConditions.steps.tsx">
+        <testCase name="TermsConditions User navigates to TermsConditions" duration="385"/>
+    </file>
+</testExecutions>

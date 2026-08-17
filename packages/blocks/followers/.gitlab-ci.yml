@@ -1,0 +1,4 @@
+include:
+  - project: 'builder/builder-bx/Bx/blocks/react-native/development/react-native-master-app/packages/blocks/blocks_shared_pipeline'
+    ref: master
+    file: '.gitlab-ci-block.yml'

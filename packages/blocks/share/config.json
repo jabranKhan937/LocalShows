@@ -1,0 +1,65 @@
+{
+  "id": "Share",
+  "version": "0.0.1",
+  "status": "preAlpha",
+  "path": "./packages/blocks/Share",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Share"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Share": {
+        "file": "Share.tsx",
+        "extends": "ShareController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "ShareController",
+            "path": "./ShareController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./ShareController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Share"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Share": {
+        "file": "Share.tsx",
+        "extends": "ShareController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "ShareController",
+            "path": "./ShareController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./ShareController"
+          }
+        ]
+      }
+    }
+  }
+}

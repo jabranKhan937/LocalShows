@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">localshows</string>
+        <string name="facebook_app_id">170982444234877</string>
+        <string name="facebook_client_token">56789</string>
+    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">AIzaSyBYo5s0uQPFgc8qafyO0Rzejpe78bi4ezw</string>
+
+</resources>

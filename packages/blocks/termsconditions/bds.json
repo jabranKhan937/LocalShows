@@ -1,0 +1,66 @@
+{
+  "id": "terms-conditions",
+  "label": "TermsConditions",
+  "author": "CMT",
+  "license": "BSD",
+  "summary": "",
+  "version": "0.0.1",
+  "platform": [
+    "desktop",
+    "mobile"
+  ],
+  "mobile": [
+    {
+      "TermsConditions": {
+        "label": "TermsConditions",
+        "hotspots": [
+        ]
+      }
+    },
+    {
+      "TermsConditionsDetail": {
+        "label": "TermsConditionsDetail",
+        "hotspots": [
+        ]
+      }
+    },
+    {
+      "TermsConditionsUsers": {
+        "label": "TermsConditionsUsers",
+        "hotspots": [
+        ]
+      }
+    },
+    {
+      "TermsConditionsEdit": {
+        "label": "TermsConditionsEdit",
+        "hotspots": [
+        ]
+      }
+    }
+  ],
+  "web": [
+    {
+      "TermsConditions": {
+        "label": "TermsConditions",
+        "hotspots": [
+        ]
+      },
+      "TermsConditionsDetail": {
+        "label": "TermsConditionsDetail",
+        "hotspots": [
+        ]
+      },
+      "TermsConditionsUsers": {
+        "label": "TermsConditionsUsers",
+        "hotspots": [
+        ]
+      },
+      "TermsConditionsEdit": {
+        "label": "TermsConditionsUsers",
+        "hotspots": [
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "id": "chat",
+  "label": "Chat",
+  "author": "CMT",
+  "license": "BSD",
+  "summary": "",
+  "version": "0.0.1",
+  "platform": [
+    "desktop",
+    "mobile"
+  ],
+  "mobile": [
+    {
+      "Chat": {
+        "label": "Chat",
+        "hotspots": [
+          {
+            "id": "btnShowAddModal",
+            "type": "button",
+            "label": "Create Room"
+          },
+          {
+            "id": "btnShowChat",
+            "type": "navigation",
+            "label": "Chat Room"
+          },
+          {
+            "id": "inputRoomName",
+            "type": "input",
+            "label": "Name"
+          },
+          {
+            "id": "btnAddRoom",
+            "type": "button",
+            "label": "Create"
+          },
+          {
+            "id": "btnCloseModal",
+            "type": "button",
+            "label": "Close"
+          }
+        ]
+      }
+    },
+    {
+      "ViewChat": {
+        "label": "Chat View",
+        "hotspots": [
+          {
+            "id": "btnAddAccount",
+            "type": "button",
+            "label": "Add Account"
+          },
+          {
+            "id": "btnLeaveChat",
+            "type": "button",
+            "label": "Leave Chat"
+          },
+          {
+            "id": "inputMessage",
+            "type": "input",
+            "label": "Write message here"
+          },
+          {
+            "id": "btnSendMessage",
+            "type": "button",
+            "label": "Send"
+          },
+          {
+            "id": "inputAccountID",
+            "type": "input",
+            "label": "Account ID"
+          },
+          {
+            "id": "btnAddAccount",
+            "type": "button",
+            "label": "Add"
+          },
+          {
+            "id": "btnCloseModal",
+            "type": "button",
+            "label": "Cancel"
+          }
+        ]
+      }
+    }
+  ],
+  "web": [
+    {
+      "Chat": {
+        "label": "Chat",
+        "hotspots": [
+        ]
+      },
+      "ViewChat": {
+        "label": "ViewChat",
+        "hotspots": [
+        ]
+      }
+    }
+  ]
+}

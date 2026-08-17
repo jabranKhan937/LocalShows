@@ -1,0 +1,65 @@
+{
+  "id": "rolesandpermissions",
+  "version": "0.0.2",
+  "status": "preAlpha",
+  "path": "./packages/blocks/rolesandpermissions",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Rolesandpermissions"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Rolesandpermissions": {
+        "file": "Rolesandpermissions.tsx",
+        "extends": "RolesandpermissionsController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "RolesandpermissionsController",
+            "path": "./RolesandpermissionsController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./RolesandpermissionsController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Rolesandpermissions"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Rolesandpermissions": {
+        "file": "Rolesandpermissions.web.tsx",
+        "extends": "RolesandpermissionsController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "RolesandpermissionsController",
+            "path": "./RolesandpermissionsController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./RolesandpermissionsController"
+          }
+        ]
+      }
+    }
+  }
+}

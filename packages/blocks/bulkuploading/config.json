@@ -1,0 +1,65 @@
+{
+  "id": "BulkUploading",
+  "version": "0.0.1",
+  "status": "preAlpha",
+  "path": "./packages/blocks/BulkUploading",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "BulkUploading"
+    ],
+    "assembler-dependencies": ["\"react-native-document-picker\": \"8.0.0\"", "\"react-native-fs\": \"2.18.0\""],
+    "catalog-dependencies": [
+      "core"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "BulkUploading": {
+        "file": "BulkUploading.tsx",
+        "extends": "BulkUploadingController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "BulkUploadingController",
+            "path": "./BulkUploadingController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./BulkUploadingController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "BulkUploading"
+    ],
+    "assembler-dependencies": ["\"react-native-document-picker\": \"8.0.0\"", "\"react-native-fs\": \"2.18.0\""],
+    "catalog-dependencies": [
+      "core"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "BulkUploading": {
+        "file": "BulkUploading.web.tsx",
+        "extends": "BulkUploadingController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "BulkUploadingController",
+            "path": "./BulkUploadingController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./BulkUploadingController"
+          }
+        ]
+      }
+    }
+  }
+}

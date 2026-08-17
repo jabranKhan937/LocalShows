@@ -1,0 +1,99 @@
+{
+  "id": "blockedusers",
+  "version": "2.1.5",
+  "status": "preAlpha",
+  "path": "./packages/blocks/blockedusers",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Blockedusers",
+      "AddBlockeduser"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Blockedusers": {
+        "file": "Blockedusers.tsx",
+        "extends": "BlockedusersController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "BlockedusersController",
+            "path": "./BlockedusersController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./BlockedusersController"
+          }
+        ]
+      },
+      "AddBlockedusers": {
+        "file": "AddBlockeduser.tsx",
+        "extends": "BlockedusersController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "BlockedusersController",
+            "path": "./BlockedusersController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./BlockedusersController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Blockedusers",
+      "AddBlockeduser"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Blockedusers": {
+        "file": "BlockedusersBlock.tsx",
+        "extends": "BlockedusersController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "BlockedusersController",
+            "path": "./BlockedusersController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./BlockedusersController"
+          }
+        ]
+      },
+      "AddBlockedusers": {
+        "file": "AddBlockeduser.tsx",
+        "extends": "BlockedusersController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "BlockedusersController",
+            "path": "./BlockedusersController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./BlockedusersController"
+          }
+        ]
+      }
+    }
+  }
+}

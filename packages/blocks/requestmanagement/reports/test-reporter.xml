@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testExecutions version="1">
+    <file path="/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/packages/blocks/requestmanagement/__tests__/step-definitions/SentRequest.steps.tsx">
+        <testCase name="SentRequest User navigates to SentRequest" duration="542"/>
+    </file>
+    <file path="/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/packages/blocks/requestmanagement/__tests__/step-definitions/SentRequest.web.steps.tsx">
+        <testCase name="SentRequest User navigates to SentRequest" duration="105"/>
+    </file>
+    <file path="/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/packages/blocks/requestmanagement/__tests__/step-definitions/RequestManagement.web.steps.tsx">
+        <testCase name="RequestManagement User navigates to RequestManagement" duration="48"/>
+    </file>
+    <file path="/data/home/ubuntu/Desktop/localshowsapp-316774-react-native/src/packages/blocks/requestmanagement/__tests__/step-definitions/RequestManagement.steps.tsx">
+        <testCase name="RequestManagement User navigates to RequestManagement" duration="1039"/>
+    </file>
+</testExecutions>

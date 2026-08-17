@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="GradleMigrationSettings" migrationVersion="1" />
+  <component name="GradleSettings">
+    <option name="linkedExternalProjectsSettings">
+      <GradleProjectSettings>
+        <compositeConfiguration>
+          <compositeBuild compositeDefinitionSource="SCRIPT">
+            <builds>
+              <build path="$PROJECT_DIR$/../node_modules/@react-native/gradle-plugin" name="gradle-plugin-root">
+                <projects>
+                  <project path="$PROJECT_DIR$/../node_modules/@react-native/gradle-plugin" />
+                  <project path="$PROJECT_DIR$/../node_modules/@react-native/gradle-plugin/react-native-gradle-plugin" />
+                  <project path="$PROJECT_DIR$/../node_modules/@react-native/gradle-plugin/settings-plugin" />
+                  <project path="$PROJECT_DIR$/../node_modules/@react-native/gradle-plugin/shared" />
+                  <project path="$PROJECT_DIR$/../node_modules/@react-native/gradle-plugin/shared-testutil" />
+                </projects>
+              </build>
+            </builds>
+          </compositeBuild>
+        </compositeConfiguration>
+        <option name="testRunner" value="CHOOSE_PER_TEST" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="gradleJvm" value="azul-20" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/../node_modules/@react-native-async-storage/async-storage/android" />
+            <option value="$PROJECT_DIR$/../node_modules/@react-native-community/checkbox/android" />
+            <option value="$PROJECT_DIR$/../node_modules/@react-native-community/datetimepicker/android" />
+            <option value="$PROJECT_DIR$/../node_modules/@react-native-community/slider/android" />
+            <option value="$PROJECT_DIR$/../node_modules/@react-native-documents/picker/android" />
+            <option value="$PROJECT_DIR$/../node_modules/@react-native-google-signin/google-signin/android" />
+            <option value="$PROJECT_DIR$/../node_modules/@react-native-masked-view/masked-view/android" />
+            <option value="$PROJECT_DIR$/../node_modules/@react-native-picker/picker/android" />
+            <option value="$PROJECT_DIR$/../node_modules/@react-native-voice/voice/android" />
+            <option value="$PROJECT_DIR$/../node_modules/@react-native/gradle-plugin" />
+            <option value="$PROJECT_DIR$/../node_modules/@react-native/gradle-plugin/react-native-gradle-plugin" />
+            <option value="$PROJECT_DIR$/../node_modules/@react-native/gradle-plugin/settings-plugin" />
+            <option value="$PROJECT_DIR$/../node_modules/@react-native/gradle-plugin/shared" />
+            <option value="$PROJECT_DIR$/../node_modules/@react-native/gradle-plugin/shared-testutil" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-android-location-enabler/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-calendar-events/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-compass-heading/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-date-picker/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-fast-image/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-fbsdk/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-file-viewer/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-fs/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-geolocation-service/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-gesture-handler/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-get-random-values/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-image-crop-picker/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-image-marker/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-image-picker/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-live-audio-stream/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-localize/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-maps/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-permissions/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-print/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-push-notification/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-radar/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-reanimated/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-safe-area-context/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-screens/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-share/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-sound/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-svg/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-view-shot/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-webview/android" />
+            <option value="$PROJECT_DIR$/../node_modules/react-native-worklets/android" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+    </option>
+  </component>
+</project>

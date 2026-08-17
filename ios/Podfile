@@ -1,0 +1,96 @@
+# --- Resolve react_native_pods.rb with node ---
+require Pod::Executable.execute_command(
+  'node',
+  ['-p', 'require.resolve("react-native/scripts/react_native_pods.rb", {paths: [process.argv[1]]})', __dir__]
+).strip
+
+# --- Helper to require other RN scripts ---
+def node_require(script)
+  require Pod::Executable.execute_command(
+    'node',
+    ['-p', "require.resolve('#{script}', {paths: [process.argv[1]]})", __dir__]
+  ).strip
+end
+
+# --- React Native Permissions ---
+node_require('react-native-permissions/scripts/setup.rb')
+
+# --- Standard RN setup ---
+platform :ios, min_ios_version_supported
+prepare_react_native_project!
+
+# --- Permissions ---
+setup_permissions([
+  'AppTrackingTransparency',
+  'Bluetooth',
+  'Calendars',
+  'Camera',
+  'Contacts',
+  'FaceID',
+  'LocationWhenInUse',
+  'MediaLibrary',
+  'Microphone',
+  'Motion',
+  'PhotoLibrary',
+  'PhotoLibraryAddOnly',
+  'Reminders',
+  'Siri',
+  'SpeechRecognition',
+])
+
+# --- Frameworks handling ---
+linkage = ENV['USE_FRAMEWORKS']
+if linkage
+  Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
+  use_frameworks! :linkage => linkage.to_sym
+end
+
+target 'localshows' do
+  config = use_native_modules!
+
+  use_react_native!(
+    :path => config[:reactNativePath],
+    :app_path => "#{Pod::Config.instance.installation_root}/.."
+  )
+end
+
+# --- POST INSTALL (CORRECT & MODERN) ---
+post_install do |installer|
+  # ✅ Correct modern call (NO nil, NO extra args)
+  react_native_post_install(installer)
+
+  # ✅ REQUIRED: Xcode 16 + React Native C++20
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++20'
+      config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
+      config.build_settings['GCC_ENABLE_CPP_EXCEPTIONS'] = 'YES'
+      config.build_settings['GCC_ENABLE_CPP_RTTI'] = 'YES'
+    end
+  end
+
+  # fmt 11: Adding -DFMT_USE_CONSTEVAL=0 in build settings does NOT work — base.h
+  # still runs its #elif chain and re-#defines FMT_USE_CONSTEVAL from __cpp_consteval.
+  # Apple only disabled that for clang < 14; Xcode 15+ still enables consteval and hits
+  # bogus errors in format-inl. Widen fmt's Apple guard for all Apple builds.
+  fmt_base = File.join(installer.sandbox.root, 'fmt', 'include', 'fmt', 'base.h')
+  if File.exist?(fmt_base)
+    content = File.read(fmt_base)
+    patch_token = 'LOCALSHOWS_FMT_APPLE_CONSTEVAL_PATCH'
+    narrow_apple = "#elif defined(__apple_build_version__) && __apple_build_version__ < 14000029L\n#  define FMT_USE_CONSTEVAL 0  // consteval is broken in Apple clang < 14."
+    wide_apple = "#elif defined(__apple_build_version__)\n#  define FMT_USE_CONSTEVAL 0  // #{patch_token}: fmt consteval breaks in Xcode 15+ Apple clang."
+    if content.include?(patch_token)
+      # idempotent pod install
+    elsif content.include?(narrow_apple)
+      begin
+        File.chmod(File.stat(fmt_base).mode | 0o200, fmt_base)
+      rescue StandardError => e
+        Pod::UI.warn "[localshows] could not chmod fmt base.h (#{e.message}); trying write anyway"
+      end
+      File.write(fmt_base, content.sub(narrow_apple, wide_apple))
+      Pod::UI.puts 'Patched fmt base.h: FMT_USE_CONSTEVAL disabled for all Apple clang builds'.green
+    else
+      Pod::UI.warn '[localshows] fmt base.h: Apple consteval guard not found; fmt may have changed — check build errors'
+    end
+  end
+end
