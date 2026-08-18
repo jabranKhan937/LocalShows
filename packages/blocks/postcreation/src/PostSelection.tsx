@@ -106,6 +106,12 @@ export default class PostSelection extends PostCreationCommonController {
 
   selectPostOption = (optionSelected: "show" | "picture") => {
     this.setState({ optionSelected }, () => {
+      if (optionSelected === "show") {
+        this.props.navigation.navigate("PostCreation", {
+          from: "show",
+        });
+        return;
+      }
       this.props.navigation.navigate("ImageSelection", {
         selectedType: optionSelected,
       });

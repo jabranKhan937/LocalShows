@@ -1268,11 +1268,6 @@ export default StyleSheet.create({
     color: '#ff2d6b',
     fontWeight: '400',
   },
-  compactShowAvatar: {
-    borderRadius: 14,
-    width: 28,
-    height: 28,
-  },
   compactSeeMoreText: {
     fontWeight: '400',
     fontSize: 14,

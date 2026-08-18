@@ -4,7 +4,6 @@ import {
   ScrollView,
   Image,
   Text,
-  SafeAreaView,
   TouchableOpacity,
   StyleSheet,
   TextInput,
@@ -18,14 +17,14 @@ import {
   KeyboardAvoidingView,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import Icon from 'react-native-vector-icons/Feather';
 import { Picker } from '@react-native-picker/picker';
 import moment from 'moment';
 import DateRangePicker from 'react-native-daterange-picker';
 import { leftArrowWhite } from '../../user-profile-basic/src/assets';
-import { colors } from '../../utilities/src/Colors';
-import { leftArrow } from '../../events/src/assets';
+import { redesignTheme } from '../../utilities/src/Colors';
 import PostCreationController, {
   configJSON,
 } from './PostCreationCommonController';
@@ -67,15 +66,63 @@ export default class PostCreation extends PostCreationController {
   };
 
   renderEventImage = () => {
+    const hasImage =
+      Object.keys(this.state.selectedImageData || {}).length !== 0 &&
+      !!this.state.selectedImageData?.uri;
     return (
-      <>
-        {Object.keys(this.state.selectedImageData).length !== 0 && (
+      <TouchableOpacity
+        testID="openCameraBtn"
+        activeOpacity={0.85}
+        style={styles.photoPicker}
+        onPress={this.handleOpenCameraPopup}
+      >
+        {hasImage ? (
           <Image
             source={{ uri: this.state.selectedImageData.uri }}
-            style={styles.eventImage}
+            style={styles.photoPreview}
           />
+        ) : (
+          <>
+            <Icon name="image" size={28} color={redesignTheme.primary} />
+            <Text style={styles.photoPickerText}>Tap to select a photo</Text>
+          </>
         )}
-      </>
+      </TouchableOpacity>
+    );
+  };
+
+  renderCameraGalleryPopup = () => {
+    return (
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={this.state.showCameraGalleryPopup}
+      >
+        <View style={styles.centerView}>
+          <View style={styles.cameraGalleryOption}>
+            <TouchableOpacity
+              testID="takePhotoBtn"
+              onPress={this.handleCameraImage}
+            >
+              <Text style={styles.cameraButtonText}>Take photo</Text>
+            </TouchableOpacity>
+            <View style={styles.divider} />
+            <TouchableOpacity
+              testID="choosePhotoBtn"
+              onPress={this.handleGallery}
+            >
+              <Text style={styles.cameraButtonText}>Choose photo</Text>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity
+            testID="cancelCameraOption"
+            style={styles.cancelCameraPopup}
+            onPress={this.handleCameraGalleryCancelPopup}
+          >
+            <Text style={styles.cancelCameraText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     );
   };
 
@@ -269,7 +316,7 @@ export default class PostCreation extends PostCreationController {
                 : 'Enter Band / Artist name & validate'
             }
             style={styles.lineUpInput}
-            placeholderTextColor="#CBD5E1"
+            placeholderTextColor={redesignTheme.muted}
             value={this.state.lineupText}
             onChangeText={lineupTxt => this.handleLineupTxt(lineupTxt)}
             onSubmitEditing={this.handleLineupSubmit}
@@ -462,7 +509,7 @@ export default class PostCreation extends PostCreationController {
               <Text
                 style={[
                   styles.label,
-                  { fontWeight: '400', color: '#3333CC', marginTop: 1 },
+                  { fontWeight: '400', color: redesignTheme.primary, marginTop: 1 },
                 ]}
               >
                 {item.first_name}
@@ -503,7 +550,7 @@ export default class PostCreation extends PostCreationController {
               <Text
                 style={[
                   styles.label,
-                  { fontWeight: '400', color: '#3333CC', marginTop: 1 },
+                  { fontWeight: '400', color: redesignTheme.primary, marginTop: 1 },
                 ]}
               >
                 {item.attributes ? item.attributes.name : item.name}
@@ -540,7 +587,7 @@ export default class PostCreation extends PostCreationController {
               <Text
                 style={[
                   styles.label,
-                  { fontWeight: '400', color: '#3333CC', marginTop: 1 },
+                  { fontWeight: '400', color: redesignTheme.primary, marginTop: 1 },
                 ]}
               >
                 {item.attributes ? item.attributes.name : item.name}
@@ -577,12 +624,12 @@ export default class PostCreation extends PostCreationController {
         {this.state.eventId !== '' && (
           <TouchableOpacity
             testID="cancelUpdate"
-            style={[styles.postShowButton, { backgroundColor: '#FFF' }]}
+            style={[styles.postShowButton, { backgroundColor: redesignTheme.card }]}
             onPress={() => {
               this.props.navigation.goBack();
             }}
           >
-            <Text style={[styles.postShowButtonText, { color: '#3333CC' }]}>
+            <Text style={[styles.postShowButtonText, { color: redesignTheme.foreground }]}>
               {configJSON.cancel}
             </Text>
           </TouchableOpacity>
@@ -591,17 +638,269 @@ export default class PostCreation extends PostCreationController {
     );
   };
 
+  canPreviewPost = () => {
+    const hasPhoto = !!(
+      this.state.selectedImageData && this.state.selectedImageData.uri
+    );
+    return !!(
+      this.state.eventTitle &&
+      String(this.state.eventTitle).trim() &&
+      this.state.location &&
+      String(this.state.location).trim() &&
+      this.state.dateOfShow &&
+      this.state.selectedLineUp &&
+      this.state.selectedLineUp.length > 0 &&
+      hasPhoto
+    );
+  };
+
+  handlePreviewPost = () => {
+    if (this.state.eventId !== '') {
+      this.handleCreateShowAPI();
+      return;
+    }
+    if (this.checkCreateShowValidation()) {
+      this.setState({ isPreviewStep: true });
+    }
+  };
+
+  handleBackFromPreview = () => {
+    this.setState({ isPreviewStep: false });
+  };
+
+  getPreviewCategory = () => {
+    const item = this.state.selectedTypeOfShows?.[0];
+    if (!item) return '';
+    return item.attributes ? item.attributes.name : item.name || '';
+  };
+
+  getPreviewStateName = () => {
+    const selectedStateObj = this.state.statesList.find(
+      ({ key }) => key === this.state.selectedState,
+    );
+    return selectedStateObj?.name || this.state.selectedState || '';
+  };
+
+  getPreviewLocationLine = () => {
+    const parts = [
+      this.state.location,
+      this.state.address,
+      this.state.selectedCity,
+      this.getPreviewStateName(),
+    ].filter(part => part && String(part).trim());
+    return parts.join(' · ');
+  };
+
+  getPreviewTime = () => {
+    if (!this.state.time) return '';
+    return String(this.state.time).replace('h', ':');
+  };
+
   renderSaveBtn = () => {
+    const isEdit = this.state.eventId !== '';
+    const isReady = isEdit || this.canPreviewPost();
     return (
-      <TouchableOpacity
-        testID="postShowBtn"
-        style={[styles.postShowButton, { marginTop: 15 }]}
-        onPress={this.handleCreateShowAPI}
-      >
-        <Text style={styles.postShowButtonText}>
-          {this.state.eventId !== '' ? configJSON.save : configJSON.postTheShow}
-        </Text>
-      </TouchableOpacity>
+      <View style={styles.previewCtaWrap}>
+        <TouchableOpacity
+          testID="postShowBtn"
+          style={[
+            styles.postShowButton,
+            isReady ? styles.previewBtnActive : styles.previewBtnInactive,
+          ]}
+          onPress={this.handlePreviewPost}
+          activeOpacity={isReady ? 0.85 : 1}
+        >
+          <View style={styles.previewBtnInner}>
+            <Text
+              style={[
+                styles.postShowButtonText,
+                !isReady && !isEdit && styles.previewBtnInactiveText,
+              ]}
+            >
+              {isEdit ? configJSON.save : 'PREVIEW POST'}
+            </Text>
+            {!isEdit && (
+              <Icon
+                name="chevron-right"
+                size={18}
+                color={isReady ? '#FFFFFF' : redesignTheme.muted}
+              />
+            )}
+          </View>
+        </TouchableOpacity>
+        {!isEdit && (
+          <Text style={styles.previewHelp}>
+            Fill in title, lineup, venue, date, and add a photo
+          </Text>
+        )}
+      </View>
+    );
+  };
+
+  renderPreviewScreen = () => {
+    const category = this.getPreviewCategory();
+    const lineupNames = (this.state.selectedLineUp || [])
+      .map((item: any) => item?.first_name)
+      .filter(Boolean);
+    const rawUri = this.state.selectedImageData?.uri;
+    const imageUri = Array.isArray(rawUri) ? rawUri[0] : rawUri;
+    return (
+      <View style={styles.previewScreen}>
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor={redesignTheme.background}
+        />
+        <View style={styles.headerContainer}>
+          <TouchableOpacity
+            testID="previewBackBtn"
+            style={styles.headerIconBtn}
+            onPress={this.handleBackFromPreview}
+          >
+            <Icon
+              name="arrow-left"
+              size={18}
+              color={redesignTheme.foreground}
+            />
+          </TouchableOpacity>
+          <View style={styles.previewHeaderCopy}>
+            <Text style={styles.pageTitle}>PREVIEW</Text>
+            <Text style={styles.previewStepLabel}>
+              Step 2 of 2 — Confirm & Publish
+            </Text>
+          </View>
+          <TouchableOpacity
+            testID="previewCloseBtn"
+            style={styles.headerIconBtn}
+            onPress={() => this.props.navigation.goBack()}
+          >
+            <Icon name="x" size={18} color={redesignTheme.muted} />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.previewProgressTrack}>
+          <View style={styles.previewProgressFill} />
+        </View>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.previewScroll}
+        >
+          <Text style={styles.previewIntro}>
+            This is how your post will appear in the feed:
+          </Text>
+          <View style={styles.previewCard}>
+            <View style={styles.previewImageWrap}>
+              {imageUri ? (
+                <Image
+                  source={{ uri: String(imageUri) }}
+                  style={styles.previewImage}
+                />
+              ) : (
+                <View style={styles.previewImagePlaceholder}>
+                  <Icon name="image" size={32} color={redesignTheme.muted} />
+                </View>
+              )}
+              {!!category && (
+                <View style={styles.previewCategoryBadge}>
+                  <Text style={styles.previewCategoryText}>
+                    {String(category).toUpperCase()}
+                  </Text>
+                </View>
+              )}
+            </View>
+            <View style={styles.previewCardBody}>
+              {!!this.state.eventTitle && (
+                <Text style={styles.previewEventTitle}>
+                  {this.state.eventTitle}
+                </Text>
+              )}
+              {lineupNames.length > 0 && (
+                <View style={styles.previewLineupRow}>
+                  {lineupNames.map((name: string) => (
+                    <View key={name} style={styles.previewLineupChip}>
+                      <Text style={styles.previewLineupChipText}>{name}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+              {!!this.getPreviewLocationLine() && (
+                <View style={styles.previewMetaRow}>
+                  <Icon
+                    name="map-pin"
+                    size={13}
+                    color={redesignTheme.primary}
+                  />
+                  <Text style={styles.previewMetaText}>
+                    {this.getPreviewLocationLine()}
+                  </Text>
+                </View>
+              )}
+              <View style={styles.previewMetaRow}>
+                <Icon name="calendar" size={13} color={redesignTheme.muted} />
+                {!!this.state.dateOfShow && (
+                  <Text style={styles.previewMetaText}>
+                    {this.state.dateOfShow}
+                  </Text>
+                )}
+                {!!this.getPreviewTime() && (
+                  <Text style={styles.previewTimeText}>
+                    {this.getPreviewTime()}
+                  </Text>
+                )}
+                {lineupNames.length > 0 && (
+                  <View style={styles.previewCountPill}>
+                    <Text style={styles.previewCountText}>
+                      {lineupNames.length}
+                    </Text>
+                  </View>
+                )}
+              </View>
+              {!!this.state.description && (
+                <Text style={styles.previewDescription}>
+                  {this.state.description}
+                </Text>
+              )}
+            </View>
+          </View>
+          <View style={styles.visibilityCard}>
+            <Text style={styles.visibilityTitle}>VISIBILITY</Text>
+            {[
+              'Visible on local feed',
+              'Notified followers',
+              'Searchable by genre & city',
+              'Reminder sent day-of to saved fans',
+            ].map(item => (
+              <View key={item} style={styles.visibilityRow}>
+                <Icon
+                  name="check-circle"
+                  size={16}
+                  color="#22C55E"
+                />
+                <Text style={styles.visibilityText}>{item}</Text>
+              </View>
+            ))}
+          </View>
+          <TouchableOpacity
+            testID="publishShowBtn"
+            style={styles.publishBtn}
+            onPress={this.handleCreateShowAPI}
+            activeOpacity={0.85}
+          >
+            {this.state.isLoading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <>
+                <Icon name="star" size={16} color="#FFFFFF" />
+                <Text style={styles.publishBtnText}>PUBLISH NOW</Text>
+              </>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            testID="editPreviewBtn"
+            onPress={this.handleBackFromPreview}
+          >
+            <Text style={styles.editPreviewText}>Go back & edit</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
     );
   };
 
@@ -617,7 +916,7 @@ export default class PostCreation extends PostCreationController {
         </Text>
         <Image
           source={require('../../../mobile/assets/images/image_calendar.png')}
-          style={[styles.backBtn, { tintColor: '#4949EE' }]}
+          style={[styles.backBtn, { tintColor: redesignTheme.primary }]}
         />
       </TouchableOpacity>
     );
@@ -635,7 +934,7 @@ export default class PostCreation extends PostCreationController {
         </Text>
         <Image
           source={require('../../../mobile/assets/images/image_calendar.png')}
-          style={[styles.backBtn, { tintColor: '#4949EE' }]}
+          style={[styles.backBtn, { tintColor: redesignTheme.primary }]}
         />
       </TouchableOpacity>
     );
@@ -654,7 +953,7 @@ export default class PostCreation extends PostCreationController {
         <TextInput
           testID="customRuleTextInput"
           placeholder="Enter custom rule or regulation"
-          placeholderTextColor="#CBD5E1"
+          placeholderTextColor={redesignTheme.muted}
           style={styles.rosterInput}
           value={this.state.customRuleTxt}
           onChangeText={text =>
@@ -806,14 +1105,20 @@ export default class PostCreation extends PostCreationController {
     // Customizable Area Start
     // Customizable Area End
     return (
-      <SafeAreaView style={styles.safeAreaView}>
+      <SafeAreaView style={styles.safeAreaView} edges={['top', 'left', 'right']}>
         {/* Customizable Area Start */}
+        {this.state.isPreviewStep ? (
+          this.renderPreviewScreen()
+        ) : (
         <KeyboardAvoidingView
-          style={{ flex: 1 }}
+          style={{ flex: 1, backgroundColor: redesignTheme.background }}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : undefined}
           behavior={this.isPlatformiOS() ? 'padding' : undefined}
         >
-          <ScrollView>
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
             <TouchableWithoutFeedback
               testID="containerFeedback"
               onPress={() => {
@@ -822,26 +1127,45 @@ export default class PostCreation extends PostCreationController {
             >
               <>
                 <View style={styles.container}>
-                  <StatusBar backgroundColor="#FFF" />
+                  <StatusBar
+                    barStyle="light-content"
+                    backgroundColor={redesignTheme.background}
+                  />
                   <View style={styles.headerContainer}>
                     <TouchableOpacity
                       testID="backBtn"
+                      style={styles.headerIconBtn}
                       onPress={() => this.props.navigation.goBack()}
                     >
-                      <Image source={leftArrow} style={styles.backBtn} />
+                      <Icon
+                        name="arrow-left"
+                        size={18}
+                        color={redesignTheme.foreground}
+                      />
                     </TouchableOpacity>
                     <Text style={styles.pageTitle}>
-                      {configJSON.showsInformation}
+                      {configJSON.postAShowCardTitle}
                     </Text>
-                    <Text />
+                    <TouchableOpacity
+                      testID="closeCreateShowBtn"
+                      style={styles.headerIconBtn}
+                      onPress={() => this.props.navigation.goBack()}
+                    >
+                      <Icon name="x" size={18} color={redesignTheme.muted} />
+                    </TouchableOpacity>
                   </View>
+                  <Text style={styles.stepLabel}>Step 1 of 2 — Details</Text>
+                  <View style={styles.progressTrack}>
+                    <View style={styles.progressFill} />
+                  </View>
+                  <Text style={styles.photoLabel}>EVENT / SHOW PHOTO</Text>
                   {this.renderEventImage()}
                   <Text style={styles.label}>Event Title</Text>
                   <TextInput
                     testID="eventTitleInputText"
                     placeholder="Enter event title"
                     style={styles.input}
-                    placeholderTextColor="#CBD5E1"
+                    placeholderTextColor={redesignTheme.muted}
                     value={this.state.eventTitle}
                     onChangeText={eventTitle =>
                       this.handleTitleInput(eventTitle)
@@ -863,7 +1187,7 @@ export default class PostCreation extends PostCreationController {
                       this.getShouldDisableLocationFields() &&
                         styles.disabledInput,
                     ]}
-                    placeholderTextColor="#CBD5E1"
+                    placeholderTextColor={redesignTheme.muted}
                     value={this.state.location}
                     onChangeText={location =>
                       this.handleLocationInput(location)
@@ -880,7 +1204,7 @@ export default class PostCreation extends PostCreationController {
                       this.getShouldDisableLocationFields() &&
                         styles.disabledInput,
                     ]}
-                    placeholderTextColor="#CBD5E1"
+                    placeholderTextColor={redesignTheme.muted}
                     value={this.state.address}
                     onChangeText={address => this.handleAddressInput(address)}
                     maxLength={100}
@@ -902,7 +1226,7 @@ export default class PostCreation extends PostCreationController {
                       this.getShouldDisableLocationFields() &&
                         styles.disabledInput,
                     ]}
-                    placeholderTextColor="#CBD5E1"
+                    placeholderTextColor={redesignTheme.muted}
                     value={this.state.zipCode}
                     onChangeText={this.onZipcodeTextChange}
                     maxLength={5}
@@ -966,7 +1290,7 @@ export default class PostCreation extends PostCreationController {
                       { height: 100, textAlignVertical: 'top' },
                     ]}
                     multiline
-                    placeholderTextColor="#CBD5E1"
+                    placeholderTextColor={redesignTheme.muted}
                     value={this.state.description}
                     maxLength={300}
                     onChangeText={description =>
@@ -1012,7 +1336,7 @@ export default class PostCreation extends PostCreationController {
                           testID="ticketLinkInputText"
                           placeholder="Enter Show Ticket link"
                           style={styles.ticketLinkInput}
-                          placeholderTextColor="#3333CC"
+                          placeholderTextColor={redesignTheme.muted}
                           value={this.state.ticketLink}
                           onChangeText={ticketLink =>
                             this.setState({ ticketLink })
@@ -1031,6 +1355,7 @@ export default class PostCreation extends PostCreationController {
 
                   {this.renderCancelBtn()}
                   {this.renderSaveBtn()}
+                  {this.renderCameraGalleryPopup()}
                 </View>
 
                 <Modal
@@ -1269,7 +1594,7 @@ export default class PostCreation extends PostCreationController {
                 style={styles.cancelDateSelectionBtn}
                 onPress={this.hideDateSelector}
               >
-                <Icon name="x" size={30} />
+                <Icon name="x" size={30} color={redesignTheme.foreground} />
               </TouchableOpacity>
             </>
           )}
@@ -1298,11 +1623,12 @@ export default class PostCreation extends PostCreationController {
                 style={styles.cancelDateSelectionBtn}
                 onPress={this.hideEndDateSelector}
               >
-                <Icon name="x" size={30} />
+                <Icon name="x" size={30} color={redesignTheme.foreground} />
               </TouchableOpacity>
             </>
           )}
         </KeyboardAvoidingView>
+        )}
         {/* Customizable Area End */}
       </SafeAreaView>
     );
@@ -1316,16 +1642,28 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     alignSelf: 'center',
-    backgroundColor: '#FFF',
+    backgroundColor: redesignTheme.background,
   },
   container: {
-    backgroundColor: '#FFF',
-    padding: 25,
+    backgroundColor: redesignTheme.background,
+    paddingHorizontal: 16,
+    paddingBottom: 40,
   },
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingTop: 8,
+  },
+  headerIconBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: redesignTheme.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   backBtn: {
     width: 20,
@@ -1333,9 +1671,60 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   pageTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#334155',
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '900',
+    color: redesignTheme.foreground,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  stepLabel: {
+    color: redesignTheme.muted,
+    fontSize: 14,
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  progressTrack: {
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  progressFill: {
+    width: '50%',
+    height: '100%',
+    backgroundColor: redesignTheme.primary,
+  },
+  photoLabel: {
+    color: redesignTheme.primary,
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+    marginTop: 12,
+  },
+  photoPicker: {
+    marginTop: 10,
+    minHeight: 150,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(255, 255, 255, 0.16)',
+    backgroundColor: redesignTheme.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  photoPreview: {
+    width: '100%',
+    height: 180,
+    resizeMode: 'cover',
+  },
+  photoPickerText: {
+    color: redesignTheme.primary,
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 8,
   },
   eventImage: {
     height: 200,
@@ -1345,18 +1734,20 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#334155',
+    fontWeight: '800',
+    color: redesignTheme.primary,
     marginTop: 20,
+    letterSpacing: 0.4,
   },
   input: {
     fontWeight: '400',
     width: '100%',
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 0.5,
-    borderColor: '#C5C5FF',
-    color: colors(false).text,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: redesignTheme.border,
+    backgroundColor: redesignTheme.input,
+    color: redesignTheme.foreground,
     height: 50,
     fontSize: 16,
     marginTop: 10,
@@ -1369,11 +1760,12 @@ const styles = StyleSheet.create({
   lineUpInput: {
     flex: 1,
     fontWeight: '400',
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 0.5,
-    borderColor: '#C5C5FF',
-    color: colors(false).text,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: redesignTheme.border,
+    backgroundColor: redesignTheme.input,
+    color: redesignTheme.foreground,
     height: 50,
     fontSize: 16,
   },
@@ -1381,10 +1773,8 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     paddingHorizontal: 20,
     height: 50,
-    borderRadius: 10,
-    borderWidth: 0.5,
-    borderColor: '#3333CC',
-    backgroundColor: '#3333CC',
+    borderRadius: 12,
+    backgroundColor: redesignTheme.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1397,24 +1787,25 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingVertical: 8,
     paddingHorizontal: 10,
-    backgroundColor: '#EAF3FF',
+    backgroundColor: 'rgba(255, 45, 107, 0.08)',
+    borderRadius: 10,
   },
   lineUpInfoText: {
-    fontFamily: 'OpenSans',
     fontSize: 14,
-    color: '#334155',
+    color: redesignTheme.muted,
     fontWeight: '600',
   },
   lineUpInfoStrong: {
-    color: '#1D4ED8',
+    color: redesignTheme.primary,
     fontWeight: '700',
   },
   androidPickerContainer: {
     width: '100%',
     paddingHorizontal: 0,
-    borderRadius: 10,
-    borderWidth: 0.5,
-    borderColor: '#C5C5FF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: redesignTheme.border,
+    backgroundColor: redesignTheme.input,
     height: 50,
     justifyContent: 'center',
     marginTop: 10,
@@ -1422,16 +1813,14 @@ const styles = StyleSheet.create({
   androidPicker: {
     width: '100%',
     paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 0.5,
-    borderColor: '#C5C5FF',
+    borderRadius: 12,
+    color: redesignTheme.foreground,
     height: 50,
     justifyContent: 'center',
   },
   androidPickerItemStyle: {
-    fontFamily: 'OpenSans',
     alignSelf: 'flex-start',
-    color: colors(false).text,
+    color: redesignTheme.foreground,
     fontSize: 16,
   },
   androidPickerDropdown: {
@@ -1439,10 +1828,9 @@ const styles = StyleSheet.create({
     right: 15,
     marginRight: 5,
     width: 8,
-    backgroundColor: 'white',
     transform: [{ rotate: '-90deg' }],
     resizeMode: 'contain',
-    tintColor: '#3333CC',
+    tintColor: redesignTheme.primary,
   },
   normalFont: {
     fontWeight: '400',
@@ -1452,29 +1840,60 @@ const styles = StyleSheet.create({
     width: 20,
     borderWidth: 1,
     borderRadius: 5,
-    borderColor: colors(false).text,
+    borderColor: redesignTheme.muted,
     marginRight: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
   postShowButton: {
-    borderRadius: 10,
-    backgroundColor: '#3333CC',
+    borderRadius: 28,
     justifyContent: 'center',
-    padding: 15,
+    paddingVertical: 16,
     marginTop: 30,
   },
+  previewCtaWrap: {
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  previewBtnInactive: {
+    backgroundColor: '#1A1A28',
+    borderWidth: 1,
+    borderColor: redesignTheme.border,
+  },
+  previewBtnActive: {
+    backgroundColor: redesignTheme.primary,
+    shadowColor: redesignTheme.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.55,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  previewBtnInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  previewBtnInactiveText: {
+    color: redesignTheme.muted,
+  },
+  previewHelp: {
+    color: redesignTheme.muted,
+    fontSize: 13,
+    textAlign: 'center',
+    marginTop: 10,
+  },
   postShowButtonText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.6,
     textAlignVertical: 'center',
     textAlign: 'center',
   },
   rowItem: {
     flexDirection: 'row',
     borderRadius: 15,
-    backgroundColor: '#EDEDFF',
+    backgroundColor: 'rgba(255, 45, 107, 0.12)',
     paddingVertical: 5,
     marginRight: 10,
     paddingHorizontal: 10,
@@ -1482,7 +1901,7 @@ const styles = StyleSheet.create({
   },
   crossBtn: {
     marginLeft: 10,
-    tintColor: '#3333CC',
+    tintColor: redesignTheme.primary,
     width: 10,
     height: 10,
     resizeMode: 'contain',
@@ -1496,30 +1915,23 @@ const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: '#33415580',
+    backgroundColor: '#08080fcc',
   },
   modal: {
     borderTopStartRadius: 20,
     padding: 15,
     height: '30%',
     justifyContent: 'space-between',
-    backgroundColor: 'white',
+    backgroundColor: redesignTheme.card,
     borderTopEndRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 100,
   },
   calendarContainer: {
     width: '100%',
     paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 0.5,
-    borderColor: '#C5C5FF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: redesignTheme.border,
+    backgroundColor: redesignTheme.input,
     justifyContent: 'space-between',
     alignItems: 'center',
     flexDirection: 'row',
@@ -1527,9 +1939,8 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   dateText: {
-    fontFamily: 'OpenSans',
     alignSelf: 'center',
-    color: colors(false).text,
+    color: redesignTheme.foreground,
     fontSize: 16,
   },
   calendarModal: {
@@ -1538,15 +1949,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   errorText: {
-    fontFamily: 'OpenSans',
     alignSelf: 'flex-start',
-    color: 'red',
+    color: redesignTheme.primary,
     fontSize: 13,
     paddingTop: 2,
   },
   loadingContainer: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#ffffffdd',
+    backgroundColor: '#08080fdd',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1556,7 +1966,7 @@ const styles = StyleSheet.create({
     right: 20,
     width: 50,
     height: 50,
-    backgroundColor: '#ffffff',
+    backgroundColor: redesignTheme.card,
     zIndex: 2147483647,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1566,7 +1976,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     marginTop: 8,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: redesignTheme.input,
     borderRadius: 8,
   },
   rulesIconRow: {
@@ -1574,28 +1984,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   rulesIconText: {
-    fontFamily: 'OpenSans',
     fontSize: 14,
-    color: colors(false).text,
+    color: redesignTheme.foreground,
     flex: 1,
   },
   disabledInput: {
     opacity: 0.6,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: redesignTheme.input,
   },
   ticketLinkPromoText: {
-    fontFamily: 'OpenSans',
     fontSize: 16,
     fontWeight: '700',
-    color: 'red',
+    color: redesignTheme.primary,
     textAlign: 'center',
     marginTop: 24,
   },
   ticketLinkVerifyText: {
-    fontFamily: 'OpenSans',
     fontSize: 16,
     fontWeight: '700',
-    color: '#334155',
+    color: redesignTheme.foreground,
     textAlign: 'center',
     marginTop: 8,
     letterSpacing: 0.5,
@@ -1603,21 +2010,20 @@ const styles = StyleSheet.create({
   ticketLinkInput: {
     fontWeight: '400',
     width: '100%',
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 0.5,
-    borderColor: '#3333CC',
-    color: '#3333CC',
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: redesignTheme.border,
+    backgroundColor: redesignTheme.input,
+    color: redesignTheme.foreground,
     height: 50,
     fontSize: 16,
     marginTop: 12,
-    textAlign: 'center',
   },
   ticketLinkDisclaimer: {
-    fontFamily: 'OpenSans',
     fontSize: 14,
     fontWeight: '400',
-    color: '#334155',
+    color: redesignTheme.muted,
     textAlign: 'center',
     marginTop: 10,
   },
@@ -1629,18 +2035,19 @@ const styles = StyleSheet.create({
   },
   rosterInput: {
     flex: 1,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 0.5,
-    borderColor: '#C5C5FF',
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: redesignTheme.border,
+    backgroundColor: redesignTheme.input,
+    color: redesignTheme.foreground,
     height: 50,
     fontSize: 16,
     marginRight: 10,
   },
   rosterSaveButton: {
-    backgroundColor: '#3333CC',
-    borderRadius: 10,
+    backgroundColor: redesignTheme.primary,
+    borderRadius: 12,
     paddingHorizontal: 20,
     height: 50,
     justifyContent: 'center',
@@ -1650,6 +2057,234 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  centerView: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: '#08080fcc',
+    padding: 10,
+  },
+  cameraGalleryOption: {
+    borderRadius: 14,
+    backgroundColor: redesignTheme.card,
+    alignItems: 'center',
+  },
+  cameraButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: redesignTheme.primary,
+    marginVertical: 16,
+  },
+  divider: {
+    backgroundColor: redesignTheme.border,
+    height: 1,
+    width: '100%',
+  },
+  cancelCameraPopup: {
+    marginTop: 10,
+    marginBottom: 20,
+    borderRadius: 14,
+    backgroundColor: redesignTheme.card,
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  cancelCameraText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: redesignTheme.foreground,
+  },
+  previewScreen: {
+    flex: 1,
+    backgroundColor: redesignTheme.background,
+    paddingHorizontal: 16,
+  },
+  previewHeaderCopy: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 8,
+  },
+  previewStepLabel: {
+    color: redesignTheme.muted,
+    fontSize: 12,
+    marginTop: 2,
+    textAlign: 'center',
+  },
+  previewProgressTrack: {
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    overflow: 'hidden',
+    marginTop: 12,
+  },
+  previewProgressFill: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: redesignTheme.primary,
+  },
+  previewScroll: {
+    paddingTop: 16,
+    paddingBottom: 40,
+  },
+  previewIntro: {
+    color: redesignTheme.muted,
+    fontSize: 14,
+    marginBottom: 14,
+  },
+  previewCard: {
+    backgroundColor: redesignTheme.card,
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: redesignTheme.border,
+  },
+  previewImageWrap: {
+    width: '100%',
+    height: 180,
+    backgroundColor: redesignTheme.input,
+  },
+  previewImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  previewImagePlaceholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  previewCategoryBadge: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    backgroundColor: redesignTheme.primary,
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  previewCategoryText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+  },
+  previewCardBody: {
+    padding: 14,
+  },
+  previewEventTitle: {
+    color: redesignTheme.foreground,
+    fontSize: 24,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    marginBottom: 8,
+  },
+  previewLineupRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 8,
+  },
+  previewLineupChip: {
+    backgroundColor: redesignTheme.primary,
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginRight: 6,
+    marginBottom: 6,
+  },
+  previewLineupChipText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  previewMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+    flexWrap: 'wrap',
+  },
+  previewMetaText: {
+    color: redesignTheme.muted,
+    fontSize: 13,
+    marginLeft: 6,
+    flexShrink: 1,
+  },
+  previewTimeText: {
+    color: redesignTheme.accent,
+    fontSize: 14,
+    fontWeight: '800',
+    marginLeft: 8,
+  },
+  previewCountPill: {
+    marginLeft: 8,
+    backgroundColor: redesignTheme.input,
+    borderRadius: 10,
+    minWidth: 22,
+    height: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+  previewCountText: {
+    color: redesignTheme.foreground,
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  previewDescription: {
+    color: redesignTheme.muted,
+    fontSize: 14,
+    marginTop: 10,
+  },
+  visibilityCard: {
+    marginTop: 14,
+    backgroundColor: redesignTheme.card,
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: redesignTheme.border,
+  },
+  visibilityTitle: {
+    color: redesignTheme.muted,
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    marginBottom: 10,
+  },
+  visibilityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  visibilityText: {
+    color: redesignTheme.foreground,
+    fontSize: 14,
+    marginLeft: 8,
+  },
+  publishBtn: {
+    marginTop: 22,
+    backgroundColor: redesignTheme.primary,
+    borderRadius: 16,
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: redesignTheme.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.55,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  publishBtnText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '900',
+    letterSpacing: 0.8,
+    marginLeft: 8,
+  },
+  editPreviewText: {
+    color: redesignTheme.foreground,
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 14,
   },
 });
 // Customizable Area End

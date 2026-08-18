@@ -299,29 +299,16 @@ export default class AllEventScreen extends AllEventController {
               onPress={async () =>
                 await this.navigateToBandProfile(show.account_id)
               }
-              style={{ marginRight: 8 }}
+              style={{ flex: 1 }}
             >
-              <FastImage
-                style={styles.compactShowAvatar}
-                source={
-                  show.band_profile_image
-                    ? {
-                        uri: show.band_profile_image,
-                        priority: FastImage.priority.high,
-                      }
-                    : require('../../../mobile/assets/images/default_profile.png')
-                }
-                resizeMode={FastImage.resizeMode.cover}
-              />
+              <Text
+                style={styles.compactShowTitle}
+                numberOfLines={2}
+                testID="bandName"
+              >
+                {title !== '' ? title : bandDisplayName}
+              </Text>
             </TouchableOpacity>
-            <Text
-              style={styles.compactShowTitle}
-              numberOfLines={2}
-              testID="bandName"
-              onPress={() => this.navigateToBandProfile(show.account_id)}
-            >
-              {title !== '' ? title : bandDisplayName}
-            </Text>
             <TouchableOpacity
               testID="likeBtn"
               onPress={() => {

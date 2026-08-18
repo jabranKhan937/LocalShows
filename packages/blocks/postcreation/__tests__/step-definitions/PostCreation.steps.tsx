@@ -703,6 +703,8 @@ defineFeature(feature, test => {
       })
       when('I press the submit button', () =>{
         postCreationWrapper.findWhere(node => node.prop("testID") === "postShowBtn").simulate("press");
+        postCreationWrapper.update();
+        postCreationWrapper.findWhere(node => node.prop("testID") === "publishShowBtn").simulate("press");
       })
       then('I expect to submit event data information', () =>{
 

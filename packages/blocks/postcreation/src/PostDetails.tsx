@@ -7,7 +7,6 @@ import {
   StatusBar,
   View,
   Text,
-  SafeAreaView,
   StyleSheet,
   Image,
   TouchableWithoutFeedback,
@@ -19,10 +18,13 @@ import {
   TextInput,
   Dimensions,
 } from 'react-native';
-import { leftArrow } from '../../events/src/assets';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
-import { colors } from '../../utilities/src/Colors';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import moment from 'moment';
 import FastImage from '../../../components/src/SafeFastImage';
+import eventStyles from '../../events/src/AllEventStyle';
+import { colors } from '../../utilities/src/Colors';
 // Customizable Area End
 
 import PostCreationController from './PostCreationController';
@@ -44,6 +46,7 @@ export default class PostDetails extends PostCreationController {
       reportComment: '',
       reportError: '',
       showRulesMoreModal: false,
+      showRulesExpanded: true,
     };
   }
 
@@ -56,188 +59,386 @@ export default class PostDetails extends PostCreationController {
   ];
 
   // Customizable Area Start
-  renderHeader = () => {
+  isPicturePost = () => {
     const { eventDetail } = this.state;
-    // Check if it's a post/picture or a show
-    const isPost =
+    return (
       eventDetail?.type === 'post' ||
-      eventDetail?.attributes?.model_name === 'BxBlockPosts::Post';
-    const headerTitle = isPost
+      eventDetail?.attributes?.model_name === 'BxBlockPosts::Post'
+    );
+  };
+
+  getHeaderTitle = () => {
+    return this.isPicturePost()
       ? "Picture's information"
       : `Shows in ${this.state.selectedState || ''}`;
+  };
 
+  getItemName = (item: any) => {
+    if (!item) return '';
+    if (typeof item === 'string') return item;
+    return item.name || item.attributes?.name || item.first_name || '';
+  };
+
+  getGenreDisplay = () => {
+    const genres = this.state.selectedGenres || [];
+    const names = genres
+      .map((item: any) => this.getItemName(item))
+      .filter((name: string) => name);
+    if (names.length > 0) return names.join(' - ');
+    const types = this.state.selectedTypeOfShows || [];
+    return types
+      .map((item: any) => this.getItemName(item))
+      .filter((name: string) => name)
+      .join(' - ');
+  };
+
+  getImageUri = () => {
+    const raw = this.state.selectedImageData?.uri;
+    if (Array.isArray(raw)) return raw[0];
+    if (raw) return raw;
+    return this.state.eventDetail?.attributes?.profile_image || '';
+  };
+
+  getFullAddress = () => {
+    if (!this.state.address) return '';
+    return `${this.state.address}, ${this.state.selectedCity}, ${this.state.selectedState} ${this.state.zipCode}, US`;
+  };
+
+  isShowTonight = () => {
+    const date = this.state.eventDetail?.attributes?.date_of_the_show;
+    if (!date || date === '2999-12-31' || this.state.undefinedDateSelected) {
+      return false;
+    }
+    return moment.utc(date).isSame(moment(), 'day');
+  };
+
+  formatInfoCardDate = () => {
+    if (this.state.undefinedDateSelected) return 'TBD';
+    const iso = this.state.eventDetail?.attributes?.date_of_the_show;
+    if (iso === '2999-12-31') return 'TBD';
+    if (this.isShowTonight()) return 'Tonight';
+    if (iso) return moment.utc(iso).format('MMM D');
+    if (!this.state.dateOfShow) return '';
+    const parsed = moment(this.state.dateOfShow, ['MM-DD-YYYY', 'YYYY-MM-DD']);
+    return parsed.isValid() ? parsed.format('MMM D') : this.state.dateOfShow;
+  };
+
+  formatInfoCardTime = () => {
+    if (this.state.undefinedDateSelected) return 'TBD';
+    const iso = this.state.eventDetail?.attributes?.date_of_the_show;
+    if (iso === '2999-12-31') return 'TBD';
+    const time = this.state.time;
+    if (!time) return '';
+    const parsed = moment(time, ['HH[h]mm', 'HH:mm:ss', 'HH:mm', 'hh:mm A'], true);
+    if (parsed.isValid()) return parsed.format('h:mm A');
+    return this.changeTimeFormat(time);
+  };
+
+  getTicketPriceLabel = () => {
+    const attributes = this.state.eventDetail?.attributes || {};
+    const raw =
+      attributes.ticket_price ??
+      attributes.price ??
+      attributes.cost ??
+      attributes.ticket_cost;
+    if (raw === null || raw === undefined || raw === '') return '';
+    const numeric = Number(raw);
+    if (!Number.isNaN(numeric)) {
+      return `$${Number.isInteger(numeric) ? numeric : numeric.toFixed(2)}`;
+    }
+    const text = String(raw).trim();
+    if (!text) return '';
+    return text.startsWith('$') ? text : `$${text}`;
+  };
+
+  renderHeader = () => {
+    const liked = this.state.eventDetail?.attributes?.like_by_me;
     return (
-      <View style={styles.headerView}>
-        <TouchableOpacity
-          testID="backBtn"
-          onPress={() => this.props.navigation.goBack()}>
-          <Image source={leftArrow} style={styles.backButton} />
-        </TouchableOpacity>
-        <Text
-          testID="titleTxt"
-          style={styles.pageTitle}
-          numberOfLines={1}
-          ellipsizeMode="tail">
-          {headerTitle}
-        </Text>
-        <TouchableOpacity
-          testID="threeDotsBtn"
-          onPress={() => this.setState({ showMenu: !this.state.showMenu })}>
+      <View style={eventStyles.detailHeroTopBar} pointerEvents="box-none">
+        <SafeAreaView edges={['top']} pointerEvents="box-none">
+          <View style={eventStyles.detailHeroTopBarInner}>
+            <TouchableOpacity
+              testID="backBtn"
+              style={eventStyles.detailCircleBtn}
+              onPress={() => this.props.navigation.goBack()}
+              activeOpacity={0.8}
+            >
+              <Icon name="arrow-left" size={18} color="#FFFFFF" />
+            </TouchableOpacity>
+            <View style={eventStyles.detailHeaderRight}>
+              <TouchableOpacity
+                testID="likeBtn"
+                style={eventStyles.detailCircleBtn}
+                onPress={this.likeDislikeEventAPI}
+                activeOpacity={0.8}
+              >
+                <Icon
+                  name="heart"
+                  size={16}
+                  color={liked ? '#ff2d6b' : '#FFFFFF'}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                testID="threeDotsBtn"
+                style={[
+                  eventStyles.detailCircleBtn,
+                  eventStyles.detailCircleBtnGap,
+                ]}
+                onPress={() =>
+                  this.setState({ showMenu: !this.state.showMenu })
+                }
+                activeOpacity={0.8}
+              >
+                <Icon name="more-vertical" size={16} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </SafeAreaView>
+      </View>
+    );
+  };
+
+  renderHeroFade = () => {
+    return (
+      <View pointerEvents="none" style={eventStyles.detailHeroFadeWrap}>
+        <View
+          style={[
+            eventStyles.detailHeroFadeLayer,
+            { bottom: 110, height: 40, opacity: 0.12 },
+          ]}
+        />
+        <View
+          style={[
+            eventStyles.detailHeroFadeLayer,
+            { bottom: 72, height: 40, opacity: 0.28 },
+          ]}
+        />
+        <View
+          style={[
+            eventStyles.detailHeroFadeLayer,
+            { bottom: 36, height: 40, opacity: 0.5 },
+          ]}
+        />
+        <View
+          style={[
+            eventStyles.detailHeroFadeLayer,
+            { bottom: 0, height: 48, opacity: 0.78 },
+          ]}
+        />
+      </View>
+    );
+  };
+
+  renderEventImage = () => {
+    const imageUri = this.getImageUri();
+    const genre = this.getGenreDisplay();
+    const priceLabel = this.getTicketPriceLabel();
+    return (
+      <View
+        style={
+          this.state.showMenu ? { zIndex: 50, elevation: 50 } : undefined
+        }
+      >
+        <View style={eventStyles.detailHeroWrap}>
+          {imageUri ? (
+            <FastImage
+              source={{
+                uri: String(imageUri),
+                priority: FastImage.priority.high,
+              }}
+              style={eventStyles.detailHeroImage}
+              resizeMode={FastImage.resizeMode.cover}
+            />
+          ) : (
+            <View style={eventStyles.detailHeroPlaceholder}>
+              <Image
+                source={require('../../../mobile/assets/images/gallery.png')}
+                style={[styles.backButton, { tintColor: '#8880aa' }]}
+              />
+            </View>
+          )}
+          <View pointerEvents="none" style={eventStyles.detailHeroScrim} />
+          {this.renderHeroFade()}
+          {this.renderHeader()}
+          <View style={eventStyles.detailHeroMeta} pointerEvents="box-none">
+            {this.isShowTonight() ? (
+              <View style={eventStyles.detailHotBadge}>
+                <MaterialCommunityIcons name="fire" size={13} color="#FFFFFF" />
+                <Text style={eventStyles.detailHotBadgeText}>HOT TONIGHT</Text>
+              </View>
+            ) : null}
+            <Text
+              testID="titleTxt"
+              style={eventStyles.detailStateCaption}
+              numberOfLines={1}
+            >
+              {this.getHeaderTitle()}
+            </Text>
+            <Text style={eventStyles.detailHeroTitle} numberOfLines={4}>
+              {this.state.eventTitle || ''}
+            </Text>
+            <View style={eventStyles.detailHeroMetaRow}>
+              {genre ? (
+                <View style={eventStyles.detailGenrePill}>
+                  <Text style={eventStyles.detailGenrePillText} numberOfLines={1}>
+                    {genre}
+                  </Text>
+                </View>
+              ) : null}
+              {priceLabel ? (
+                <Text style={eventStyles.detailPriceText}>{priceLabel}</Text>
+              ) : null}
+            </View>
+          </View>
+        </View>
+        {this.renderMenuPopup()}
+      </View>
+    );
+  };
+
+  renderStatusBadges = () => {
+    const postponed =
+      this.state.eventDetail?.attributes?.postpone_show ||
+      this.state.undefinedDateSelected;
+    const canceled = this.state.eventDetail?.attributes?.is_canceled;
+    const soldOut = this.state.sold_out;
+    if (!postponed && !canceled && !soldOut) {
+      return null;
+    }
+    return (
+      <View style={[eventStyles.detailSection, eventStyles.detailBadgeRow]}>
+        {canceled ? (
+          <Text style={styles.canceledBadge}>Show Canceled</Text>
+        ) : null}
+        {postponed ? (
           <Image
-            source={require('../../../mobile/assets/images/3_dots.png')}
-            style={[styles.threeDots, { tintColor: '#000' }]}
+            source={require('../../../mobile/assets/images/postponed.png')}
+            style={eventStyles.detailStatusBadge}
           />
-        </TouchableOpacity>
+        ) : null}
+        {soldOut ? (
+          <Image
+            source={require('../../../mobile/assets/images/sold_out.png')}
+            style={eventStyles.detailSoldOutBadge}
+          />
+        ) : null}
       </View>
     );
   };
 
   renderLikes = () => {
     const { eventDetail } = this.state;
-    const likeIcon = eventDetail?.attributes?.like_by_me
-      ? require('../../../mobile/assets/images/favourite_filled.png')
-      : require('../../../mobile/assets/images/image_favorite.png');
+    const liked = eventDetail?.attributes?.like_by_me;
     const likesCount = eventDetail?.attributes?.likes_count ?? 0;
+    const commentsCount =
+      parseInt(eventDetail?.attributes?.comments_count, 10) || 0;
+    const sharesCount =
+      eventDetail?.attributes?.shares_count ??
+      eventDetail?.attributes?.share_count ??
+      eventDetail?.attributes?.reposts_count ??
+      0;
+    const addedInCalendar = eventDetail?.attributes?.added_in_calendar;
+    const iconColor = '#E8E4F5';
+
     return (
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>
-        <TouchableOpacity testID="likeBtn" onPress={this.likeDislikeEventAPI}>
-          <Image
-            source={likeIcon}
-            style={[styles.backButton, { tintColor: '#4949EE' }]}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity
-          testID="likeNavBtn"
-          onPress={() => {
-            if (eventDetail?.id && eventDetail?.type) {
-              this.handleLikeListScreenNav(eventDetail.id, eventDetail.type);
-            }
-          }}>
-          <Text style={[styles.text, { fontWeight: '700' }]}>
-            {` ${likesCount} people`}
-            <Text style={styles.text}> like this</Text>
-          </Text>
-        </TouchableOpacity>
+      <View style={eventStyles.detailSection}>
+        <View style={eventStyles.detailStatsBar}>
+          <View style={eventStyles.detailStatItem}>
+            <TouchableOpacity
+              onPress={this.likeDislikeEventAPI}
+              activeOpacity={0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+            >
+              <Icon
+                name="heart"
+                size={18}
+                color={liked ? '#ff2d6b' : iconColor}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              testID="likeNavBtn"
+              onPress={() => {
+                if (eventDetail?.id && eventDetail?.type) {
+                  this.handleLikeListScreenNav(eventDetail.id, eventDetail.type);
+                }
+              }}
+              activeOpacity={0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+            >
+              <Text style={eventStyles.detailStatCount}>{likesCount}</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={eventStyles.detailStatItem}>
+            <Icon name="message-circle" size={18} color={iconColor} />
+            <Text style={eventStyles.detailStatCount}>{commentsCount}</Text>
+          </View>
+          <View style={eventStyles.detailStatItem}>
+            <Icon name="repeat" size={18} color={iconColor} />
+            <Text style={eventStyles.detailStatCount}>{sharesCount}</Text>
+          </View>
+          <View style={eventStyles.detailStatItem}>
+            <Icon
+              name="calendar"
+              size={18}
+              color={addedInCalendar ? '#ff2d6b' : iconColor}
+            />
+          </View>
+        </View>
       </View>
     );
   };
 
   renderLocation = () => {
-    return (
-      <>
-        {this.state.location !== null && this.state.location !== '' && (
-          <View style={{ flexDirection: 'row', marginTop: 20 }}>
-            <View style={{ flexDirection: 'row', flex: 0.4 }}>
-              <Image
-                source={require('../../../mobile/assets/images/location_on.png')}
-                style={styles.backButton}
-              />
-              <Text style={[styles.text, { fontWeight: '700', marginLeft: 10 }]}>
-                Location
-              </Text>
-            </View>
-            <TouchableOpacity
-              testID="openMap"
-              style={{ flex: 0.6 }}
-              onPress={() => {
-                this.openGoogleMaps();
-              }}>
-              <Text style={[styles.text]}>
-                At <Text style={{ color: '#4949EE' }}>{this.state.location}</Text>
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </>
-    );
+    return this.renderVenueCard();
   };
 
   renderAddress = () => {
-    const fullAddress = `${this.state.address}, ${this.state.selectedCity}, ${this.state.selectedState} ${this.state.zipCode}, US`;
-    return (
-      <>
-        {this.state.address !== null && this.state.address !== '' && (
-          <View style={{ flexDirection: 'row', marginTop: 20 }}>
-            <View style={{ flexDirection: 'row', flex: 0.4 }}>
-              <Image
-                source={require('../../../mobile/assets/images/home.png')}
-                style={styles.backButton}
-              />
-              <Text style={[styles.text, { fontWeight: '700', marginLeft: 10 }]}>
-                Address
-              </Text>
-            </View>
-            <Text style={[styles.text, { flex: 0.6 }]}>{fullAddress}</Text>
-          </View>
-        )}
-      </>
-    );
+    const fullAddress = this.getFullAddress();
+    if (!this.state.address) return null;
+    return this.renderMetaRow('home', 'Address', fullAddress);
   };
 
   renderDate = () => {
-    console.log('here is date to show', this.state.dateOfShow);
-    return (
-      <>
-        <View style={{ flexDirection: 'row', marginTop: 20 }}>
-          <View style={{ flexDirection: 'row', flex: 0.4 }}>
-            <Image
-              source={require('../../../mobile/assets/images/image_calendar.png')}
-              style={[styles.backButton, { tintColor: '#4949EE' }]}
-            />
-            <Text style={[styles.text, { fontWeight: '700', marginLeft: 10 }]}>
-              Date
-            </Text>
-          </View>
-          <Text style={[styles.text, { flex: 0.6 }]}>
-            {this.state.dateOfShow}
-          </Text>
-        </View>
-      </>
-    );
+    return this.renderMetaRow('calendar', 'Date', this.state.dateOfShow);
   };
 
   renderEndDate = () => {
-    if (!this.state.endDate) {
-      return null;
-    }
-    return (
-      <View style={{ flexDirection: 'row', marginTop: 20 }}>
-        <View style={{ flexDirection: 'row', flex: 0.4 }}>
-          <Image
-            source={require('../../../mobile/assets/images/image_calendar.png')}
-            style={[styles.backButton, { tintColor: '#4949EE' }]}
-          />
-          <Text style={[styles.text, { fontWeight: '700', marginLeft: 10 }]}>
-            End Date
-          </Text>
-        </View>
-        <Text style={[styles.text, { flex: 0.6 }]}>{this.state.endDate}</Text>
-      </View>
-    );
+    if (!this.state.endDate) return null;
+    return this.renderMetaRow('calendar', 'End Date', this.state.endDate);
   };
 
   renderTime = () => {
+    const value =
+      this.state.time !== null && this.state.time !== ''
+        ? this.changeTimeFormat(this.state.time)
+        : 'To Be Determined';
+    return this.renderMetaRow('clock', 'Time', value);
+  };
+
+  renderMetaRow = (icon: string, label: string, value: string) => {
+    if (!value) return null;
     return (
-      <>
-        {
-          <View style={{ flexDirection: 'row', marginTop: 20 }}>
-            <View style={{ flexDirection: 'row', flex: 0.4 }}>
-              <Image
-                source={require('../../../mobile/assets/images/time.png')}
-                style={[styles.backButton, { tintColor: '#4949EE' }]}
-              />
-              <Text style={[styles.text, { fontWeight: '700', marginLeft: 10 }]}>
-                Time
-              </Text>
-            </View>
-            <Text style={[styles.text, { flex: 0.6 }]}>
-              {this.state.time !== null && this.state.time !== ''
-                ? this.changeTimeFormat(this.state.time)
-                : 'To Be Determined'}
-            </Text>
-          </View>
-        }
-      </>
+      <View style={eventStyles.detailWebsiteRow}>
+        <View
+          style={[
+            eventStyles.eventDetails,
+            { alignItems: 'flex-start', flex: 0, paddingTop: 2 },
+          ]}
+        >
+          <Icon name={icon} size={16} color="#ff2d6b" />
+          <Text style={[eventStyles.detailMetaLabel, { marginLeft: 8 }]}>
+            {label}
+          </Text>
+        </View>
+        <Text
+          style={[
+            eventStyles.detailMetaValue,
+            { color: '#f0eeff', flex: 1 },
+          ]}
+        >
+          {value}
+        </Text>
+      </View>
     );
   };
 
@@ -264,203 +465,268 @@ export default class PostDetails extends PostCreationController {
     const canNavigate = Boolean(creator.id);
 
     return (
-      <View style={{ flexDirection: 'row', marginTop: 20, alignItems: 'flex-start' }}>
-        <View style={{ flexDirection: 'row', flex: 0.4, alignItems: 'center' }}>
-          <View
-            style={{
-              width: 20,
-              height: 20,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            accessible={false}>
-            <Icon name="tag" size={18} color="#4949EE" />
-          </View>
-          <Text style={[styles.text, { fontWeight: '700', marginLeft: 10 }]}>
+      <View style={eventStyles.detailWebsiteRow}>
+        <View
+          style={[
+            eventStyles.eventDetails,
+            { alignItems: 'center', flex: 0 },
+          ]}
+        >
+          <Icon name="tag" size={16} color="#ff2d6b" />
+          <Text style={[eventStyles.detailMetaLabel, { marginLeft: 8 }]}>
             Category
           </Text>
         </View>
         {canNavigate ? (
           <TouchableOpacity
             testID="eventCreatorCategoryType"
-            style={{ flex: 0.6 }}
+            style={{ flex: 1 }}
             onPress={() =>
               this.openEventCreatorProfileForCategoryRow(
                 String(creator.id),
                 creator.account_type,
               )
             }
-            activeOpacity={0.7}>
-            <Text style={[styles.text, { color: '#4949EE' }]}>
-              {accountTypeLabel}
-            </Text>
+            activeOpacity={0.7}
+          >
+            <Text style={eventStyles.detailMetaValue}>{accountTypeLabel}</Text>
           </TouchableOpacity>
         ) : (
-          <Text style={[styles.text, { flex: 0.6 }]}>{accountTypeLabel}</Text>
+          <Text style={[eventStyles.detailMetaValue, { color: '#f0eeff' }]}>
+            {accountTypeLabel}
+          </Text>
         )}
       </View>
     );
   };
 
-  renderLineup = () => {
+  renderInfoCards = () => {
     return (
-      <>
-        {this.state.selectedLineUp !== null &&
-          this.state.selectedLineUp.length !== 0 && (
-            <View style={{ flexDirection: 'row', marginTop: 20 }}>
-              <View style={{ flexDirection: 'row', flex: 0.4 }}>
-                <Image
-                  source={require('../../../mobile/assets/images/headphones.png')}
-                  style={[styles.backButton, { tintColor: '#4949EE' }]}
-                />
-                <Text
-                  style={[styles.text, { fontWeight: '700', marginLeft: 10 }]}>
-                  Line up
+      <View style={eventStyles.detailInfoCardsRow}>
+        <View
+          style={[eventStyles.detailInfoCard, eventStyles.detailInfoCardFirst]}
+        >
+          <Icon name="calendar" size={16} color="#ff2d6b" />
+          <Text style={eventStyles.detailInfoCardLabel}>Date</Text>
+          <Text style={eventStyles.detailInfoCardValue} numberOfLines={1}>
+            {this.formatInfoCardDate() || '—'}
+          </Text>
+        </View>
+        <View style={eventStyles.detailInfoCard}>
+          <Icon name="clock" size={16} color="#ff2d6b" />
+          <Text style={eventStyles.detailInfoCardLabel}>Doors</Text>
+          <Text style={eventStyles.detailInfoCardValue} numberOfLines={1}>
+            {this.formatInfoCardTime() || '—'}
+          </Text>
+        </View>
+        <View
+          style={[eventStyles.detailInfoCard, eventStyles.detailInfoCardLast]}
+        >
+          <Icon name="map-pin" size={16} color="#ff2d6b" />
+          <Text style={eventStyles.detailInfoCardLabel}>City</Text>
+          <Text style={eventStyles.detailInfoCardValue} numberOfLines={1}>
+            {this.state.selectedCity || '—'}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
+  renderLineup = () => {
+    if (
+      this.state.selectedLineUp === null ||
+      this.state.selectedLineUp.length === 0
+    ) {
+      return null;
+    }
+    return (
+      <View>
+        <Text style={eventStyles.detailSectionLabel}>LINEUP</Text>
+        <FlatList
+          testID="lineupFlatlist"
+          data={this.state.selectedLineUp}
+          scrollEnabled={false}
+          renderItem={({ item, index }) => {
+            const isHeadliner = index === 0;
+            return (
+              <TouchableOpacity
+                testID="lineup"
+                style={eventStyles.detailLineupRow}
+                onPress={() => item.id !== '' && this.showProfile(item.id)}
+                activeOpacity={item.id === '' ? 1 : 0.8}
+              >
+                <View
+                  style={[
+                    eventStyles.detailLineupIndex,
+                    isHeadliner && eventStyles.detailLineupIndexActive,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      eventStyles.detailLineupIndexText,
+                      isHeadliner && eventStyles.detailLineupIndexTextActive,
+                    ]}
+                  >
+                    {index + 1}
+                  </Text>
+                </View>
+                <Text style={eventStyles.detailLineupName}>
+                  {item.first_name ? item.first_name.trim() : ''}
                 </Text>
-              </View>
-              <View style={{ flex: 0.6 }}>
-                <FlatList
-                  testID="lineupFlatlist"
-                  data={this.state.selectedLineUp}
-                  renderItem={({ item }) => {
-                    return (
-                      <TouchableOpacity
-                        testID="lineup"
-                        onPress={() =>
-                          item.id !== '' && this.showProfile(item.id)
-                        }
-                        activeOpacity={item.id === '' ? 1 : 0}>
-                        <Text
-                          style={[
-                            styles.text,
-                            { color: item.id !== '' ? '#4949EE' : '#334155' },
-                          ]}>
-                          {item.first_name.trim()}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  }}
-                />
-              </View>
-            </View>
-          )}
-      </>
+              </TouchableOpacity>
+            );
+          }}
+        />
+      </View>
     );
   };
 
   renderShowType = () => {
+    if (
+      this.state.selectedTypeOfShows === null ||
+      this.state.selectedTypeOfShows.length === 0
+    ) {
+      return null;
+    }
     return (
-      <>
-        {this.state.selectedTypeOfShows !== null &&
-          this.state.selectedTypeOfShows.length !== 0 && (
-            <View style={{ flexDirection: 'row', marginTop: 20 }}>
-              <View style={{ flexDirection: 'row', flex: 0.4 }}>
-                <Image
-                  source={require('../../../mobile/assets/images/music.png')}
-                  style={[styles.backButton, { tintColor: '#4949EE' }]}
-                />
+      <View style={eventStyles.detailWebsiteRow}>
+        <View
+          style={[
+            eventStyles.eventDetails,
+            { alignItems: 'flex-start', flex: 0, paddingTop: 2 },
+          ]}
+        >
+          <Icon name="music" size={16} color="#ff2d6b" />
+          <Text style={[eventStyles.detailMetaLabel, { marginLeft: 8 }]}>
+            Show type
+          </Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <FlatList
+            testID="typeOfShowFlatlist"
+            numColumns={20}
+            columnWrapperStyle={{ flexWrap: 'wrap' }}
+            data={this.state.selectedTypeOfShows}
+            contentContainerStyle={styles.showTypeFlatlist}
+            keyExtractor={(item: any) => item.id}
+            renderItem={({ item, index }) => {
+              const name = this.getItemName(item);
+              return (
                 <Text
-                  style={[styles.text, { fontWeight: '700', marginLeft: 10 }]}>
-                  Show type
+                  style={[eventStyles.detailMetaValue, { color: '#f0eeff' }]}
+                >
+                  {index === this.state.selectedTypeOfShows.length - 1
+                    ? `${name}`
+                    : `${name}, `}
                 </Text>
-              </View>
-              <View style={{ flex: 0.6 }}>
-                <FlatList
-                  testID="typeOfShowFlatlist"
-                  numColumns={20}
-                  columnWrapperStyle={{ flexWrap: 'wrap' }}
-                  data={this.state.selectedTypeOfShows}
-                  contentContainerStyle={styles.showTypeFlatlist}
-                  keyExtractor={(item: any) => item.id}
-                  renderItem={({ item, index }) => {
-                    return (
-                      <>
-                        <Text style={[styles.text]}>
-                          {index === this.state.selectedTypeOfShows.length - 1
-                            ? `${item.name}`
-                            : `${item.name}, `}
-                        </Text>
-                      </>
-                    );
-                  }}
-                />
-              </View>
-            </View>
-          )}
-      </>
+              );
+            }}
+          />
+        </View>
+      </View>
     );
   };
 
   renderGenre = () => {
+    if (
+      this.state.selectedGenres === null ||
+      this.state.selectedGenres.length === 0
+    ) {
+      return null;
+    }
     return (
-      <>
-        {this.state.selectedGenres !== null &&
-          this.state.selectedGenres.length !== 0 && (
-            <View style={{ flexDirection: 'row', marginTop: 20 }}>
-              <View style={{ flexDirection: 'row', flex: 0.4 }}>
-                <Image
-                  source={require('../../../mobile/assets/images/music.png')}
-                  style={[styles.backButton, { tintColor: '#4949EE' }]}
-                />
+      <View style={eventStyles.detailWebsiteRow}>
+        <View
+          style={[
+            eventStyles.eventDetails,
+            { alignItems: 'flex-start', flex: 0, paddingTop: 2 },
+          ]}
+        >
+          <Icon name="music" size={16} color="#ff2d6b" />
+          <Text style={[eventStyles.detailMetaLabel, { marginLeft: 8 }]}>
+            Genre
+          </Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <FlatList
+            testID="genreFlatlist"
+            numColumns={20}
+            columnWrapperStyle={{ flexWrap: 'wrap' }}
+            data={this.state.selectedGenres}
+            contentContainerStyle={styles.showTypeFlatlist}
+            keyExtractor={(item: any) => item.id}
+            renderItem={({ item, index }) => {
+              const name = this.getItemName(item);
+              return (
                 <Text
-                  style={[styles.text, { fontWeight: '700', marginLeft: 10 }]}>
-                  Genre
+                  style={[eventStyles.detailMetaValue, { color: '#f0eeff' }]}
+                >
+                  {index === this.state.selectedGenres.length - 1
+                    ? `${name}`
+                    : `${name}, `}
                 </Text>
-              </View>
-              <View style={{ flex: 0.6 }}>
-                <FlatList
-                  testID="genreFlatlist"
-                  numColumns={20}
-                  columnWrapperStyle={{ flexWrap: 'wrap' }}
-                  data={this.state.selectedGenres}
-                  contentContainerStyle={styles.showTypeFlatlist}
-                  keyExtractor={(item: any) => item.id}
-                  renderItem={({ item, index }) => {
-                    return (
-                      <>
-                        <Text style={[styles.text]}>
-                          {index === this.state.selectedGenres.length - 1
-                            ? `${item.name}`
-                            : `${item.name}, `}
-                        </Text>
-                      </>
-                    );
-                  }}
-                />
-              </View>
-            </View>
-          )}
-      </>
+              );
+            }}
+          />
+        </View>
+      </View>
     );
   };
 
   renderDescription = () => {
+    if (!this.state.description) return null;
     return (
-      <>
-        {this.state.description !== null && this.state.description !== '' && (
-          <View style={{ marginTop: 20 }}>
-            <Text style={[styles.text, { fontWeight: '700', marginBottom: 5 }]}>
-              Description
-            </Text>
-            <Text style={[styles.text, { lineHeight: 22 }]}>
-              {this.state.description}
-            </Text>
-          </View>
-        )}
-      </>
+      <View style={{ marginTop: 8, marginBottom: 8 }}>
+        <Text style={eventStyles.detailSectionLabel}>ABOUT</Text>
+        <Text style={eventStyles.detailAboutText}>{this.state.description}</Text>
+      </View>
     );
   };
 
-  renderRulesAndRegulations = () => {
-    // Check both state and eventDetail.attributes as fallback
+  renderVenueCard = () => {
+    if (!this.state.location && !this.state.address) return null;
+    const fullAddress = this.getFullAddress();
+    return (
+      <View>
+        <Text style={eventStyles.detailSectionLabel}>VENUE</Text>
+        <TouchableOpacity
+          testID="openMap"
+          style={eventStyles.detailVenueCard}
+          onPress={() => this.openGoogleMaps()}
+          activeOpacity={0.8}
+        >
+          <View style={eventStyles.detailVenueIconWrap}>
+            <MaterialCommunityIcons
+              name="office-building"
+              size={22}
+              color="#f0eeff"
+            />
+          </View>
+          <View style={eventStyles.detailVenueTextWrap}>
+            <Text style={eventStyles.detailVenueName} numberOfLines={1}>
+              {this.state.location || 'Venue'}
+            </Text>
+            {fullAddress ? (
+              <Text style={eventStyles.detailVenueAddress}>{fullAddress}</Text>
+            ) : null}
+          </View>
+          <Icon name="external-link" size={16} color="#8880aa" />
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  getPostRules = () => {
     let rulesAndRegulationsIcons =
       this.state.rulesAndRegulationsIcons ||
       this.state.eventDetail?.attributes?.rules_and_regulations_icons ||
       [];
 
-    // Handle case where it might be a single object or string
     if (!Array.isArray(rulesAndRegulationsIcons)) {
-      if (rulesAndRegulationsIcons && typeof rulesAndRegulationsIcons === 'object') {
+      if (
+        rulesAndRegulationsIcons &&
+        typeof rulesAndRegulationsIcons === 'object'
+      ) {
         rulesAndRegulationsIcons = [rulesAndRegulationsIcons];
       } else if (typeof rulesAndRegulationsIcons === 'string') {
         rulesAndRegulationsIcons = [{ title: rulesAndRegulationsIcons }];
@@ -469,67 +735,117 @@ export default class PostDetails extends PostCreationController {
       }
     }
 
-    // Normalize post rules to { title }[]
-    const postRules = rulesAndRegulationsIcons.map((item: any) => {
-      let title = '';
-      if (typeof item === 'string') {
-        title = item;
-      } else if (item && typeof item === 'object') {
-        title = item.title || item.name || item.text || '';
-      }
-      return { ...(typeof item === 'object' ? item : {}), title };
-    }).filter((item: any) => item.title);
+    return rulesAndRegulationsIcons
+      .map((item: any) => {
+        let title = '';
+        if (typeof item === 'string') {
+          title = item;
+        } else if (item && typeof item === 'object') {
+          title = item.title || item.name || item.text || '';
+        }
+        return { ...(typeof item === 'object' ? item : {}), title };
+      })
+      .filter((item: any) => item.title);
+  };
 
-    if (!postRules || postRules.length === 0) {
-      return null;
-    }
-
-    // Official titles from API (compare by trimmed lowercase)
+  splitKnownAndOtherRules = (postRules: any[]) => {
     const officialList = this.state.officialRulesAndRegulationsIconsList || [];
     const officialTitlesSet = new Set(
       officialList.map((i: any) => (i.title || '').trim().toLowerCase()),
     );
-
     const knownRules: any[] = [];
     const otherRules: any[] = [];
     postRules.forEach((item: any) => {
       const titleNorm = (item.title || '').trim().toLowerCase();
-      // If official list not loaded yet, treat all as known (show inline)
       if (officialTitlesSet.size === 0 || officialTitlesSet.has(titleNorm)) {
         knownRules.push(item);
       } else {
         otherRules.push(item);
       }
     });
+    return { knownRules, otherRules };
+  };
+
+  renderRulesAndRegulations = () => {
+    const postRules = this.getPostRules();
+    const expanded = (this.state as any).showRulesExpanded;
+    const { knownRules, otherRules } =
+      postRules.length > 0
+        ? this.splitKnownAndOtherRules(postRules)
+        : { knownRules: [], otherRules: [] };
+    const hasRules = knownRules.length > 0 || otherRules.length > 0;
 
     return (
-      <View style={{ marginTop: 20 }}>
-        <View style={{ flexDirection: 'row', flex: 0.4, marginBottom: 10 }}>
-          <Text style={[styles.text, { fontWeight: '700' }]}>
-            Rules and Regulations
+      <View style={{ marginTop: 8 }}>
+        <TouchableOpacity
+          style={[
+            eventStyles.detailRulesHeader,
+            expanded ? eventStyles.detailRulesHeaderOpen : null,
+          ]}
+          onPress={() =>
+            this.setState({
+              showRulesExpanded: !expanded,
+            } as any)
+          }
+          activeOpacity={0.8}
+        >
+          <Text style={eventStyles.detailRulesHeaderText}>
+            Venue Rules & Regulations
           </Text>
-        </View>
-        <View style={{ marginTop: 5 }}>
-          {knownRules.map((item: any, index: number) => (
-            <React.Fragment key={item.id?.toString() || item.title || index.toString()}>
-              <View style={{ marginBottom: 8 }}>
-                <Text style={[styles.text, { lineHeight: 22 }]}>{item.title}</Text>
-              </View>
-            </React.Fragment>
-          ))}
-          {otherRules.length > 0 && (
-            <>
-              <TouchableOpacity
-                testID="showMoreRulesBtn"
-                onPress={() => this.setState({ showRulesMoreModal: true })}
-                style={{ marginTop: 4, marginBottom: 8 }}>
-                <Text style={[styles.text, { color: '#4949EE', fontWeight: '600' }]}>
-                  More info
-                </Text>
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
+          <Icon
+            name={expanded ? 'chevron-up' : 'chevron-down'}
+            size={18}
+            color="#f0eeff"
+          />
+        </TouchableOpacity>
+        {expanded ? (
+          <View style={eventStyles.detailRulesBody}>
+            {hasRules ? (
+              <>
+                {knownRules.map((item: any, index: number) => (
+                  <View
+                    key={item.id?.toString() || item.title || index.toString()}
+                    style={eventStyles.detailRuleRow}
+                  >
+                    <Icon
+                      name="check-circle"
+                      size={16}
+                      color="#ff2d6b"
+                      style={eventStyles.detailRuleIcon}
+                    />
+                    <Text style={eventStyles.detailRuleTitle}>{item.title}</Text>
+                  </View>
+                ))}
+                {otherRules.length > 0 && (
+                  <TouchableOpacity
+                    testID="showMoreRulesBtn"
+                    onPress={() => this.setState({ showRulesMoreModal: true })}
+                    style={{ marginTop: 8 }}
+                  >
+                    <Text
+                      style={[
+                        eventStyles.detailRuleTitle,
+                        { color: '#ff2d6b', fontWeight: '700' },
+                      ]}
+                    >
+                      More info
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </>
+            ) : (
+              <Text style={[eventStyles.detailRuleText, { marginTop: 8 }]}>
+                No rules specified.
+              </Text>
+            )}
+          </View>
+        ) : otherRules.length > 0 ? (
+          <TouchableOpacity
+            testID="showMoreRulesBtn"
+            onPress={() => this.setState({ showRulesMoreModal: true })}
+            style={{ height: 0, overflow: 'hidden' }}
+          />
+        ) : null}
       </View>
     );
   };
@@ -540,27 +856,8 @@ export default class PostDetails extends PostCreationController {
 
   renderRulesMoreModal = () => {
     const showRulesMoreModal = this.state.showRulesMoreModal;
-    let otherRules: any[] = [];
-    const rulesAndRegulationsIcons =
-      this.state.rulesAndRegulationsIcons ||
-      this.state.eventDetail?.attributes?.rules_and_regulations_icons ||
-      [];
-    let list: any[] = Array.isArray(rulesAndRegulationsIcons)
-      ? rulesAndRegulationsIcons
-      : rulesAndRegulationsIcons
-        ? [rulesAndRegulationsIcons]
-        : [];
-    const postRules = list.map((item: any) => {
-      const title = typeof item === 'string' ? item : (item?.title || item?.name || item?.text || '');
-      return { ...(typeof item === 'object' ? item : {}), title };
-    }).filter((item: any) => item.title);
-    const officialList = this.state.officialRulesAndRegulationsIconsList || [];
-    const officialTitlesSet = new Set(
-      officialList.map((i: any) => (i.title || '').trim().toLowerCase()),
-    );
-    otherRules = postRules.filter(
-      (item: any) => !officialTitlesSet.has((item.title || '').trim().toLowerCase()),
-    );
+    const postRules = this.getPostRules();
+    const { otherRules } = this.splitKnownAndOtherRules(postRules);
 
     if (otherRules.length === 0) {
       return null;
@@ -576,7 +873,7 @@ export default class PostDetails extends PostCreationController {
         visible={showRulesMoreModal}
         onRequestClose={this.closeRulesMoreModal}
       >
-        <View style={[styles.centeredView, { backgroundColor: '#33415580' }]}>
+        <View style={[styles.centeredView, { backgroundColor: '#08080fcc' }]}>
           <TouchableWithoutFeedback onPress={this.closeRulesMoreModal}>
             <View style={StyleSheet.absoluteFill} />
           </TouchableWithoutFeedback>
@@ -593,10 +890,10 @@ export default class PostDetails extends PostCreationController {
                 testID="closeRulesMoreModal"
                 onPress={this.closeRulesMoreModal}
               >
-                <Svg width={20} height={20} viewBox="0 0 14 14" fill="#0F172A">
+                <Svg width={20} height={20} viewBox="0 0 14 14" fill="#f0eeff">
                   <Path
                     d="M13.3.71a.996.996 0 00-1.41 0L7 5.59 2.11.7A.996.996 0 10.7 2.11L5.59 7 .7 11.89a.996.996 0 101.41 1.41L7 8.41l4.89 4.89a.996.996 0 101.41-1.41L8.41 7l4.89-4.89c.38-.38.38-1.02 0-1.4z"
-                    fill="#0F172A"
+                    fill="#f0eeff"
                   />
                 </Svg>
               </TouchableOpacity>
@@ -609,11 +906,11 @@ export default class PostDetails extends PostCreationController {
               bounces={true}
             >
               {otherRules.map((item: any, index: number) => (
-                <React.Fragment key={item.id?.toString() || index}>
-                  <View style={{ marginBottom: 12 }}>
-                    <Text style={[styles.text, { lineHeight: 22 }]}>{item.title}</Text>
-                  </View>
-                </React.Fragment>
+                <View key={item.id?.toString() || index} style={{ marginBottom: 12 }}>
+                  <Text style={[styles.text, { lineHeight: 22 }]}>
+                    {item.title}
+                  </Text>
+                </View>
               ))}
             </ScrollView>
           </View>
@@ -649,7 +946,6 @@ export default class PostDetails extends PostCreationController {
         await Linking.openURL(urlToOpen);
       } else {
         console.log(`Don't know how to open this URL: ${urlToOpen}`);
-        // Fallback: try opening it anyway as some schemes might not return true for canOpenURL on Android
         await Linking.openURL(urlToOpen);
       }
     } catch (error) {
@@ -658,7 +954,6 @@ export default class PostDetails extends PostCreationController {
   };
 
   handleReportIssue = () => {
-    // Close the disclaimer modal first, then show the report modal
     (this as any).setState({ showDisclaimer: false, showReportModal: true });
   };
 
@@ -689,24 +984,20 @@ export default class PostDetails extends PostCreationController {
       return;
     }
 
-    // Prepare report payload
     const reportPayload = {
       event_id: this.state.eventId,
       reason: reportReason,
       comment: reportComment || '',
     };
 
-    // Construct the API endpoint
     const endpoint = `/reports`;
     const baseURL = 'https://api.localshows.com';
     const fullURL = `${baseURL}${endpoint}`;
 
-    // Log URL and payload
     console.log('=== Report Show API Call ===');
     console.log('URL:', fullURL);
     console.log('Payload:', JSON.stringify(reportPayload, null, 2));
 
-    // Make API call
     try {
       const authToken = await getStorageData('authToken');
 
@@ -743,7 +1034,6 @@ export default class PostDetails extends PostCreationController {
 
       runEngine.sendMessage(requestMessage.id, requestMessage);
 
-      // Reset and close
       this.closeReportModal();
     } catch (error) {
       console.error('Error submitting report:', error);
@@ -752,7 +1042,6 @@ export default class PostDetails extends PostCreationController {
       });
     }
   };
-
 
   renderReportModal = () => {
     const {
@@ -767,24 +1056,27 @@ export default class PostDetails extends PostCreationController {
         transparent
         animationType="slide"
         visible={showReportModal}
-        onRequestClose={this.closeReportModal}>
+        onRequestClose={this.closeReportModal}
+      >
         <TouchableWithoutFeedback onPress={this.closeReportModal}>
-          <View style={[styles.centeredView, { backgroundColor: '#33415580' }]}>
+          <View style={[styles.centeredView, { backgroundColor: '#08080fcc' }]}>
             <TouchableWithoutFeedback>
               <View style={[styles.modalView, styles.reportModalContent]}>
                 <View style={styles.reportHeader}>
                   <Text style={styles.reportTitle}>{'Report Show'}</Text>
                   <TouchableOpacity
                     testID="closeReportModal"
-                    onPress={this.closeReportModal}>
+                    onPress={this.closeReportModal}
+                  >
                     <Svg
                       width={20}
                       height={20}
                       viewBox="0 0 14 14"
-                      fill="#0F172A">
+                      fill="#f0eeff"
+                    >
                       <Path
                         d="M13.3.71a.996.996 0 00-1.41 0L7 5.59 2.11.7A.996.996 0 10.7 2.11L5.59 7 .7 11.89a.996.996 0 101.41 1.41L7 8.41l4.89 4.89a.996.996 0 101.41-1.41L8.41 7l4.89-4.89c.38-.38.38-1.02 0-1.4z"
-                        fill="#0F172A"
+                        fill="#f0eeff"
                       />
                     </Svg>
                   </TouchableOpacity>
@@ -795,8 +1087,9 @@ export default class PostDetails extends PostCreationController {
                 <ScrollView
                   style={styles.reportReasonsContainer}
                   contentContainerStyle={{ paddingBottom: 8 }}
-                  showsVerticalScrollIndicator={false}>
-                  {this.reportReasons.map((reason) => {
+                  showsVerticalScrollIndicator={false}
+                >
+                  {this.reportReasons.map(reason => {
                     const isSelected = reportReason === reason;
                     return (
                       <TouchableOpacity
@@ -805,21 +1098,22 @@ export default class PostDetails extends PostCreationController {
                           styles.reportReasonButton,
                           isSelected && styles.reportReasonButtonSelected,
                         ]}
-                        onPress={() => this.selectReportReason(reason)}>
+                        onPress={() => this.selectReportReason(reason)}
+                      >
                         <View
                           style={[
                             styles.reportRadioOuter,
                             isSelected && styles.reportRadioOuterSelected,
-                          ]}>
-                          {isSelected && (
-                            <View style={styles.reportRadioInner} />
-                          )}
+                          ]}
+                        >
+                          {isSelected && <View style={styles.reportRadioInner} />}
                         </View>
                         <Text
                           style={[
                             styles.reportReasonText,
                             isSelected && styles.reportReasonTextSelected,
-                          ]}>
+                          ]}
+                        >
                           {reason}
                         </Text>
                       </TouchableOpacity>
@@ -836,7 +1130,7 @@ export default class PostDetails extends PostCreationController {
                   testID="reportCommentInput"
                   style={styles.reportCommentInput}
                   placeholder={'Add any additional information...'}
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor="#8880aa"
                   multiline
                   numberOfLines={4}
                   value={reportComment}
@@ -846,13 +1140,15 @@ export default class PostDetails extends PostCreationController {
                   <TouchableOpacity
                     testID="cancelReport"
                     style={[styles.reportButton, styles.reportCancelButton]}
-                    onPress={this.closeReportModal}>
+                    onPress={this.closeReportModal}
+                  >
                     <Text style={styles.reportCancelText}>{'Cancel'}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     testID="submitReport"
                     style={[styles.reportButton, styles.reportSubmitButton]}
-                    onPress={this.submitReport}>
+                    onPress={this.submitReport}
+                  >
                     <Text style={styles.reportSubmitText}>
                       {'Submit Report'}
                     </Text>
@@ -872,14 +1168,16 @@ export default class PostDetails extends PostCreationController {
         animationType="slide"
         transparent={true}
         visible={this.state.showDisclaimer}
-        onRequestClose={() => this.setState({ showDisclaimer: false })}>
+        onRequestClose={() => this.setState({ showDisclaimer: false })}
+      >
         <View style={styles.modalParentView}>
           <View style={styles.modalContainerView}>
             <TouchableOpacity
               testID="closeDisclaimerBtn"
               style={styles.disablePopupIconContainer}
-              onPress={() => this.setState({ showDisclaimer: false })}>
-              <Icon name="x" color="#0F172A" size={25} />
+              onPress={() => this.setState({ showDisclaimer: false })}
+            >
+              <Icon name="x" color="#f0eeff" size={25} />
             </TouchableOpacity>
             <Text style={styles.txtCancelShowHeading}>Disclaimer</Text>
             <View>
@@ -891,9 +1189,14 @@ export default class PostDetails extends PostCreationController {
                 illegal content or violates our community guidelines, please{' '}
                 <Text
                   testID="reportItLink"
-                  style={{ fontWeight: 'bold', textDecorationLine: 'underline', color: '#3333CC' }}
+                  style={{
+                    fontWeight: 'bold',
+                    textDecorationLine: 'underline',
+                    color: '#ff2d6b',
+                  }}
                   onPress={this.handleReportIssue}
-                  suppressHighlighting={false}>
+                  suppressHighlighting={false}
+                >
                   report it
                 </Text>{' '}
                 immediately.
@@ -907,7 +1210,8 @@ export default class PostDetails extends PostCreationController {
                 flexDirection: 'row',
                 justifyContent: 'space-between',
                 marginTop: 20,
-              }}>
+              }}
+            >
               <TouchableOpacity
                 testID="cancelDisclaimerBtn"
                 style={[
@@ -915,7 +1219,8 @@ export default class PostDetails extends PostCreationController {
                   styles.keepButtonContainer,
                   { width: '45%' },
                 ]}
-                onPress={() => this.setState({ showDisclaimer: false })}>
+                onPress={() => this.setState({ showDisclaimer: false })}
+              >
                 <Text style={[styles.textCancelButton, styles.textKeepButton]}>
                   Cancel
                 </Text>
@@ -923,7 +1228,8 @@ export default class PostDetails extends PostCreationController {
               <TouchableOpacity
                 testID="confirmDisclaimerBtn"
                 style={[styles.cancelShowButtonContainer, { width: '45%' }]}
-                onPress={this.handleOpenLink}>
+                onPress={this.handleOpenLink}
+              >
                 <Text style={styles.textCancelButton}>Continue</Text>
               </TouchableOpacity>
             </View>
@@ -932,48 +1238,48 @@ export default class PostDetails extends PostCreationController {
       </Modal>
     );
   };
-  
+
   renderMenuPopup = () => {
-    const isPost =
-      this.state.eventDetail?.type === 'post' ||
-      this.state.eventDetail?.attributes?.model_name === 'BxBlockPosts::Post';
+    const isPost = this.isPicturePost();
 
     return (
       <>
         {this.state.showMenu && (
-          <View style={styles.menuContainer}>
+          <View style={[eventStyles.detailMenuContainer, styles.menuContainer]}>
             {isPost ? (
-              // Post/Picture menu options
               <>
                 <TouchableOpacity
                   testID="editPost"
-                  style={styles.menuButton}
+                  style={eventStyles.menuButton}
                   onPress={() => {
                     this.setState({ showMenu: false }, () => {
                       this.props.navigation.navigate('PhotoLibrary', {
                         eventId: this.state.eventId,
                       });
                     });
-                  }}>
-                  <Text style={styles.menuButtonText}>
+                  }}
+                >
+                  <Text style={eventStyles.detailMenuButtonText}>
                     {'Edit the picture'}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   testID="deletePost"
-                  style={[styles.menuButton, { marginTop: 5 }]}
+                  style={[eventStyles.menuButton, { marginTop: 5 }]}
                   onPress={() => {
                     this.setState({ cancelPopup: true, showMenu: false });
-                  }}>
-                  <Text style={styles.menuButtonText}>{'Delete picture'}</Text>
+                  }}
+                >
+                  <Text style={eventStyles.detailMenuButtonText}>
+                    {'Delete picture'}
+                  </Text>
                 </TouchableOpacity>
               </>
             ) : (
-              // Show menu options
               <>
                 <TouchableOpacity
                   testID="editShow"
-                  style={styles.menuButton}
+                  style={eventStyles.menuButton}
                   onPress={() => {
                     this.setState({ showMenu: false }, () => {
                       this.props.navigation.navigate('PostCreation', {
@@ -981,12 +1287,15 @@ export default class PostDetails extends PostCreationController {
                         from: 'show',
                       });
                     });
-                  }}>
-                  <Text style={styles.menuButtonText}>{'Edit the show'}</Text>
+                  }}
+                >
+                  <Text style={eventStyles.detailMenuButtonText}>
+                    {'Edit the show'}
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   testID="postponeShow"
-                  style={[styles.menuButton, { marginTop: 5 }]}
+                  style={[eventStyles.menuButton, { marginTop: 5 }]}
                   onPress={() => {
                     this.setState({ showMenu: false }, () => {
                       this.props.navigation.navigate('PostPostpone', {
@@ -995,8 +1304,9 @@ export default class PostDetails extends PostCreationController {
                         from: 'show',
                       });
                     });
-                  }}>
-                  <Text style={styles.menuButtonText}>
+                  }}
+                >
+                  <Text style={eventStyles.detailMenuButtonText}>
                     {'Postpone the show'}
                   </Text>
                 </TouchableOpacity>
@@ -1004,7 +1314,7 @@ export default class PostDetails extends PostCreationController {
                   testID="cancelShow"
                   disabled={this.state.eventDetail?.attributes?.is_canceled}
                   style={[
-                    styles.menuButton,
+                    eventStyles.menuButton,
                     {
                       marginTop: 5,
                       opacity: this.state.eventDetail?.attributes?.is_canceled
@@ -1014,19 +1324,23 @@ export default class PostDetails extends PostCreationController {
                   ]}
                   onPress={() => {
                     this.setState({ cancelPopup: true, showMenu: false });
-                  }}>
-                  <Text style={styles.menuButtonText}>{'Cancel show'}</Text>
+                  }}
+                >
+                  <Text style={eventStyles.detailMenuButtonText}>
+                    {'Cancel show'}
+                  </Text>
                 </TouchableOpacity>
                 {!this.state.sold_out && (
                   <TouchableOpacity
                     testID="markAsSoldOut"
-                    style={[styles.menuButton, { marginTop: 5 }]}
+                    style={[eventStyles.menuButton, { marginTop: 5 }]}
                     onPress={() => {
                       this.setState({ showMenu: false }, () => {
                         this.handleMarkAsSoldOut(this.state.eventId);
                       });
-                    }}>
-                    <Text style={styles.menuButtonText}>
+                    }}
+                  >
+                    <Text style={eventStyles.detailMenuButtonText}>
                       {'Mark as sold out'}
                     </Text>
                   </TouchableOpacity>
@@ -1040,27 +1354,89 @@ export default class PostDetails extends PostCreationController {
   };
 
   renderBuyTicketButton = () => {
-    console.log(
-      '--this.state.eventDetail?.attributes--',
-      this.state.eventDetail?.attributes,
-    );
     const isVerified = this.state.eventDetail?.attributes?.verified;
     const ticketLink = this.state.eventDetail?.attributes?.ticket_link;
-
-    console.log('--ticketLink--', ticketLink);
-
     if (!ticketLink || !isVerified) return null;
+    const priceLabel = this.getTicketPriceLabel();
+    const ticketLabel = priceLabel
+      ? `GET TICKETS — ${priceLabel}`
+      : 'GET TICKETS';
 
     return (
-      <View style={{}}>
-        <TouchableOpacity
-          testID="buyTicketBtn"
-          style={[styles.button, { backgroundColor: '#4949EE', marginTop: 15 }]}
-          onPress={() => this.handleBuyTicket(ticketLink)}>
-          <Text style={{ fontWeight: '700', fontSize: 16, color: '#FFF' }}>
-            Buy Ticket
-          </Text>
-        </TouchableOpacity>
+      <TouchableOpacity
+        testID="buyTicketBtn"
+        style={eventStyles.detailPrimaryBtn}
+        onPress={() => this.handleBuyTicket(ticketLink)}
+        activeOpacity={0.85}
+      >
+        <MaterialCommunityIcons
+          name="ticket-confirmation-outline"
+          size={18}
+          color="#FFFFFF"
+        />
+        <Text style={eventStyles.detailPrimaryBtnText}>{ticketLabel}</Text>
+      </TouchableOpacity>
+    );
+  };
+
+  renderDirectionsButton = () => {
+    const isVerified = this.state.eventDetail?.attributes?.verified;
+    const ticketLink = this.state.eventDetail?.attributes?.ticket_link;
+    const isPrimary = !(ticketLink && isVerified);
+    return (
+      <TouchableOpacity
+        testID="directionsBtn"
+        style={
+          isPrimary
+            ? eventStyles.detailPrimaryBtn
+            : eventStyles.detailSecondaryBtn
+        }
+        onPress={() => this.openGoogleMaps()}
+        activeOpacity={0.85}
+      >
+        <Text
+          style={
+            isPrimary
+              ? eventStyles.detailPrimaryBtnText
+              : eventStyles.detailSecondaryBtnText
+          }
+        >
+          Directions
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
+  renderShowBody = () => {
+    return (
+      <View>
+        {this.renderStatusBadges()}
+        {this.renderLikes()}
+        <View style={eventStyles.detailSection}>
+          {this.renderInfoCards()}
+          {this.renderLineup()}
+          {this.renderDescription()}
+          {this.renderVenueCard()}
+          {this.renderAddress()}
+          {this.renderEndDate()}
+          {this.renderEventCreatorCategoryRow()}
+          {this.renderShowType()}
+          {this.renderGenre()}
+          {this.renderRulesAndRegulations()}
+          <View style={eventStyles.detailTicketsWrap}>
+            {this.renderBuyTicketButton()}
+            {this.renderDirectionsButton()}
+          </View>
+        </View>
+      </View>
+    );
+  };
+
+  renderPictureBody = () => {
+    return (
+      <View style={eventStyles.detailSection}>
+        {this.renderLikes()}
+        {this.renderDescription()}
       </View>
     );
   };
@@ -1068,22 +1444,23 @@ export default class PostDetails extends PostCreationController {
 
   render() {
     // Customizable Area Start
-    const isPost =
-      this.state.eventDetail?.type === 'post' ||
-      this.state.eventDetail?.attributes?.model_name === 'BxBlockPosts::Post';
+    const isPost = this.isPicturePost();
     // Customizable Area End
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={eventStyles.detailScreen} edges={['bottom']}>
         {/* Customizable Area Start */}
-        <StatusBar barStyle="light-content" backgroundColor="#FFF" />
-        <ScrollView>
+        <StatusBar barStyle="light-content" backgroundColor="#08080f" />
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={eventStyles.detailListContent}
+        >
           <TouchableWithoutFeedback
             testID="containerFeedback"
             onPress={() => {
               this.setState({ showMenu: false });
-            }}>
-            <View style={styles.containerView}>
-              {this.renderHeader()}
+            }}
+          >
+            <View>
               {this.state.sold_out && (
                 <View style={styles.soldoutContainer}>
                   <View style={styles.soldoutView}>
@@ -1095,146 +1472,24 @@ export default class PostDetails extends PostCreationController {
                   </View>
                 </View>
               )}
-
-              {Object.keys(this.state.selectedImageData).length !== 0 && (
-                <FastImage
-                  source={{
-                    uri: this.state.selectedImageData.uri,
-                    priority: FastImage.priority.high,
-                  }}
-                  style={styles.eventImageContainer}
-                  resizeMode={FastImage.resizeMode.contain}
-                />
-              )}
-              <View style={{ marginTop: 20 }}>
-                {(() => {
-                  if (isPost) {
-                    // For posts/pictures, only show likes and description
-                    return (
-                      <>
-                        {this.renderLikes()}
-                        {this.renderDescription()}
-                      </>
-                    );
-                  } else {
-                    // For shows, show all fields
-                    return (
-                      <>
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            justifyContent: 'space-between',
-                          }}>
-                          <Text
-                            style={
-                              styles.eventTitleText
-                            }>{`${this.state.eventTitle}`}</Text>
-                          <View
-                            style={{
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                            }}>
-                            {this.state.eventDetail?.attributes
-                              ?.is_canceled && (
-                                <Text
-                                  style={{
-                                    color: '#DC2626',
-                                    fontSize: 14,
-                                    fontWeight: '700',
-                                    marginRight: 10,
-                                  }}>
-                                  Show Canceled
-                                </Text>
-                              )}
-                            {this.state.eventDetail?.attributes
-                              ?.postpone_show && (
-                                <Image
-                                  source={require('../../../mobile/assets/images/postponed.png')}
-                                  style={{
-                                    width: 87,
-                                    height: 28,
-                                    borderRadius: 5,
-                                    marginRight: 10,
-                                  }}
-                                />
-                              )}
-                            {this.state.sold_out && (
-                              <Image
-                                source={require('../../../mobile/assets/images/sold_out.png')}
-                                style={{ width: 75, height: 28, borderRadius: 5 }}
-                              />
-                            )}
-                          </View>
-                        </View>
-                        {this.renderLikes()}
-                        <View>
-                          {this.renderLocation()}
-                          {this.renderAddress()}
-                          {this.renderDate()}
-                          {this.renderEndDate()}
-                          {this.renderTime()}
-                          {this.renderEventCreatorCategoryRow()}
-                          {this.renderLineup()}
-                          {this.renderShowType()}
-                          {this.renderGenre()}
-                        </View>
-                        {this.renderDescription()}
-                        {this.renderRulesAndRegulations()}
-                        {this.renderBuyTicketButton()}
-                      </>
-                    );
-                  }
-                })()}
-              </View>
-              {this.renderMenuPopup()}
+              {this.renderEventImage()}
+              {isPost ? this.renderPictureBody() : this.renderShowBody()}
               {this.renderDisclaimerModal()}
               {this.renderReportModal()}
               {this.renderRulesMoreModal()}
-
-              {(() => {
-                const isPost =
-                  this.state.eventDetail?.type === 'post' ||
-                  this.state.eventDetail?.attributes?.model_name ===
-                  'BxBlockPosts::Post';
-                if (!isPost) {
-                  // Only show Directions button for shows
-                  return (
-                    <View style={{ marginVertical: 10 }}>
-                      <TouchableOpacity
-                        testID="directionsBtn"
-                        style={[
-                          styles.button,
-                          {
-                            backgroundColor: '#EDEDFF',
-                            marginTop: 0,
-                          },
-                        ]}
-                        onPress={() => this.openGoogleMaps()}>
-                        <Text
-                          style={{
-                            fontWeight: '700',
-                            fontSize: 16,
-                            color: '#4949EE',
-                          }}>
-                          Directions
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  );
-                }
-                return null;
-              })()}
               <Modal
                 animationType="slide"
                 transparent={true}
-                visible={this.state.cancelPopup}>
+                visible={this.state.cancelPopup}
+              >
                 <View style={styles.modalParentView}>
                   <View style={styles.modalContainerView}>
                     <TouchableOpacity
                       testID="crossBtn"
                       style={styles.disablePopupIconContainer}
-                      onPress={() => this.setState({ cancelPopup: false })}>
-                      <Icon name="x" color="#0F172A" size={25} />
+                      onPress={() => this.setState({ cancelPopup: false })}
+                    >
+                      <Icon name="x" color="#f0eeff" size={25} />
                     </TouchableOpacity>
                     <Text style={styles.txtCancelShowHeading}>
                       {isPost
@@ -1252,12 +1507,14 @@ export default class PostDetails extends PostCreationController {
                         styles.cancelShowButtonContainer,
                         styles.keepButtonContainer,
                       ]}
-                      onPress={() => this.setState({ cancelPopup: false })}>
+                      onPress={() => this.setState({ cancelPopup: false })}
+                    >
                       <Text
                         style={[
                           styles.textCancelButton,
                           styles.textKeepButton,
-                        ]}>
+                        ]}
+                      >
                         Cancel
                       </Text>
                     </TouchableOpacity>
@@ -1272,7 +1529,8 @@ export default class PostDetails extends PostCreationController {
                             this.handleCancelShowAPI();
                           }
                         });
-                      }}>
+                      }}
+                    >
                       <Text style={styles.textCancelButton}>Confirm</Text>
                     </TouchableOpacity>
                   </View>
@@ -1282,8 +1540,8 @@ export default class PostDetails extends PostCreationController {
           </TouchableWithoutFeedback>
         </ScrollView>
         {this.state.isLoading && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size={'large'} color="black" />
+          <View style={eventStyles.detailLoadingContainer}>
+            <ActivityIndicator size={'large'} color="#ff2d6b" />
           </View>
         )}
         {/* Customizable Area End */}
@@ -1294,96 +1552,40 @@ export default class PostDetails extends PostCreationController {
 
 // Customizable Area Start
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-    alignSelf: 'center',
-    backgroundColor: '#FFF',
-  },
-  containerView: {
-    backgroundColor: '#FFF',
-    padding: 25,
-  },
-  headerView: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
   backButton: {
     width: 20,
     height: 20,
     resizeMode: 'contain',
   },
-  pageTitle: {
-    fontSize: 24,
+  canceledBadge: {
+    color: '#ff2d6b',
+    fontSize: 14,
     fontWeight: '700',
-    color: '#334155',
-    width: '80%',
-    paddingHorizontal: 10,
-    textAlign: 'center',
-  },
-  threeDots: {
-    width: 30,
-    height: 30,
-    resizeMode: 'contain',
-    tintColor: '#334155',
-  },
-  eventImageContainer: {
-    height: 200,
-    width: '100%',
-    marginTop: 30,
-    borderRadius: 8,
-  },
-  eventTitleText: {
-    fontSize: 20,
-    color: '#334155',
-    fontWeight: '700',
-    flex: 2,
+    marginRight: 10,
   },
   text: {
     fontSize: 16,
-    color: '#334155',
+    color: '#f0eeff',
     fontWeight: '400',
-  },
-  showFeatureItems: {
-    flexDirection: 'row',
-    width: '49%',
-    marginRight: 10,
-    marginBottom: 5,
   },
   menuContainer: {
-    position: 'absolute',
-    right: 20,
-    top: 60,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    padding: 10,
-    paddingLeft: 30,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.9,
-    shadowRadius: 3,
-    elevation: 3,
+    right: 16,
+    top: 96,
   },
-  menuButton: {
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-  },
-  menuButtonText: {
-    fontSize: 16,
-    fontWeight: '400',
-    color: '#0F172A',
-    textAlignVertical: 'center',
+  showTypeFlatlist: {
+    flex: 1,
+    flexWrap: 'wrap',
   },
   modalParentView: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: '#33415580',
+    backgroundColor: '#08080fcc',
   },
   modalContainerView: {
     justifyContent: 'space-between',
-    backgroundColor: 'white',
+    backgroundColor: '#111120',
     borderTopEndRadius: 20,
+    borderTopStartRadius: 20,
     padding: 35,
     shadowColor: '#000',
     shadowOffset: {
@@ -1405,13 +1607,14 @@ const styles = StyleSheet.create({
     lineHeight: 28,
     marginBottom: 10,
     marginTop: 25,
-    color: '#0F172A',
+    color: '#f0eeff',
   },
   txtDelete: {
     fontSize: 18,
+    color: '#c4bdd6',
   },
   cancelShowButtonContainer: {
-    backgroundColor: '#3333CC',
+    backgroundColor: '#ff2d6b',
     width: '100%',
     padding: 15,
     borderRadius: 10,
@@ -1425,42 +1628,27 @@ const styles = StyleSheet.create({
   },
   keepButtonContainer: {
     backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   textKeepButton: {
-    color: '#3333CC',
-  },
-  loadingContainer: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#ffffffdd',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  button: {
-    alignItems: 'center',
-    borderRadius: 10,
-    backgroundColor: '#4949EE',
-    width: '100%',
-    padding: 15,
-  },
-  showTypeFlatlist: {
-    flex: 1,
-    flexWrap: 'wrap',
+    color: '#f0eeff',
   },
   soldoutView: {
     flex: 1,
-    backgroundColor: '#DC2626',
+    backgroundColor: '#ff2d6b',
     paddingLeft: 8,
     borderRadius: 4,
     overflow: 'hidden',
   },
   soldoutView2: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: 'rgba(255, 45, 107, 0.18)',
     flex: 1,
     paddingVertical: 12,
     paddingLeft: 12,
   },
   soldoutText: {
-    color: '#DC2626',
+    color: '#ff2d6b',
     fontSize: 12,
   },
   soldoutContainer: {
@@ -1478,7 +1666,7 @@ const styles = StyleSheet.create({
   },
   modalView: {
     margin: 20,
-    backgroundColor: 'white',
+    backgroundColor: '#111120',
     borderRadius: 20,
     padding: 35,
     alignItems: 'center',
@@ -1505,12 +1693,12 @@ const styles = StyleSheet.create({
   reportTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#0F172A',
+    color: '#f0eeff',
   },
   reportSubtitle: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#334155',
+    color: '#8880aa',
     marginBottom: 12,
   },
   reportReasonsContainer: {
@@ -1528,62 +1716,63 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 8,
     marginBottom: 8,
+    backgroundColor: '#1a1a2e',
   },
   reportReasonButtonSelected: {
-    borderColor: '#4949EE',
-    backgroundColor: '#F8FAFC',
+    borderColor: '#ff2d6b',
+    backgroundColor: 'rgba(255, 45, 107, 0.12)',
   },
   reportRadioOuter: {
     height: 20,
     width: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#CBD5E1',
+    borderColor: '#8880aa',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   reportRadioOuterSelected: {
-    borderColor: '#4949EE',
+    borderColor: '#ff2d6b',
   },
   reportRadioInner: {
     height: 10,
     width: 10,
     borderRadius: 5,
-    backgroundColor: '#4949EE',
+    backgroundColor: '#ff2d6b',
   },
   reportReasonText: {
     fontSize: 14,
-    color: '#64748B',
+    color: '#c4bdd6',
   },
   reportReasonTextSelected: {
-    color: '#0F172A',
+    color: '#f0eeff',
     fontWeight: '600',
   },
   reportErrorText: {
-    color: '#EF4444',
+    color: '#ff2d6b',
     fontSize: 12,
     marginBottom: 16,
     marginTop: -10,
   },
   reportCommentInput: {
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 8,
     padding: 12,
     height: 100,
     textAlignVertical: 'top',
     fontSize: 14,
-    color: '#0F172A',
+    color: '#f0eeff',
     marginBottom: 24,
+    backgroundColor: '#1a1a2e',
   },
   reportActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 12,
   },
   reportButton: {
     flex: 1,
@@ -1595,15 +1784,16 @@ const styles = StyleSheet.create({
   reportCancelButton: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    marginRight: 12,
   },
   reportSubmitButton: {
-    backgroundColor: '#4949EE',
+    backgroundColor: '#ff2d6b',
   },
   reportCancelText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#64748B',
+    color: '#8880aa',
   },
   reportSubmitText: {
     fontSize: 16,
