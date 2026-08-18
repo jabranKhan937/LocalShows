@@ -1,7 +1,9 @@
 import { StyleSheet, Platform, Dimensions } from "react-native";
 import scale, { verticalScale } from "../../../components/src/Scale";
 // Customizable Area Start
-import { colors } from "../../utilities/src/Colors";
+import { colors, lightTheme, redesignTheme } from "../../utilities/src/Colors";
+
+type HomeTheme = typeof redesignTheme;
 
 /** Shared home-feed spacing so search, featured, filters, and cards share one grid. */
 const FEED_GUTTER = 16;
@@ -11,21 +13,21 @@ const FEED_CARD_GAP = 12;
 const FEED_CARD_PAD = 12;
 const DETAIL_HERO_HEIGHT = Math.round(Dimensions.get('window').height * 0.32);
 
-export default StyleSheet.create({
+export const createAllEventStyles = (theme: HomeTheme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#08080f'
+    backgroundColor: theme.background
   },
   /** Top app bar on the events feed; dark redesign chrome. */
   feedHeaderBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#08080f',
+    backgroundColor: theme.background,
     paddingHorizontal: FEED_GUTTER,
     height: 56,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    borderBottomColor: theme.border,
   },
   feedHeaderBrandRow: {
     flexDirection: 'row',
@@ -37,7 +39,7 @@ export default StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 8,
-    backgroundColor: '#ff2d6b',
+    backgroundColor: theme.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 8,
@@ -46,15 +48,15 @@ export default StyleSheet.create({
     fontWeight: '900',
     fontSize: 18,
     letterSpacing: 0.6,
-    color: '#f0eeff',
+    color: theme.foreground,
     textTransform: 'uppercase',
   },
   feedHeaderLocationPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: theme.input,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: theme.border,
     borderRadius: 16,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -62,7 +64,7 @@ export default StyleSheet.create({
     maxWidth: 140,
   },
   feedHeaderLocationText: {
-    color: '#f0eeff',
+    color: theme.foreground,
     fontSize: 12,
     fontWeight: '600',
     marginLeft: 4,
@@ -78,20 +80,20 @@ export default StyleSheet.create({
     height: 22,
     width: 22,
     resizeMode: 'contain',
-    tintColor: '#f0eeff',
+    tintColor: theme.foreground,
   },
   feedHeaderMenuIcon: {
     height: 18,
     width: 18,
     resizeMode: 'contain',
     marginLeft: 10,
-    tintColor: '#f0eeff',
+    tintColor: theme.foreground,
   },
   feedHeaderBackIcon: {
     width: 12,
     height: 12,
     resizeMode: 'contain',
-    tintColor: '#f0eeff',
+    tintColor: theme.foreground,
   },
   feedHeaderAvatarWrap: {
     marginLeft: 10,
@@ -99,11 +101,11 @@ export default StyleSheet.create({
     height: 32,
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: '#ff2d6b',
+    borderColor: theme.primary,
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1a1a2e',
+    backgroundColor: theme.input,
   },
   feedHeaderAvatar: {
     width: 32,
@@ -113,14 +115,14 @@ export default StyleSheet.create({
   /** Groups category filters and sort/state controls under the redesign search. */
   feedToolbarSurface: {
     marginHorizontal: 0,
-    backgroundColor: '#08080f',
+    backgroundColor: theme.background,
     borderWidth: 0,
     overflow: 'visible',
     paddingBottom: 0,
   },
   /** Aligns with feedToolbarSurface so list body shares the same side rails. */
   feedListContent: {
-    backgroundColor: '#08080f',
+    backgroundColor: theme.background,
     flexGrow: 1,
   },
   /** Centered spinner in the feed body while the shows API is in flight (empty list). */
@@ -129,7 +131,7 @@ export default StyleSheet.create({
     minHeight: 320,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#08080f',
+    backgroundColor: theme.background,
     paddingVertical: 40,
   },
   input: {
@@ -137,7 +139,7 @@ export default StyleSheet.create({
     height: 44,
     fontSize: 14,
     marginLeft: 8,
-    color: '#f0eeff',
+    color: theme.foreground,
     paddingVertical: 0,
   },
   inputContainer: {
@@ -150,19 +152,19 @@ export default StyleSheet.create({
     marginHorizontal: FEED_GUTTER,
     marginTop: 12,
     marginBottom: FEED_SECTION_GAP,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: theme.input,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: theme.border,
   },
   nearMeButton: {
-    backgroundColor: 'rgba(255, 45, 107, 0.15)',
+    backgroundColor: theme.primarySoft,
     borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 8,
     marginLeft: 6,
   },
   nearMeButtonText: {
-    color: '#ff2d6b',
+    color: theme.primary,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -171,9 +173,9 @@ export default StyleSheet.create({
     marginBottom: FEED_SECTION_GAP,
     borderRadius: 18,
     overflow: 'hidden',
-    backgroundColor: '#111120',
+    backgroundColor: theme.card,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: theme.border,
     height: 190,
   },
   featuredImage: {
@@ -183,7 +185,7 @@ export default StyleSheet.create({
   featuredImagePlaceholder: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#1a1a2e',
+    backgroundColor: theme.input,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -203,7 +205,7 @@ export default StyleSheet.create({
     position: 'absolute',
     top: FEED_CARD_PAD,
     left: FEED_CARD_PAD,
-    backgroundColor: '#ff2d6b',
+    backgroundColor: theme.primary,
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -228,7 +230,7 @@ export default StyleSheet.create({
     paddingRight: 12,
   },
   featuredTitle: {
-    color: '#f0eeff',
+    color: '#FFFFFF',
     fontSize: 22,
     fontWeight: '900',
     letterSpacing: 0.4,
@@ -247,7 +249,7 @@ export default StyleSheet.create({
     marginLeft: 4,
   },
   featuredTimeText: {
-    color: '#00d4ff',
+    color: theme.featuredTime,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -255,12 +257,12 @@ export default StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#ff2d6b',
+    backgroundColor: theme.primary,
     alignItems: 'center',
     justifyContent: 'center',
     ...Platform.select({
       ios: {
-        shadowColor: '#ff2d6b',
+        shadowColor: theme.primary,
         shadowOffset: { width: 0, height: 0 },
         shadowOpacity: 0.7,
         shadowRadius: 10,
@@ -287,7 +289,7 @@ export default StyleSheet.create({
   modalView: {
     height: '40%',
     justifyContent: 'space-between',
-    backgroundColor: 'white',
+    backgroundColor: theme.card,
     borderTopEndRadius: 20,
     padding: 35,
     shadowColor: '#000',
@@ -557,7 +559,7 @@ export default StyleSheet.create({
   txt: {
     fontFamily: "OpenSans",
     alignSelf: "flex-start",
-    color: colors(false).text,
+    color: theme.foreground,
     fontWeight:"600"
   },
   welcomeToPopupText: {
@@ -627,7 +629,7 @@ export default StyleSheet.create({
   headerText: {
     fontWeight: "700",
     fontSize: 24,
-    color: "#0F172A",
+    color: theme.foreground,
     textAlign: "center",
     textAlignVertical:'center',
     maxWidth:'70%'
@@ -674,7 +676,7 @@ export default StyleSheet.create({
     position: 'absolute',
     right: 20,
     top: 60,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 10,
     padding: 10,
     paddingLeft: 30,
@@ -690,7 +692,7 @@ export default StyleSheet.create({
   menuButtonText: {
     fontSize: 16,
     fontWeight: '400',
-    color: '#0F172A',
+    color: theme.foreground,
     textAlignVertical: 'center',
   },
   commentsParentView: {
@@ -709,11 +711,12 @@ export default StyleSheet.create({
   commentsHeadingText: {
     fontSize: 24,
     fontWeight: 'bold',
+    color: theme.foreground,
   },
   horizontalRuler: {
     width: '100%',
     height: 1,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: theme.divider,
     marginVertical: 15,
   },
   commentsListContainer: {
@@ -739,7 +742,7 @@ export default StyleSheet.create({
     borderRadius: 75,
   },
   userAvatarContainer: {
-    backgroundColor: "#FCFCFF",
+    backgroundColor: theme.input,
     width: 42,
     height: 42,
     borderRadius: 80,
@@ -747,13 +750,15 @@ export default StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: '#C5C5FF',
+    borderColor: theme.border,
     marginRight: 10,
   },
   commentTextInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#C5C5FF",
+    borderColor: theme.border,
+    backgroundColor: theme.input,
+    color: theme.foreground,
     borderRadius: 10,
     paddingHorizontal: 10,
     paddingRight: 50,
@@ -781,6 +786,7 @@ export default StyleSheet.create({
   },
   startConversationText: {
     marginTop: 5,
+    color: theme.muted,
   },
   commentItem: {
     flexDirection: "row",
@@ -793,9 +799,11 @@ export default StyleSheet.create({
   commenterName: {
     fontSize: 16,
     fontWeight: "bold",
+    color: theme.foreground,
   },
   commentText: {
-    fontSize: 14
+    fontSize: 14,
+    color: theme.foreground,
   },
   likeContainer: {
     alignSelf: "flex-start",
@@ -803,7 +811,7 @@ export default StyleSheet.create({
     justifyContent: "center",
   },
   likesCountText: {
-    color: "#94A3B8",
+    color: theme.muted,
     textAlign: "center",
   },
   replyButton: {
@@ -812,7 +820,7 @@ export default StyleSheet.create({
   replyButtonText: {
     fontWeight: "bold",
     fontSize: 14,
-    color: "#94A3B8",
+    color: theme.muted,
   },
   showReplyButton: {
     flexDirection: "row",
@@ -823,11 +831,11 @@ export default StyleSheet.create({
     height: 1,
     width: 20,
     marginRight: 10,
-    backgroundColor: "#94A3B8",
+    backgroundColor: theme.muted,
   },
   showReplyButtonText: {
     fontSize: 14,
-    color: "#94A3B8"
+    color: theme.muted
   },
   replyText: {
     marginTop: 10,
@@ -841,7 +849,7 @@ export default StyleSheet.create({
   },
   rowFront: {
     alignItems: 'center',
-    backgroundColor: '#FFF',
+    backgroundColor: theme.card,
     width: '100%',
     flexDirection: "row",
     justifyContent: "space-between",
@@ -906,13 +914,14 @@ export default StyleSheet.create({
     lineHeight: 28,
     marginBottom: 10,
     marginTop: 25,
-    color: "#0F172A",
+    color: theme.foreground,
   },
   textDelete: {
     fontSize: 18,
+    color: theme.muted,
   },
   deleteButtonContainer: {
-    backgroundColor: "#3333CC",
+    backgroundColor: theme.primary,
     width: "100%",
     padding: 15,
     borderRadius: 10,
@@ -926,9 +935,11 @@ export default StyleSheet.create({
   },
   keepButtonContainer: {
     backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: theme.divider,
   },
   textKeepButton: {
-    color: "#3333CC",
+    color: theme.foreground,
   },
   filterButton: {
     borderRadius: 999,
@@ -937,19 +948,19 @@ export default StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
-    backgroundColor: '#1a1a2e',
+    backgroundColor: theme.input,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: theme.border,
     marginRight: 8,
   },
   filterButtonActive: {
-    backgroundColor: '#ff2d6b',
-    borderColor: '#ff2d6b',
+    backgroundColor: theme.primary,
+    borderColor: theme.primary,
   },
   filterButtonText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#8880aa',
+    color: theme.muted,
   },
   filterButtonTextActive: {
     color: '#FFFFFF',
@@ -971,22 +982,22 @@ export default StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: theme.input,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: theme.border,
     marginRight: 8,
   },
   sortPillActive: {
-    backgroundColor: 'rgba(255, 45, 107, 0.15)',
-    borderColor: '#ff2d6b',
+    backgroundColor: theme.primarySoft,
+    borderColor: theme.primary,
   },
   sortPillText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#8880aa',
+    color: theme.muted,
   },
   sortPillTextActive: {
-    color: '#ff2d6b',
+    color: theme.primary,
   },
   reportModalContent: {
     height: 'auto',
@@ -1007,12 +1018,12 @@ export default StyleSheet.create({
   reportTitle: {
     fontWeight: '700',
     fontSize: 20,
-    color: '#0F172A',
+    color: theme.foreground,
   },
   reportSubtitle: {
     marginTop: 16,
     fontSize: 14,
-    color: '#64748B',
+    color: theme.muted,
     fontWeight: '500',
   },
   reportReasonsContainer: {
@@ -1025,56 +1036,57 @@ export default StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.border,
     marginBottom: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.input,
   },
   reportReasonButtonSelected: {
-    borderColor: '#4949EE',
-    backgroundColor: '#EEF2FF',
+    borderColor: theme.primary,
+    backgroundColor: theme.primarySoft,
   },
   reportRadioOuter: {
     width: 20,
     height: 20,
     borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: '#CBD5E1',
+    borderColor: theme.muted,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   reportRadioOuterSelected: {
-    borderColor: '#4949EE',
+    borderColor: theme.primary,
   },
   reportRadioInner: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#4949EE',
+    backgroundColor: theme.primary,
   },
   reportReasonText: {
     fontSize: 14,
-    color: '#0F172A',
+    color: theme.foreground,
     flex: 1,
   },
   reportReasonTextSelected: {
-    color: '#1E1B4B',
+    color: theme.foreground,
     fontWeight: '600',
   },
   reportErrorText: {
-    color: '#DC2626',
+    color: theme.primary,
     fontSize: 12,
     marginTop: 4,
   },
   reportCommentInput: {
     marginTop: 12,
     borderWidth: 1,
-    borderColor: '#C5C5FF',
+    borderColor: theme.border,
+    backgroundColor: theme.input,
     borderRadius: 10,
     padding: 12,
     minHeight: 100,
     textAlignVertical: 'top',
-    color: '#0F172A',
+    color: theme.foreground,
   },
   reportActions: {
     flexDirection: 'row',
@@ -1087,15 +1099,15 @@ export default StyleSheet.create({
     borderRadius: 8,
   },
   reportCancelButton: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: theme.input,
     marginRight: 12,
   },
   reportCancelText: {
-    color: '#0F172A',
+    color: theme.foreground,
     fontWeight: '600',
   },
   reportSubmitButton: {
-    backgroundColor: '#3333CC',
+    backgroundColor: theme.primary,
   },
   reportSubmitText: {
     color: '#FFFFFF',
@@ -1127,11 +1139,11 @@ export default StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#ff2d6b',
+    backgroundColor: theme.primary,
     marginRight: 6,
   },
   showsCountText: {
-    color: '#ff2d6b',
+    color: theme.primary,
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 0.8,
@@ -1139,11 +1151,11 @@ export default StyleSheet.create({
   showsCountLine: {
     flex: 1,
     height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: theme.divider,
     marginRight: 10,
   },
   showsCountArea: {
-    color: '#8880aa',
+    color: theme.muted,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -1153,9 +1165,9 @@ export default StyleSheet.create({
     marginBottom: FEED_CARD_GAP,
     padding: FEED_CARD_PAD,
     borderRadius: 16,
-    backgroundColor: '#111120',
+    backgroundColor: theme.card,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: theme.border,
   },
   compactShowMainRow: {
     flexDirection: 'row',
@@ -1166,7 +1178,7 @@ export default StyleSheet.create({
     height: 108,
     borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: '#1a1a2e',
+    backgroundColor: theme.input,
   },
   compactShowThumb: {
     width: 108,
@@ -1177,7 +1189,7 @@ export default StyleSheet.create({
     height: 108,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1a1a2e',
+    backgroundColor: theme.input,
   },
   compactShowBody: {
     flex: 1,
@@ -1192,7 +1204,7 @@ export default StyleSheet.create({
   },
   compactShowTitle: {
     flex: 1,
-    color: '#f0eeff',
+    color: theme.foreground,
     fontSize: 16,
     fontWeight: '800',
     letterSpacing: 0.2,
@@ -1200,13 +1212,13 @@ export default StyleSheet.create({
     paddingRight: 8,
   },
   compactShowGenre: {
-    color: '#8880aa',
+    color: theme.muted,
     fontSize: 12,
     fontWeight: '500',
     marginTop: 2,
   },
   compactShowLineup: {
-    color: '#c8c2e6',
+    color: theme.muted,
     fontSize: 11,
     fontWeight: '500',
     marginTop: 2,
@@ -1218,14 +1230,14 @@ export default StyleSheet.create({
     marginTop: 8,
   },
   compactShowVenue: {
-    color: '#f0eeff',
+    color: theme.foreground,
     fontSize: 12,
     fontWeight: '600',
     marginLeft: 4,
     flexShrink: 1,
   },
   compactShowTime: {
-    color: '#ffe138',
+    color: theme.accent,
     fontSize: 12,
     fontWeight: '700',
     marginLeft: 8,
@@ -1244,28 +1256,28 @@ export default StyleSheet.create({
     height: 18,
     width: 18,
     resizeMode: 'contain',
-    tintColor: '#8880aa',
+    tintColor: theme.muted,
     marginRight: 10,
   },
   compactShowLikeIcon: {
     height: 18,
     width: 20,
     resizeMode: 'contain',
-    tintColor: '#ff2d6b',
+    tintColor: theme.primary,
   },
   compactShowCalendarText: {
-    color: '#ff2d6b',
+    color: theme.primary,
     fontWeight: '500',
     fontSize: 12,
   },
   compactShowSocialText: {
-    color: '#8880aa',
+    color: theme.muted,
     fontSize: 12,
     fontWeight: '600',
     marginTop: 6,
   },
   compactShowSocialLink: {
-    color: '#ff2d6b',
+    color: theme.primary,
     fontWeight: '400',
   },
   compactSeeMoreText: {
@@ -1275,7 +1287,7 @@ export default StyleSheet.create({
     paddingHorizontal: FEED_GUTTER,
     paddingTop: 4,
     paddingBottom: FEED_CARD_GAP,
-    color: '#ff2d6b',
+    color: theme.primary,
     textAlign: 'right',
   },
   compactShowFooter: {
@@ -1285,24 +1297,24 @@ export default StyleSheet.create({
     marginTop: FEED_CARD_PAD,
     paddingTop: FEED_CARD_PAD,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    borderTopColor: theme.divider,
   },
   compactShowCategoryPill: {
     borderRadius: 999,
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255, 77, 120, 0.38)',
-    backgroundColor: '#32151d',
+    borderColor: theme.primary,
+    backgroundColor: theme.primarySoft,
   },
   compactShowCategoryText: {
-    color: '#ff4d78',
+    color: theme.primary,
     fontSize: 13,
     fontWeight: '800',
     letterSpacing: 0.2,
   },
   compactShowFooterDate: {
-    color: '#c4bdd6',
+    color: theme.muted,
     fontSize: 12,
     fontWeight: '500',
   },
@@ -1312,16 +1324,16 @@ export default StyleSheet.create({
     flex: 1,
     width: '100%',
     height: '100%',
-    backgroundColor: '#08080f',
+    backgroundColor: theme.background,
   },
   detailListContent: {
-    backgroundColor: '#08080f',
+    backgroundColor: theme.background,
     flexGrow: 1,
     paddingBottom: 36,
   },
   detailLoadingContainer: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#08080f',
+    backgroundColor: theme.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1358,7 +1370,7 @@ export default StyleSheet.create({
     width: '100%',
     height: DETAIL_HERO_HEIGHT,
     marginBottom: 12,
-    backgroundColor: '#08080f',
+    backgroundColor: theme.background,
     overflow: 'hidden',
   },
   detailHeroImage: {
@@ -1368,7 +1380,7 @@ export default StyleSheet.create({
   detailHeroPlaceholder: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#1a1a2e',
+    backgroundColor: theme.input,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1387,7 +1399,7 @@ export default StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    backgroundColor: '#08080f',
+    backgroundColor: theme.background,
   },
   detailHeroTopBar: {
     position: 'absolute',
@@ -1419,7 +1431,7 @@ export default StyleSheet.create({
     alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ff2d6b',
+    backgroundColor: theme.primary,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 5,
@@ -1442,7 +1454,7 @@ export default StyleSheet.create({
     marginBottom: 8,
   },
   detailStateCaption: {
-    color: '#c4bdd6',
+    color: 'rgba(240, 238, 255, 0.88)',
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.8,
@@ -1459,18 +1471,18 @@ export default StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: '#ff2d6b',
-    backgroundColor: 'rgba(255, 45, 107, 0.12)',
+    borderColor: theme.primary,
+    backgroundColor: theme.primarySoft,
     marginRight: 10,
     marginBottom: 4,
   },
   detailGenrePillText: {
-    color: '#ff2d6b',
+    color: theme.primary,
     fontSize: 13,
     fontWeight: '700',
   },
   detailPriceText: {
-    color: '#ff2d6b',
+    color: theme.primary,
     fontSize: 20,
     fontWeight: '800',
     marginBottom: 4,
@@ -1498,7 +1510,7 @@ export default StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#1a1a2e',
+    backgroundColor: theme.input,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(196, 189, 214, 0.28)',
@@ -1512,7 +1524,7 @@ export default StyleSheet.create({
     alignItems: 'center',
   },
   detailStatCount: {
-    color: '#FFFFFF',
+    color: theme.foreground,
     fontSize: 14,
     fontWeight: '700',
     marginLeft: 8,
@@ -1527,7 +1539,7 @@ export default StyleSheet.create({
   },
   detailInfoCard: {
     flex: 1,
-    backgroundColor: '#111120',
+    backgroundColor: theme.input,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: 'rgba(196, 189, 214, 0.28)',
@@ -1542,19 +1554,19 @@ export default StyleSheet.create({
     marginRight: 0,
   },
   detailInfoCardLabel: {
-    color: '#8880aa',
+    color: theme.muted,
     fontSize: 12,
     fontWeight: '600',
     marginTop: 8,
     marginBottom: 4,
   },
   detailInfoCardValue: {
-    color: '#f0eeff',
+    color: theme.foreground,
     fontSize: 15,
     fontWeight: '800',
   },
   detailSectionLabel: {
-    color: '#8880aa',
+    color: theme.muted,
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 1.2,
@@ -1563,10 +1575,10 @@ export default StyleSheet.create({
   detailLineupRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#111120',
+    backgroundColor: theme.card,
     borderRadius: 14,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: theme.border,
     paddingHorizontal: 12,
     paddingVertical: 12,
     marginBottom: 8,
@@ -1578,13 +1590,13 @@ export default StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: theme.input,
   },
   detailLineupIndexActive: {
-    backgroundColor: '#ff2d6b',
+    backgroundColor: theme.primary,
   },
   detailLineupIndexText: {
-    color: '#c4bdd6',
+    color: theme.muted,
     fontSize: 13,
     fontWeight: '800',
   },
@@ -1592,13 +1604,13 @@ export default StyleSheet.create({
     color: '#FFFFFF',
   },
   detailLineupName: {
-    color: '#f0eeff',
+    color: theme.foreground,
     fontSize: 15,
     fontWeight: '700',
     flex: 1,
   },
   detailAboutText: {
-    color: '#c4bdd6',
+    color: theme.muted,
     fontSize: 14,
     lineHeight: 22,
     fontWeight: '400',
@@ -1607,10 +1619,10 @@ export default StyleSheet.create({
   detailVenueCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#111120',
+    backgroundColor: theme.card,
     borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: theme.border,
     padding: 14,
     marginBottom: 10,
   },
@@ -1618,7 +1630,7 @@ export default StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: theme.input,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -1628,13 +1640,13 @@ export default StyleSheet.create({
     paddingRight: 8,
   },
   detailVenueName: {
-    color: '#f0eeff',
+    color: theme.foreground,
     fontSize: 16,
     fontWeight: '800',
     marginBottom: 4,
   },
   detailVenueAddress: {
-    color: '#8880aa',
+    color: theme.muted,
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '400',
@@ -1643,10 +1655,10 @@ export default StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#111120',
+    backgroundColor: theme.card,
     borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: theme.border,
     paddingHorizontal: 14,
     paddingVertical: 16,
   },
@@ -1656,16 +1668,16 @@ export default StyleSheet.create({
     borderBottomWidth: 0,
   },
   detailRulesHeaderText: {
-    color: '#f0eeff',
+    color: theme.foreground,
     fontSize: 15,
     fontWeight: '700',
     flex: 1,
     paddingRight: 8,
   },
   detailRulesBody: {
-    backgroundColor: '#111120',
+    backgroundColor: theme.card,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: theme.border,
     borderTopWidth: 0,
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
@@ -1683,13 +1695,13 @@ export default StyleSheet.create({
     marginTop: 1,
   },
   detailRuleTitle: {
-    color: '#f0eeff',
+    color: theme.foreground,
     fontSize: 14,
     fontWeight: '700',
     marginBottom: 2,
   },
   detailRuleText: {
-    color: '#c4bdd6',
+    color: theme.muted,
     fontSize: 13,
     lineHeight: 20,
     fontWeight: '400',
@@ -1705,7 +1717,7 @@ export default StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     marginRight: 10,
-    backgroundColor: '#111120',
+    backgroundColor: theme.card,
   },
   detailMoreShowImage: {
     width: '100%',
@@ -1733,7 +1745,7 @@ export default StyleSheet.create({
     marginBottom: 2,
   },
   detailMoreShowDate: {
-    color: '#ffe138',
+    color: theme.accent,
     fontSize: 11,
     fontWeight: '700',
   },
@@ -1743,12 +1755,12 @@ export default StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#ff2d6b',
+    borderColor: theme.primary,
     paddingVertical: 14,
     marginBottom: 16,
   },
   detailVenueProfileBtnText: {
-    color: '#ff2d6b',
+    color: theme.primary,
     fontSize: 15,
     fontWeight: '800',
     marginLeft: 8,
@@ -1761,11 +1773,11 @@ export default StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#ff2d6b',
+    backgroundColor: theme.primary,
     borderRadius: 16,
     paddingVertical: 16,
     width: '100%',
-    shadowColor: '#ff2d6b',
+    shadowColor: theme.primary,
     shadowOpacity: 0.35,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
@@ -1785,35 +1797,35 @@ export default StyleSheet.create({
     backgroundColor: 'transparent',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: theme.divider,
     paddingVertical: 14,
     width: '100%',
     marginTop: 12,
   },
   detailSecondaryBtnText: {
-    color: '#f0eeff',
+    color: theme.foreground,
     fontSize: 15,
     fontWeight: '700',
   },
   detailWebsiteRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#111120',
+    backgroundColor: theme.card,
     borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: theme.border,
     paddingHorizontal: 14,
     paddingVertical: 14,
     marginBottom: 10,
   },
   detailMetaLabel: {
-    color: '#8880aa',
+    color: theme.muted,
     fontSize: 13,
     fontWeight: '700',
     marginRight: 8,
   },
   detailMetaValue: {
-    color: '#ff2d6b',
+    color: theme.primary,
     fontSize: 14,
     fontWeight: '600',
     flex: 1,
@@ -1829,7 +1841,7 @@ export default StyleSheet.create({
     alignItems: 'flex-start',
   },
   detailFeatureText: {
-    color: '#c4bdd6',
+    color: theme.muted,
     fontSize: 14,
     lineHeight: 22,
     fontWeight: '400',
@@ -1838,18 +1850,18 @@ export default StyleSheet.create({
   detailErrorTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#f0eeff',
+    color: theme.foreground,
     textAlign: 'center',
     marginBottom: 8,
   },
   detailErrorBody: {
     fontSize: 14,
-    color: '#8880aa',
+    color: theme.muted,
     textAlign: 'center',
     marginBottom: 24,
   },
   detailRetryBtn: {
-    backgroundColor: '#ff2d6b',
+    backgroundColor: theme.primary,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 12,
@@ -1860,19 +1872,19 @@ export default StyleSheet.create({
     fontWeight: '700',
   },
   detailGoBackText: {
-    color: '#ff2d6b',
+    color: theme.primary,
     fontWeight: '700',
   },
   detailMenuContainer: {
     position: 'absolute',
     right: 16,
     top: 110,
-    backgroundColor: '#111120',
+    backgroundColor: theme.card,
     borderRadius: 12,
     padding: 8,
     minWidth: 220,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: theme.border,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.4,
     shadowRadius: 8,
@@ -1882,9 +1894,14 @@ export default StyleSheet.create({
   detailMenuButtonText: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#f0eeff',
+    color: theme.foreground,
     textAlignVertical: 'center',
   },
 });
+
+export const darkAllEventStyles = createAllEventStyles(redesignTheme);
+export const lightAllEventStyles = createAllEventStyles(lightTheme);
+export default darkAllEventStyles;
+
 
 // Customizable Area End

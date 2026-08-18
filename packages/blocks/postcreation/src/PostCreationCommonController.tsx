@@ -146,6 +146,7 @@ interface S {
   pendingTicketLink: string;
   showRulesMoreModal: boolean;
   isPreviewStep: boolean;
+  isDarkMode: boolean;
 }
 
 interface SS {
@@ -302,6 +303,7 @@ export default class PostCreationCommonController extends BlockComponent<
       pendingTicketLink: '',
       showRulesMoreModal: false,
       isPreviewStep: false,
+      isDarkMode: true,
     };
 
     console.disableYellowBox = true;

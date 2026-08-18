@@ -17,6 +17,7 @@ import {
   Modal,
   TextInput,
   Platform,
+  Alert,
   Linking,
 } from 'react-native';
 
@@ -26,7 +27,10 @@ import {
   location,
   defaultProfile,
 } from './assets';
-import { colors } from '../../utilities/src/Colors';
+import {
+  lightTheme,
+  redesignTheme,
+} from '../../utilities/src/Colors';
 import Feather from 'react-native-vector-icons/Feather';
 import MCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import FntAwesome from 'react-native-vector-icons/FontAwesome';
@@ -39,6 +43,7 @@ import {
 import { IEvent } from './UserProfileBasicController';
 import { leftArrow } from '../../events/src/assets';
 import FastImage from '../../../components/src/SafeFastImage';
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import {
   getStorageData,
   removeStorageData,
@@ -57,139 +62,100 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
     // Customizable Area End
   }
 
+  get styles() {
+    return this.state.isDarkMode ? darkProfileStyles : lightProfileStyles;
+  }
+
   // Customizable Area Start
 
   renderEvents = ({ item }: { item: IEvent }) => {
+    const title = (item.event_title || item.band_name || '').toString();
+    const month = this.getFormattedFullMonth(item.date_of_the_show);
+    const day = this.getFullDate(item.date_of_the_show);
+    const dateLabel = `${month} ${day}`.trim();
+    const subtitle = [item.location, dateLabel].filter(Boolean).join(' · ');
+    const thumbUri = (item.profile_image || item.band_profile_image || '').trim();
     return (
-      <View style={styles.eventContainer}>
-        <Text style={styles.month}>
-          {this.getFormattedFullMonth(item.date_of_the_show)}
-          <Text style={styles.date}>
-            {' '}
-            {this.getFullDate(item.date_of_the_show)}
-          </Text>
-        </Text>
-        <View
-          style={[
-            styles.flexRow,
-            {
-              width: '100%',
-            },
-          ]}
-        >
-          <TouchableOpacity
-            testID="bandPicture"
-            onPress={() => this.handleProfileNavigation(item.account_id)}
+      <View style={this.styles.eventContainer}>
+        <View style={this.styles.compactCard}>
+          <TouchableWithoutFeedback
+            testID="navigateToDetail"
+            onPress={() => this.handleShowDetailsNav(item, item.state)}
           >
-            <FastImage
-              style={styles.bandImage}
-              source={
-                item.band_profile_image.trim()
-                  ? {
-                      uri: item.band_profile_image,
-                      priority: FastImage.priority.high,
-                    }
-                  : require('../../../mobile/assets/images/default_profile.png')
-              }
-            />
-          </TouchableOpacity>
-          <View
-            style={{
-              marginLeft: 10,
-            }}
-          >
-            <TouchableOpacity
-              testID="bandName"
-              onPress={() => this.handleProfileNavigation(item.account_id)}
-            >
-              <Text style={styles.boldText}>{item.band_name}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              testID="openLocation"
-              style={styles.flexRow}
-              onPress={() => {
-                this.openGoogleMaps(item);
-              }}
-            >
-              <View style={styles.location}>
-                <Image
-                  source={require('../../../mobile/assets/images/location-pin.png')}
-                  style={styles.locationPin}
-                />
-                <Text style={{ color: '#334166' }}>{item.location} </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-        </View>
-        <TouchableWithoutFeedback
-          testID="navigateToDetail"
-          onPress={() => this.handleShowDetailsNav(item, item.state)}
-        >
-          <View style={styles.eventImageContainer}>
-            <FastImage
-              style={styles.eventImage}
-              source={{
-                uri: item.profile_image,
-                priority: FastImage.priority.high,
-              }}
-              resizeMode={FastImage.resizeMode.contain}
-            />
-            <View style={styles.dateBanner}>
-              <Text style={styles.monthText}>
-                {this.getFormattedMonth(item.date_of_the_show)}
-              </Text>
-              <Text
-                style={[
-                  styles.monthText,
-                  {
-                    fontWeight: '700',
-                  },
-                ]}
+            <View style={this.styles.compactCardMain}>
+              <TouchableOpacity
+                testID="bandPicture"
+                onPress={() => this.handleProfileNavigation(item.account_id)}
               >
-                {this.getFormattedDate(item.date_of_the_show)}
-              </Text>
+                <FastImage
+                  style={this.styles.compactThumb}
+                  source={
+                    thumbUri
+                      ? {
+                          uri: thumbUri,
+                          priority: FastImage.priority.high,
+                        }
+                      : require('../../../mobile/assets/images/default_profile.png')
+                  }
+                  resizeMode={FastImage.resizeMode.cover}
+                />
+              </TouchableOpacity>
+              <View style={this.styles.compactCardCopy}>
+                <TouchableOpacity
+                  testID="bandName"
+                  onPress={() => this.handleProfileNavigation(item.account_id)}
+                >
+                  <Text style={this.styles.compactCardTitle} numberOfLines={1}>
+                    {title.toUpperCase()}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  testID="openLocation"
+                  onPress={() => this.openGoogleMaps(item)}
+                >
+                  <Text style={this.styles.compactCardSubtitle} numberOfLines={1}>
+                    {subtitle}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        </TouchableWithoutFeedback>
-        <View style={styles.likeCommentShareIcon}>
-          <View style={styles.flexRow}>
-            <TouchableOpacity
-              testID="likeEventBtn"
-              onPress={() => this.toggleLikeApi(`${item.id}`)}
-            >
-              {item.like_by_me ? (
-                <Image
-                  style={styles.likeIcon}
-                  source={require('../../../mobile/assets/images/favourite_filled.png')}
-                />
-              ) : (
-                <Image
-                  style={styles.likeIcon}
-                  source={require('../../../mobile/assets/images/image_favorite.png')}
-                />
-              )}
-            </TouchableOpacity>
+          </TouchableWithoutFeedback>
+          <TouchableOpacity
+            testID="likeEventBtn"
+            style={this.styles.compactLikeBtn}
+            onPress={() => this.toggleLikeApi(`${item.id}`)}
+          >
+            {item.like_by_me ? (
+              <Image
+                style={this.styles.compactLikeIconFilled}
+                source={require('../../../mobile/assets/images/favourite_filled.png')}
+              />
+            ) : (
+              <Image
+                style={this.styles.compactLikeIcon}
+                source={require('../../../mobile/assets/images/image_favorite.png')}
+              />
+            )}
+          </TouchableOpacity>
+        </View>
+        <View style={this.styles.likeCommentShareIcon}>
+          <View style={this.styles.flexRow}>
             <TouchableOpacity
               testID="commentBubble"
               onPress={() => this.handleShowComments(item.id.toString())}
             >
               <Image
                 source={require('../../../mobile/assets/images/image_chat_bubble_outline_24px.png')}
-                style={{
-                  marginLeft: 5,
-                }}
+                style={this.styles.actionIcon}
               />
             </TouchableOpacity>
-
             <TouchableOpacity
               testID="shareEventBtn"
               onPress={() => this.handleShareEvent(`${item.id}`, item.type)}
             >
               <Image
                 source={require('../../../mobile/assets/images/image_share_24px.png')}
-                style={{
-                  marginLeft: 5,
-                }}
+                style={this.styles.actionIcon}
               />
             </TouchableOpacity>
           </View>
@@ -197,32 +163,32 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
         <TouchableOpacity
           testID="likeThisTxt"
           onPress={() => this.handleLikeNav(item)}
-          style={styles.flexRow}
+          style={this.styles.flexRow}
         >
-          <Text style={styles.people}>
+          <Text style={this.styles.people}>
             {item.likes_count}
             {' people '}
           </Text>
-          <Text style={styles.likeThisText}>like this</Text>
+          <Text style={this.styles.likeThisText}>like this</Text>
         </TouchableOpacity>
-        <View style={styles.flexRow}>
+        <View style={this.styles.flexRow}>
           <Text
             style={[
-              styles.boldText,
+              this.styles.boldText,
               {
                 marginTop: 6,
               },
             ]}
           >
             {item.event_title}' {'Concert'}
-            <Text style={styles.descriptionText}>
+            <Text style={this.styles.descriptionText}>
               {` - ${item.description}`}
             </Text>
           </Text>
         </View>
         <View
           style={[
-            styles.flexRow,
+            this.styles.flexRow,
             {
               marginTop: 6,
             },
@@ -230,7 +196,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
         >
           <Text
             style={[
-              styles.boldText,
+              this.styles.boldText,
               {
                 lineHeight: 18,
               },
@@ -242,7 +208,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
             testID="showCommentsBtn"
             onPress={() => this.handleShowComments(`${item.id}`)}
           >
-            <Text style={styles.seeCommentsText}>See the comments</Text>
+            <Text style={this.styles.seeCommentsText}>See the comments</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -251,18 +217,18 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
 
   renderCategories = ({ item }: { item: any }) => {
     return (
-      <View style={styles.categoryContainer}>
-        <Text style={[styles.text, styles.categoryName]}>
+      <View style={this.styles.categoryContainer}>
+        <Text style={[this.styles.text, this.styles.categoryName]}>
           {item.name ? item.name : item.attributes.name}
         </Text>
         {item.user_sub_categories ? (
-          <Text style={[styles.text, styles.categoryElems]}>
+          <Text style={[this.styles.text, this.styles.categoryElems]}>
             {item.user_sub_categories
               .map((subcat: any) => subcat.name)
               .join(', ')}
           </Text>
         ) : (
-          <Text style={[styles.text, styles.categoryElems]}>
+          <Text style={[this.styles.text, this.styles.categoryElems]}>
             {'No data available'}
           </Text>
         )}
@@ -272,10 +238,10 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
 
   renderComment = ({ item }: { item: ICommentItem }) => {
     return (
-      <View style={styles.frontRow}>
+      <View style={this.styles.frontRow}>
         <TouchableOpacity
           testID="imgShowProfile"
-          style={styles.userAvatarView}
+          style={this.styles.userAvatarView}
           onPress={() =>
             this.showProfile(
               `${item.attributes.account.id}`,
@@ -293,45 +259,45 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                 : defaultProfile
             }
             resizeMode={FastImage.resizeMode.cover}
-            style={styles.userAvatarImage}
+            style={this.styles.userAvatarImage}
           />
         </TouchableOpacity>
-        <View style={styles.commentContentContainer}>
+        <View style={this.styles.commentContentContainer}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={styles.commenterNameText}>
+            <Text style={this.styles.commenterNameText}>
               {`${item.attributes.account.first_name}`}
             </Text>
             <Text
               style={[
-                styles.commenterNameText,
+                this.styles.commenterNameText,
                 { fontWeight: '400', marginLeft: 5 },
               ]}
             >
               {this.timeSince(item.attributes.created_at)}
             </Text>
           </View>
-          <Text style={styles.commentText}>{item.attributes.comment}</Text>
+          <Text style={this.styles.commentText}>{item.attributes.comment}</Text>
           <TouchableOpacity
             testID="replyButton"
-            style={styles.replyBtn}
+            style={this.styles.replyBtn}
             onPress={() => this.handleReplyPressed(`${item.id}`)}
           >
-            <Text style={styles.replyBtnText}>Reply</Text>
+            <Text style={this.styles.replyBtnText}>Reply</Text>
           </TouchableOpacity>
           {item.attributes.replies.length !== 0 && (
             <TouchableOpacity
               testID="showReplyButton"
-              style={styles.showReplyBtn}
+              style={this.styles.showReplyBtn}
               onPress={() => this.handleShowReplies(item)}
             >
-              <View style={styles.horizontalBar} />
-              <Text style={styles.showReplyBtnText}>
+              <View style={this.styles.horizontalBar} />
+              <Text style={this.styles.showReplyBtnText}>
                 {`View ${item.attributes.replies.length} more replies`}
               </Text>
             </TouchableOpacity>
           )}
         </View>
-        <View style={styles.likeView}>
+        <View style={this.styles.likeView}>
           <TouchableOpacity
             testID="likeCommentButton"
             onPress={() => this.likeComments(item.id.toString())}
@@ -342,7 +308,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
               color={item.attributes.like_by_me ? '#DC2626' : '#94A3B8'}
             />
           </TouchableOpacity>
-          <Text style={styles.likeCountText}>
+          <Text style={this.styles.likeCountText}>
             {item.attributes.likes_count}
           </Text>
         </View>
@@ -356,17 +322,17 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
   ) => (
     <>
       {this.state.userID === data.item?.attributes?.account_id?.toString() && (
-        <View style={styles.backRow}>
+        <View style={this.styles.backRow}>
           <TouchableOpacity
             testID="editComment"
-            style={[styles.backBtn, styles.backBtnLeft]}
+            style={[this.styles.backBtn, this.styles.backBtnLeft]}
             onPress={() => this.handleEditComment(data.item, rowMap)}
           >
             <Feather name="corner-up-left" size={25} color={'white'} />
           </TouchableOpacity>
           <TouchableOpacity
             testID="deleteComment"
-            style={[styles.backBtn, styles.backBtnRight]}
+            style={[this.styles.backBtn, this.styles.backBtnRight]}
             onPress={() => {
               this.deleteComment(`${data.item.id}`);
             }}
@@ -382,7 +348,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
     return (
       <>
         {this.state.comments.length ? (
-          <View style={styles.commentsListView}>
+          <View style={this.styles.commentsListView}>
             <SwipeListView
               bounces={false}
               alwaysBounceVertical={false}
@@ -431,10 +397,10 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
             />
           </View>
         ) : (
-          <View style={styles.noCommentsView}>
+          <View style={this.styles.noCommentsView}>
             <Feather name="message-square" size={60} color="#0F172A" />
-            <Text style={styles.commentsHeaderText}>No comments yet</Text>
-            <Text style={styles.startConversation}>Start the conversation</Text>
+            <Text style={this.styles.commentsHeaderText}>No comments yet</Text>
+            <Text style={this.styles.startConversation}>Start the conversation</Text>
           </View>
         )}
         {this.state.commentsLoading && (
@@ -447,7 +413,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
               justifyContent: 'center',
             }}
           >
-            <ActivityIndicator size="large" color="#4949EE" />
+            <ActivityIndicator size="large" color={this.getProfileTheme().primary} />
           </View>
         )}
       </>
@@ -465,14 +431,14 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
           behavior={this.isPlatformiOS() ? 'padding' : undefined}
           style={{ flex: 1 }}
         >
-          <View style={styles.commentsModalParentView}>
+          <View style={this.styles.commentsModalParentView}>
             <TouchableOpacity
               activeOpacity={1}
               testID="repliesModal"
               onPress={() => this.hideKeyboard()}
-              style={styles.commentsContainer}
+              style={this.styles.commentsContainer}
             >
-              <View style={styles.commentsHeading}>
+              <View style={this.styles.commentsHeading}>
                 <TouchableOpacity
                   testID="replyModalBackBtn"
                   onPress={this.handleReplyBack}
@@ -487,7 +453,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                     }}
                   />
                 </TouchableOpacity>
-                <Text style={styles.commentsHeaderText}>Replies</Text>
+                <Text style={this.styles.commentsHeaderText}>Replies</Text>
                 <TouchableOpacity
                   testID="closeReplyPopupButton"
                   onPress={this.closeReplyModal}
@@ -495,9 +461,9 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                   <Feather name="x" size={25} />
                 </TouchableOpacity>
               </View>
-              <View style={styles.separator} />
+              <View style={this.styles.separator} />
               {this.renderReplies()}
-              <View style={styles.emojiSelectionStrip}>
+              <View style={this.styles.emojiSelectionStrip}>
                 {this.defaultEmojisForSelectionStrip.map(
                   (emoji: string, index: number) => (
                     <TouchableOpacity
@@ -505,15 +471,15 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                       key={emoji}
                       onPress={() => this.handleEmojiSelection(emoji)}
                     >
-                      <Text style={styles.emojiSelectionStripIcon}>
+                      <Text style={this.styles.emojiSelectionStripIcon}>
                         {emoji}
                       </Text>
                     </TouchableOpacity>
                   ),
                 )}
               </View>
-              <View style={styles.commentInputContainer}>
-                <View style={styles.userAvatarView}>
+              <View style={this.styles.commentInputContainer}>
+                <View style={this.styles.userAvatarView}>
                   <FastImage
                     source={
                       this.state.profilePic
@@ -523,7 +489,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                           }
                         : defaultProfile
                     }
-                    style={styles.userAvatarImage}
+                    style={this.styles.userAvatarImage}
                     resizeMode={FastImage.resizeMode.cover}
                   />
                 </View>
@@ -536,13 +502,13 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                   onChangeText={commentText =>
                     this.handleCommentChange(commentText)
                   }
-                  style={styles.commentInput}
+                  style={this.styles.commentInput}
                   placeholder={'Add a reply...'}
                   multiline
                 />
                 <TouchableOpacity
                   testID="emojiReplyBtn"
-                  style={styles.emojiBtn}
+                  style={this.styles.emojiBtn}
                   onPress={this.handleSubmit}
                 >
                   <MCommunityIcons name="send" color="#64748B" size={30} />
@@ -570,7 +536,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
             justifyContent: 'flex-end',
           }}
         >
-          <View style={styles.tncModal}>
+          <View style={this.styles.tncModal}>
             <View
               style={{
                 padding: 20,
@@ -697,10 +663,10 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
   renderReplies = () => {
     return (
       <>
-        <View style={[styles.frontRow, { paddingHorizontal: 20 }]}>
+        <View style={[this.styles.frontRow, { paddingHorizontal: 20 }]}>
           <TouchableOpacity
             testID="userProfileImage"
-            style={styles.userAvatarView}
+            style={this.styles.userAvatarView}
             onPress={() =>
               this.showProfile(
                 `${this.state.commentWithReply.attributes.account.id}`,
@@ -718,18 +684,18 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                     }
                   : defaultProfile
               }
-              style={styles.userAvatarImage}
+              style={this.styles.userAvatarImage}
               resizeMode={FastImage.resizeMode.cover}
             />
           </TouchableOpacity>
-          <View style={styles.commentContentContainer}>
+          <View style={this.styles.commentContentContainer}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={styles.commenterNameText}>
+              <Text style={this.styles.commenterNameText}>
                 {this.state.commentWithReply.attributes?.account.first_name}
               </Text>
               <Text
                 style={[
-                  styles.commenterNameText,
+                  this.styles.commenterNameText,
                   { fontWeight: '400', marginLeft: 5 },
                 ]}
               >
@@ -738,7 +704,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                 )}
               </Text>
             </View>
-            <Text style={styles.replyText}>
+            <Text style={this.styles.replyText}>
               {this.state.commentWithReply.attributes?.comment}
             </Text>
           </View>
@@ -800,7 +766,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
               justifyContent: 'center',
             }}
           >
-            <ActivityIndicator size="large" color="#4949EE" />
+            <ActivityIndicator size="large" color={this.getProfileTheme().primary} />
           </View>
         )}
       </>
@@ -811,7 +777,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
     return (
       <View
         style={[
-          styles.frontRow,
+          this.styles.frontRow,
           {
             width: '95%',
             alignSelf: 'flex-end',
@@ -820,7 +786,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
       >
         <TouchableOpacity
           testID="showProfileBtn"
-          style={styles.userAvatarView}
+          style={this.styles.userAvatarView}
           onPress={() =>
             this.showProfile(`${item.account_id}`, item.account_type)
           }
@@ -834,23 +800,23 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                   }
                 : defaultProfile
             }
-            style={styles.userAvatarImage}
+            style={this.styles.userAvatarImage}
             resizeMode={FastImage.resizeMode.cover}
           />
         </TouchableOpacity>
-        <View style={styles.commentContentContainer}>
+        <View style={this.styles.commentContentContainer}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={styles.commenterNameText}>{item.account_name}</Text>
+            <Text style={this.styles.commenterNameText}>{item.account_name}</Text>
             <Text
               style={[
-                styles.commenterNameText,
+                this.styles.commenterNameText,
                 { fontWeight: '400', marginLeft: 5 },
               ]}
             >
               {item.created_at ? this.timeSince(item.created_at) : ''}
             </Text>
           </View>
-          <Text style={styles.replyText}>{item.reply}</Text>
+          <Text style={this.styles.replyText}>{item.reply}</Text>
         </View>
       </View>
     );
@@ -862,17 +828,17 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
   ) => (
     <>
       {this.state.userID === data.item.account_id.toString() && (
-        <View style={styles.backRow}>
+        <View style={this.styles.backRow}>
           <TouchableOpacity
             testID="editReply"
-            style={[styles.backBtn, styles.backBtnRight]}
+            style={[this.styles.backBtn, this.styles.backBtnRight]}
             onPress={() => this.handleEditReply(data.item, rowMap)}
           >
             <Feather name="corner-up-left" size={25} color={'white'} />
           </TouchableOpacity>
           <TouchableOpacity
             testID="deleteReply"
-            style={[styles.backBtn, styles.backBtnLeft]}
+            style={[this.styles.backBtn, this.styles.backBtnLeft]}
             onPress={() => {
               this.deleteComment(`${data.item.id}`);
             }}
@@ -902,7 +868,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
           }}
         >
           <Text
-            style={[styles.preferenceHeading, { justifyContent: 'flex-start' }]}
+            style={[this.styles.preferenceHeading, { justifyContent: 'flex-start' }]}
           >
             Categories I like
           </Text>
@@ -913,7 +879,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
             >
               <Text
                 style={[
-                  styles.preferenceHeading,
+                  this.styles.preferenceHeading,
                   {
                     justifyContent: 'flex-end',
                     fontWeight: '400',
@@ -942,26 +908,22 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
   renderActionButtons = () => {
     return (
       <>
-        {console.log(
-          '--this.state.profileData--',
-          this.state.profileData?.data,
-        )}
         {this.state.profileData.data?.attributes?.role_id === 1 &&
           this.isViewingOwnProfile() && (
-          <View style={{ marginTop: 0, marginBottom: 20 }}>
             <TouchableOpacity
-              style={[
-                styles.editProfileButton,
-                { width: '100%', alignSelf: 'center' },
-              ]}
+              style={this.styles.editProfilePill}
               onPress={this.goToEditProfile}
             >
-              <Text style={styles.editProfileButtonText}>
+              <Feather
+                name="edit-2"
+                size={13}
+                color={this.getProfileTheme().editButtonText}
+              />
+              <Text style={[this.styles.editProfilePillText, { marginLeft: 6 }]}>
                 Edit Profile
               </Text>
             </TouchableOpacity>
-          </View>
-        )}
+          )}
       </>
     );
   };
@@ -971,8 +933,8 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
     if (count > 0) {
       const displayCount = count > 99 ? '99+' : `${count}`;
       return (
-        <View style={styles.notificationBadge}>
-          <Text style={styles.notificationBadgeText}>{displayCount}</Text>
+        <View style={this.styles.notificationBadge}>
+          <Text style={this.styles.notificationBadgeText}>{displayCount}</Text>
         </View>
       );
     }
@@ -982,213 +944,242 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
 
   renderRedDot = ({ condition }: { condition: boolean }) => {
     if (condition) {
-      return <View style={styles.redDot} />;
+      return <View style={this.styles.redDot} />;
     }
 
     return null;
   };
 
   renderHeader = () => {
-    const currentTime = new Date().toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
-
     return (
-      // <View style={styles.topBackdrop}>
-      <View style={styles.headerContainer}>
-        <View style={styles.headerLeftSection}>
+      <View style={this.styles.bannerOverlay} pointerEvents="box-none">
+        <View style={this.styles.bannerOverlayInner} pointerEvents="box-none">
           <TouchableOpacity
             testID="navigationBackButton"
-            style={styles.headerIconBtn}
+            style={this.styles.overlayCircleBtn}
             onPress={this.handleBack}
+            activeOpacity={0.8}
           >
             <Image
               source={leftArrow}
-              style={[styles.headerIcon, { tintColor: '#334155' }]}
+              style={[this.styles.headerIcon, { tintColor: '#FFFFFF' }]}
             />
           </TouchableOpacity>
-        </View>
-        <Text style={styles.headerTitle}>Profile</Text>
-        <View style={styles.headerRightSection}>
-          <TouchableOpacity
-            testID="notificationButton"
-            style={styles.headerIconBtn}
-            onPress={() => this.handleNavigateToNotifications()}
-          >
-            <View style={styles.notificationWrapper}>
-              <Image
-                source={require('../../../mobile/assets/images/notifications.png')}
-                style={styles.notificationIcon}
-              />
-              {this.renderNotificationIndicator()}
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity
-            testID="hamburgerIcon"
-            onPress={() =>
-              this.props.navigation?.openDrawer &&
-              this.props.navigation.openDrawer()
-            }
-            style={styles.headerIconBtn}
-          >
-            <Image
-              style={styles.hamburgerIcon}
-              source={require('../../../mobile/assets/images/Vector.png')}
-            />
-          </TouchableOpacity>
+          <View style={this.styles.overlayRightActions}>
+            {this.renderThemeToggle()}
+            <TouchableOpacity
+              testID="notificationButton"
+              style={this.styles.overlayCircleBtn}
+              onPress={() => this.handleNavigateToNotifications()}
+              activeOpacity={0.8}
+            >
+              <View style={this.styles.notificationWrapper}>
+                <Image
+                  source={require('../../../mobile/assets/images/notifications.png')}
+                  style={this.styles.overlayNotificationIcon}
+                />
+                {this.renderNotificationIndicator()}
+              </View>
+            </TouchableOpacity>
+            {this.isViewingOwnProfile() && (
+              <TouchableOpacity
+                testID="logoutBtn"
+                style={[this.styles.overlayCircleBtn, this.styles.overlayCircleBtnGap]}
+                onPress={this.handleFanLogoutPress}
+                activeOpacity={0.8}
+              >
+                <Feather name="log-out" size={16} color="#FFFFFF" />
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              testID="hamburgerIcon"
+              onPress={() =>
+                this.props.navigation?.openDrawer &&
+                this.props.navigation.openDrawer()
+              }
+              style={[this.styles.overlayCircleBtn, this.styles.overlayCircleBtnGap]}
+              activeOpacity={0.8}
+            >
+              <Feather name="menu" size={16} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
-      // </View>
     );
   };
 
-  renderCoverAndProfilePhoto = () => {
+  handleFanLogoutPress = () => {
+    Alert.alert('Logout', 'Are you sure you want to logout?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: async () => {
+          const { clearAllUserData } = require('../../../framework/src/Utilities');
+          await clearAllUserData();
+          this.props.navigation?.navigate('EmailAccountLoginBlock');
+        },
+      },
+    ]);
+  };
+
+  getFanLocationLabel = () => {
+    const attrs = this.state.profileData.data?.attributes;
+    if (!attrs) {
+      return '';
+    }
+    if (attrs.city) {
+      return attrs.state ? `${attrs.city}, ${attrs.state}` : attrs.city;
+    }
+    return attrs.country || '';
+  };
+
+  getFanAccountTypeLabel = () => {
+      const accountType =
+      this.state.profileData.data?.attributes?.account_type ||
+      this.state.accountType ||
+      'Fan';
+    return this.getAccountTypeDisplayLabel(accountType);
+  };
+
+  renderThemeToggle = () => {
+    const isDark = this.state.isDarkMode;
     return (
-      <View
-        style={{
-          borderBottomRightRadius: 40,
-          backgroundColor: '#090966',
-          height: deviceWidth - 20,
-          width: '100%',
-          marginTop: 10,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
+      <TouchableOpacity
+        testID="themeToggle"
+        style={this.styles.themeTogglePill}
+        onPress={this.toggleProfileTheme}
+        activeOpacity={0.85}
+        accessibilityRole="switch"
+        accessibilityState={{ checked: isDark }}
+        accessibilityLabel="Toggle dark mode"
       >
+        <Feather
+          name="sun"
+          size={13}
+          color={isDark ? 'rgba(255,255,255,0.55)' : '#FFD60A'}
+        />
         <View
-          style={{
-            flex: 1,
-            height: deviceWidth - 20,
-            width: '100%',
-          }}
+          style={[
+            this.styles.themeSwitchTrack,
+            { backgroundColor: this.getProfileTheme().toggleTrack },
+          ]}
         >
-          {this.state.profileData.data?.attributes?.cover_photo ? (
-            <FastImage
-              source={{
-                uri: this.state.profileData.data?.attributes?.cover_photo,
-                priority: FastImage.priority.high,
-              }}
-              style={{
-                borderBottomRightRadius: 40,
-                backgroundColor: '#090966',
-                height: deviceWidth - 20,
-                width: '100%',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            />
-          ) : (
-            <View
-              style={{
-                borderBottomRightRadius: 40,
-                backgroundColor: '#090966',
-                height: deviceWidth - 20,
-                width: '100%',
-              }}
-            />
-          )}
+          <View
+            style={[
+              this.styles.themeSwitchKnob,
+              isDark
+                ? this.styles.themeSwitchKnobDark
+                : this.styles.themeSwitchKnobLight,
+            ]}
+          />
         </View>
-        <View style={{ position: 'absolute' }}>
-          <View style={styles.profileImageContainer}>
+        <Feather
+          name="moon"
+          size={13}
+          color={isDark ? '#C4B5FD' : 'rgba(255,255,255,0.45)'}
+        />
+      </TouchableOpacity>
+    );
+  };
+
+  renderBannerFade = () => {
+    const fadeColor = this.getProfileTheme().background;
+    const width = Dimensions.get('window').width;
+    return (
+      <View style={this.styles.bannerBottomFade} pointerEvents="none">
+        <Svg width={width} height={FAN_BANNER_FADE_HEIGHT}>
+          <Defs>
+            <LinearGradient
+              id="fanProfileBannerFade"
+              x1="0"
+              y1="0"
+              x2="0"
+              y2="1"
+            >
+              <Stop offset="0" stopColor={fadeColor} stopOpacity="0" />
+              <Stop offset="0.6" stopColor={fadeColor} stopOpacity="0.55" />
+              <Stop offset="1" stopColor={fadeColor} stopOpacity="1" />
+            </LinearGradient>
+          </Defs>
+          <Rect
+            x="0"
+            y="0"
+            width={width}
+            height={FAN_BANNER_FADE_HEIGHT}
+            fill="url(#fanProfileBannerFade)"
+          />
+        </Svg>
+      </View>
+    );
+  };
+
+  getProfileBannerSource = () => {
+    const attrs = this.state.profileData.data?.attributes;
+    const coverPhoto = this.state.coverPic || attrs?.cover_photo;
+    const coverUri =
+      typeof coverPhoto === 'string'
+        ? coverPhoto.trim()
+        : coverPhoto?.url
+          ? String(coverPhoto.url).trim()
+          : '';
+    if (coverUri !== '' && coverUri !== 'null' && coverUri !== 'undefined') {
+      return {
+        uri: coverUri,
+        priority: FastImage.priority.high,
+      };
+    }
+    return require('../../../mobile/assets/images/profile_concert_bg.png');
+  };
+
+  renderCoverAndProfilePhoto = () => {
+    const attrs = this.state.profileData.data?.attributes;
+    return (
+      <View style={this.styles.heroWrap}>
+        <View style={this.styles.bannerWrap}>
+          <FastImage
+            source={this.getProfileBannerSource()}
+            style={this.styles.bannerImage}
+            resizeMode={FastImage.resizeMode.cover}
+          />
+          {this.renderBannerFade()}
+          {this.renderHeader()}
+        </View>
+        <View style={this.styles.avatarRow}>
+          <View style={this.styles.profileImageContainer}>
             <FastImage
               source={
-                this.state.profileData.data?.attributes?.profile_image
+                attrs?.profile_image
                   ? {
-                      uri: this.state.profileData.data?.attributes
-                        ?.profile_image,
+                      uri: attrs.profile_image,
                       priority: FastImage.priority.high,
                     }
                   : defaultProfile
               }
-              style={styles.profileImage}
+              style={this.styles.profileImage}
               resizeMode={FastImage.resizeMode.cover}
             />
           </View>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            <Text
-              style={{
-                marginVertical: 16,
-                textAlign: 'center',
-                textAlignVertical: 'center',
-                color: '#FFFFFF',
-                fontSize: 30,
-                fontWeight: '700',
-                marginRight: 10,
-              }}
-            >
-              {this.state.profileData.data?.attributes?.first_name}
-            </Text>
-            {this.state.profileData.data?.attributes?.is_verified_user && (
-              <Image
-                source={require('../../../mobile/assets/images/check_green_circle.png')}
-                style={{ width: 20, height: 20, resizeMode: 'contain' }}
-              />
-            )}
-          </View>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            <Image
-              source={require('../../../mobile/assets/images/location_on.png')}
-              style={{
-                width: 20,
-                height: 20,
-                marginRight: 10,
-                resizeMode: 'contain',
-                tintColor: '#FFFFFF',
-              }}
-            />
-            <Text
-              style={{
-                textAlign: 'center',
-                textAlignVertical: 'center',
-                color: '#FFFFFF',
-                fontSize: 16,
-                fontWeight: '400',
-              }}
-            >
-              {this.state.profileData.data?.attributes?.city !== ''
-                ? `${this.state.profileData.data?.attributes?.city}, ${this.state.profileData.data?.attributes?.state}`
-                : `${this.state.profileData.data?.attributes?.country}`}
-            </Text>
-          </View>
-
-          {this.state.userID !== this.state.profileData.data?.id && (
-            <View style={styles.actionButtonsContainer}>
+          {this.isViewingOwnProfile() ? (
+            this.renderActionButtons()
+          ) : (
+            <View style={this.styles.actionButtonsContainer}>
               <TouchableOpacity
                 testID="follow"
-                style={styles.actionBtn}
-                onPress={() =>
-                  this.handleFollow(this.state.profileData.data?.id)
-                }
+                style={this.styles.actionBtn}
+                onPress={() => this.handleFollow(this.state.profileData.data?.id)}
               >
-                <Text style={[styles.text, styles.actionBtnText]}>
-                  {this.state.profileData.data?.attributes?.follow
-                    ? 'Unfollow'
-                    : 'Follow'}
+                <Text style={[this.styles.text, this.styles.actionBtnText]}>
+                  {attrs?.follow ? 'Unfollow' : 'Follow'}
                 </Text>
               </TouchableOpacity>
               {this.state.canShowAccountInfo && (
                 <TouchableOpacity
                   testID="message"
-                  style={[styles.actionBtn, styles.msgBtn]}
+                  style={[this.styles.actionBtn, this.styles.msgBtn]}
                   onPress={this.navigateToStartChat}
                 >
-                  <Text style={[styles.text, styles.msgBtn, { width: '100%' }]}>
-                    Message
-                  </Text>
+                  <Text style={[this.styles.text, this.styles.msgBtnText]}>Message</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -1198,38 +1189,76 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
     );
   };
 
+  renderFanIdentity = () => {
+    const attrs = this.state.profileData.data?.attributes;
+    const name = attrs?.first_name || '';
+    const headlineParts = [
+      this.getFanAccountTypeLabel(),
+      this.getFanLocationLabel(),
+    ].filter(Boolean);
+    const bio = attrs?.bio;
+    return (
+      <View style={this.styles.identityBlock}>
+        <View style={this.styles.nameRow}>
+          <Text style={this.styles.profileName} numberOfLines={2}>
+            {String(name).toUpperCase()}
+          </Text>
+          {attrs?.is_verified_user && (
+            <Image
+              source={require('../../../mobile/assets/images/check_green_circle.png')}
+              style={this.styles.verifiedBadge}
+            />
+          )}
+        </View>
+        {headlineParts.length > 0 && (
+          <Text style={this.styles.profileHeadline}>
+            {headlineParts.join(' · ')}
+          </Text>
+        )}
+        {!!bio && bio !== '' && <Text style={this.styles.profileBio}>{bio}</Text>}
+        {this.renderWebsiteSocialMedia()}
+      </View>
+    );
+  };
+
   renderPostsFollowersFollowings = () => {
     return (
-      <View style={styles.statsContainer}>
+      <View style={this.styles.statsContainer}>
         <TouchableOpacity
           testID="followers"
+          style={this.styles.statCell}
           activeOpacity={1}
           onPress={() => this.goToFollowerFollowingScreen('followers')}
         >
-          <Text style={[styles.text, styles.statsText]}>
-            {`${this.state.profileData.data?.attributes?.followers}\nFollowers`}
+          <Text style={this.styles.statValue}>
+            {this.state.profileData.data?.attributes?.followers ?? 0}
           </Text>
+          <Text style={this.styles.statLabel}>Followers</Text>
         </TouchableOpacity>
-        <View style={styles.divider} />
+        <View style={this.styles.divider} />
         <TouchableOpacity
           testID="following"
+          style={this.styles.statCell}
           activeOpacity={1}
           onPress={() => this.goToFollowerFollowingScreen('following')}
         >
-          <Text style={[styles.text, styles.statsText]}>
-            {`${this.state.profileData.data?.attributes?.following}\nFollowing`}
+          <Text style={this.styles.statValue}>
+            {this.state.profileData.data?.attributes?.following ?? 0}
           </Text>
+          <Text style={this.styles.statLabel}>Following</Text>
         </TouchableOpacity>
         {this.state.userID === this.state.profileData.data?.id && (
           <>
-            <View style={styles.divider} />
+            <View style={this.styles.divider} />
             <TouchableOpacity
               testID="blocked"
+              style={this.styles.statCell}
               onPress={this.goToBlockedUserScreen}
             >
-              <Text style={[styles.text, styles.statsText]}>
-                {`${this.state.profileData.data?.attributes?.blocked_user}\nBlocked`}
+              <Text style={this.styles.statValue}>
+                {this.state.profileData.data?.attributes?.blocked_user ?? 0}
               </Text>
+              <Text style={this.styles.statLabel}>Blocked</Text>
             </TouchableOpacity>
           </>
         )}
@@ -1257,7 +1286,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                 flex: 0.4,
                 fontSize: 16,
                 fontWeight: '700',
-                color: '#334155',
+                color: this.getProfileTheme().foreground,
               }}
             >
               Category
@@ -1275,7 +1304,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                       style={{
                         fontSize: 16,
                         fontWeight: '400',
-                        color: '#334155',
+                        color: this.getProfileTheme().foreground,
                       }}
                     >
                       {index === categorySubcat.length - 1
@@ -1312,7 +1341,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                 flex: 0.4,
                 fontSize: 16,
                 fontWeight: '700',
-                color: '#334155',
+                color: this.getProfileTheme().foreground,
               }}
             >
               Type
@@ -1336,7 +1365,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                         style={{
                           fontSize: 16,
                           fontWeight: '400',
-                          color: '#334155',
+                          color: this.getProfileTheme().foreground,
                         }}
                       >
                         {index === (item.subcategories?.length || 0) - 1
@@ -1379,7 +1408,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                 flex: 0.4,
                 fontSize: 16,
                 fontWeight: '700',
-                color: '#334155',
+                color: this.getProfileTheme().foreground,
               }}
             >
               Official Website
@@ -1390,7 +1419,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                 flex: 0.5,
                 fontSize: 16,
                 fontWeight: '400',
-                color: '#4949EE',
+                color: this.getProfileTheme().primary,
               }}
               onPress={() => {
                 if (website) {
@@ -1421,7 +1450,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                   flex: 0.4,
                   fontSize: 16,
                   fontWeight: '700',
-                  color: '#334155',
+                  color: this.getProfileTheme().foreground,
                 }}
               >
                 Social Media
@@ -1443,7 +1472,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                   }}
                   style={{ marginRight: 25 }}
                 >
-                  <Feather name="instagram" size={20} color={'#4949EE'} />
+                  <Feather name="instagram" size={20} color={this.getProfileTheme().primary} />
                 </TouchableOpacity>
               )}
               {facebook !== '' && facebook !== 'undefined' && (
@@ -1459,7 +1488,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                   }}
                   style={{ marginRight: 25 }}
                 >
-                  <FntAwesome name="facebook" size={20} color={'#4949EE'} />
+                  <FntAwesome name="facebook" size={20} color={this.getProfileTheme().primary} />
                 </TouchableOpacity>
               )}
               {linkedin !== '' && linkedin !== 'undefined' && (
@@ -1477,7 +1506,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                   <FntAwesome
                     name="linkedin-square"
                     size={20}
-                    color={'#4949EE'}
+                    color={this.getProfileTheme().primary}
                   />
                 </TouchableOpacity>
               )}
@@ -1502,7 +1531,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                   style={{
                     fontSize: 16,
                     fontWeight: '700',
-                    color: '#334155',
+                    color: this.getProfileTheme().foreground,
                     marginBottom: 10,
                   }}
                 >
@@ -1513,7 +1542,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                   style={{
                     fontSize: 16,
                     fontWeight: '400',
-                    color: '#334155',
+                    color: this.getProfileTheme().foreground,
                     lineHeight: 22,
                   }}
                 >
@@ -1527,7 +1556,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                   style={{
                     fontSize: 16,
                     fontWeight: '700',
-                    color: '#334155',
+                    color: this.getProfileTheme().foreground,
                     marginBottom: 10,
                   }}
                 >
@@ -1538,7 +1567,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                   style={{
                     fontSize: 16,
                     fontWeight: '400',
-                    color: '#334155',
+                    color: this.getProfileTheme().foreground,
                     lineHeight: 22,
                   }}
                 >
@@ -1572,7 +1601,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                 flex: 0.4,
                 fontSize: 16,
                 fontWeight: '700',
-                color: '#334155',
+                color: this.getProfileTheme().foreground,
               }}
             >
               Influences
@@ -1590,7 +1619,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                       style={{
                         fontSize: 16,
                         fontWeight: '400',
-                        color: '#334155',
+                        color: this.getProfileTheme().foreground,
                       }}
                     >
                       {index === influences.length - 1
@@ -1627,7 +1656,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                 flex: 0.4,
                 fontSize: 16,
                 fontWeight: '700',
-                color: '#334155',
+                color: this.getProfileTheme().foreground,
               }}
             >
               Affiliates
@@ -1645,7 +1674,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                       style={{
                         fontSize: 16,
                         fontWeight: '400',
-                        color: '#334155',
+                        color: this.getProfileTheme().foreground,
                       }}
                     >
                       {index === affiliates.length - 1
@@ -1669,10 +1698,10 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
           this.state.profileData.data?.attributes?.user_selection?.data?.attributes
             .band_artists.length !== 0 && (
             <View style={{ marginTop: 20 }}>
-              <Text style={[styles.preferenceHeading, { marginTop: 0 }]}>
+              <Text style={[this.styles.preferenceHeading, { marginTop: 0 }]}>
                 Bands/Artists I like
               </Text>
-              <Text style={styles.preferenceText}>
+              <Text style={this.styles.preferenceText}>
                 {(this.state.profileData.data?.attributes?.band_artists ?? [])
                   .map((band_name: any) => band_name)
                   .join(', ')}
@@ -1703,32 +1732,35 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
     return (
       <KeyboardAvoidingView
         behavior={this.isPlatformiOS() ? 'padding' : undefined}
-        style={{ flex: 1 }}
+        style={{ flex: 1, backgroundColor: this.getProfileTheme().background }}
       >
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scollContent}
+          contentContainerStyle={this.styles.scollContent}
+          contentInsetAdjustmentBehavior="never"
         >
-          <StatusBar backgroundColor="#131388" barStyle="light-content" />
-          <View style={styles.container}>
+          <StatusBar
+            backgroundColor={this.getProfileTheme().background}
+            barStyle="light-content"
+          />
+          <View style={this.styles.container}>
             <TouchableWithoutFeedback
               onPress={() => {
                 this.hideKeyboard();
               }}
             >
-              <SafeAreaView>
-                <View style={styles.contentContainer}>
-                  {this.renderHeader()}
+              <View style={{ flex: 1, backgroundColor: this.getProfileTheme().background }}>
+                <View style={this.styles.contentContainer}>
                   {this.renderCoverAndProfilePhoto()}
-                  <View style={styles.bottomContainer}>
+                  <View style={this.styles.bottomContainer}>
                     <View
                       style={{
                         paddingHorizontal: 16,
                         paddingBottom: 30,
                       }}
                     >
+                      {this.renderFanIdentity()}
                       {this.renderPostsFollowersFollowings()}
-                      {this.renderActionButtons()}
                       {/* {this.state.profileData.data?.attributes?.user_selection?.data?.attributes?.user_categories &&
                       this.renderCategory()}
                     {this.state.profileData.data?.attributes?.user_selection?.data?.attributes?.user_categories &&
@@ -1751,10 +1783,10 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                             <View>
                               <Text
                                 style={[
-                                  styles.preferenceHeading,
+                                  this.styles.preferenceHeading,
                                   {
                                     marginTop: 40,
-                                    color: '#334155',
+                                    color: this.getProfileTheme().foreground,
                                     marginBottom: 5,
                                   },
                                 ]}
@@ -1762,14 +1794,14 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                                 Calendar{' '}
                                 <Text
                                   style={[
-                                    styles.preferenceText,
+                                    this.styles.preferenceText,
                                     { fontWeight: '400' },
                                   ]}
                                 >
                                   {`(${this.getCalendarEventsLength()} shows)`}
                                 </Text>
                               </Text>
-                              <View style={styles.horizontalView} />
+                              <View style={this.styles.horizontalView} />
                               <FlatList
                                 testID="calendarEventFlatList"
                                 data={this.calendarEventsData()}
@@ -1784,7 +1816,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                                 >
                                   <Text
                                     style={[
-                                      styles.preferenceHeading,
+                                      this.styles.preferenceHeading,
                                       {
                                         fontWeight: '400',
                                         fontSize: 14,
@@ -1805,17 +1837,17 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                             <View>
                               <Text
                                 style={[
-                                  styles.preferenceHeading,
+                                  this.styles.preferenceHeading,
                                   {
                                     marginTop: 40,
-                                    color: '#334155',
+                                    color: this.getProfileTheme().foreground,
                                     marginBottom: 5,
                                   },
                                 ]}
                               >
                                 Liked events
                               </Text>
-                              <View style={styles.horizontalView} />
+                              <View style={this.styles.horizontalView} />
                               <FlatList
                                 testID="likedEventFlatList"
                                 data={this.likedEventsData()}
@@ -1830,7 +1862,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                                 >
                                   <Text
                                     style={[
-                                      styles.preferenceHeading,
+                                      this.styles.preferenceHeading,
                                       {
                                         fontWeight: '400',
                                         fontSize: 14,
@@ -1848,13 +1880,13 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                           ) : null}
                         </>
                       ) : (
-                        <View style={styles.privateAccountContainer}>
+                        <View style={this.styles.privateAccountContainer}>
                           <MCommunityIcons
                             name="lock-outline"
-                            color="#334155"
+                            color={this.getProfileTheme().foreground}
                             size={100}
                           />
-                          <Text style={styles.privateAccountText}>
+                          <Text style={this.styles.privateAccountText}>
                             {configJSON.privateAccount}
                           </Text>
                         </View>
@@ -1871,15 +1903,15 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                     behavior={this.isPlatformiOS() ? 'padding' : undefined}
                     style={{ flex: 1 }}
                   >
-                    <View style={styles.commentsModalParentView}>
+                    <View style={this.styles.commentsModalParentView}>
                       <TouchableOpacity
                         activeOpacity={1}
                         testID="commentModal"
                         onPress={() => this.hideKeyboard()}
-                        style={styles.commentsContainer}
+                        style={this.styles.commentsContainer}
                       >
-                        <View style={styles.commentsHeading}>
-                          <Text style={styles.commentsHeaderText}>
+                        <View style={this.styles.commentsHeading}>
+                          <Text style={this.styles.commentsHeaderText}>
                             Comments
                           </Text>
                           <TouchableOpacity
@@ -1889,15 +1921,15 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                             <Feather name="x" size={25} />
                           </TouchableOpacity>
                         </View>
-                        <View style={styles.separator} />
+                        <View style={this.styles.separator} />
                         {this.state.isLoadingComments ? (
-                          <View style={styles.noCommentsView}>
-                            <ActivityIndicator size="large" color="#4949EE" />
+                          <View style={this.styles.noCommentsView}>
+                            <ActivityIndicator size="large" color={this.getProfileTheme().primary} />
                           </View>
                         ) : (
                           <this.renderComments />
                         )}
-                        <View style={styles.emojiSelectionStrip}>
+                        <View style={this.styles.emojiSelectionStrip}>
                           {this.defaultEmojisForSelectionStrip.map(
                             (emoji: string, index) => (
                               <TouchableOpacity
@@ -1905,15 +1937,15 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                                 key={emoji}
                                 onPress={() => this.handleEmojiSelection(emoji)}
                               >
-                                <Text style={styles.emojiSelectionStripIcon}>
+                                <Text style={this.styles.emojiSelectionStripIcon}>
                                   {emoji}
                                 </Text>
                               </TouchableOpacity>
                             ),
                           )}
                         </View>
-                        <View style={styles.commentInputContainer}>
-                          <View style={styles.userAvatarView}>
+                        <View style={this.styles.commentInputContainer}>
+                          <View style={this.styles.userAvatarView}>
                             <FastImage
                               source={
                                 this.state.profilePic
@@ -1923,7 +1955,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                                     }
                                   : defaultProfile
                               }
-                              style={styles.userAvatarImage}
+                              style={this.styles.userAvatarImage}
                               resizeMode={FastImage.resizeMode.cover}
                             />
                           </View>
@@ -1932,7 +1964,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                             ref={input => {
                               this.commentTextInput = input;
                             }}
-                            style={styles.commentInput}
+                            style={this.styles.commentInput}
                             placeholder={
                               this.state.replying
                                 ? 'Add a reply...'
@@ -1946,7 +1978,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                           />
                           <TouchableOpacity
                             testID="emojiCommentBtn"
-                            style={styles.emojiBtn}
+                            style={this.styles.emojiBtn}
                             onPress={this.handleSubmit}
                           >
                             <MCommunityIcons
@@ -1963,11 +1995,11 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                 <this.renderRepliesModal />
                 {this.renderTnCUpdateModalPopup()}
                 {this.state.isLoading && (
-                  <View style={styles.loadingContainer}>
-                    <ActivityIndicator size={'large'} color="#4949EE" />
+                  <View style={this.styles.loadingContainer}>
+                    <ActivityIndicator size={'large'} color={this.getProfileTheme().primary} />
                   </View>
                 )}
-              </SafeAreaView>
+              </View>
             </TouchableWithoutFeedback>
           </View>
         </ScrollView>
@@ -2001,6 +2033,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
       );
     }
 
+    await this.loadProfileTheme();
     await this.loadProfileData(true);
     this.getUnreadNotificationsCount();
 
@@ -2014,16 +2047,190 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
   }
 }
 // Customizable Area Start
-const styles = StyleSheet.create({
+const FAN_BANNER_HEIGHT = Math.round(Dimensions.get('window').height * 0.28);
+const FAN_BANNER_FADE_HEIGHT = 96;
+
+const createProfileStyles = (theme: typeof redesignTheme) =>
+  StyleSheet.create({
   container: {
     flex: 1,
     marginLeft: 'auto',
     marginRight: 'auto',
     width: '100%',
     maxWidth: 650,
-    backgroundColor: '#FCFCFF',
+    backgroundColor: theme.background,
   },
-  scollContent: { flexGrow: 1 },
+  scollContent: { flexGrow: 1, backgroundColor: theme.background },
+  heroWrap: {
+    backgroundColor: theme.background,
+    marginBottom: 8,
+  },
+  bannerWrap: {
+    width: '100%',
+    height: FAN_BANNER_HEIGHT,
+    backgroundColor: theme.input,
+    overflow: 'hidden',
+  },
+  bannerImage: {
+    width: '100%',
+    height: FAN_BANNER_HEIGHT,
+  },
+  bannerBottomFade: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: FAN_BANNER_FADE_HEIGHT,
+  },
+  bannerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    paddingTop: Platform.OS === 'ios' ? 48 : 16,
+  },
+  bannerOverlayInner: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingTop: Platform.OS === 'ios' ? 12 : 8,
+    paddingBottom: 12,
+  },
+  overlayCircleBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(8, 8, 15, 0.55)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255, 255, 255, 0.14)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  overlayCircleBtnGap: {
+    marginLeft: 8,
+  },
+  overlayRightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  themeTogglePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 36,
+    paddingHorizontal: 8,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+    marginRight: 8,
+  },
+  themeSwitchTrack: {
+    width: 36,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: theme.toggleTrack,
+    marginHorizontal: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 2,
+  },
+  themeSwitchKnob: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+  },
+  themeSwitchKnobLight: {
+    marginRight: 'auto',
+  },
+  themeSwitchKnobDark: {
+    marginLeft: 'auto',
+  },
+  overlayNotificationIcon: {
+    width: 16,
+    height: 16,
+    resizeMode: 'contain',
+    tintColor: '#FFFFFF',
+  },
+  avatarRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    marginTop: -42,
+  },
+  identityBlock: {
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  },
+  profileName: {
+    color: theme.foreground,
+    fontSize: 26,
+    fontWeight: '800',
+    letterSpacing: 0.4,
+    marginRight: 8,
+    flexShrink: 1,
+  },
+  verifiedBadge: {
+    width: 18,
+    height: 18,
+    resizeMode: 'contain',
+  },
+  profileHeadline: {
+    color: theme.muted,
+    fontSize: 14,
+    marginTop: 6,
+  },
+  profileBio: {
+    color: theme.muted,
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 10,
+  },
+  editProfilePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.editButtonBorder,
+    backgroundColor: theme.editButton,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    marginBottom: 8,
+  },
+  editProfilePillText: {
+    color: theme.editButtonText,
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  statCell: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statValue: {
+    color: theme.foreground,
+    fontSize: 22,
+    fontWeight: '700',
+  },
+  statLabel: {
+    color: theme.muted,
+    fontSize: 13,
+    fontWeight: '400',
+    marginTop: 4,
+  },
+  msgBtnText: {
+    color: theme.foreground,
+    fontWeight: '700',
+    fontSize: 13,
+    textAlign: 'center',
+  },
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -2053,7 +2260,7 @@ const styles = StyleSheet.create({
   },
   headerTimeText: {
     fontSize: 16,
-    color: '#334155',
+    color: theme.foreground,
     marginLeft: 8,
     marginRight: 8,
   },
@@ -2079,14 +2286,14 @@ const styles = StyleSheet.create({
     height: 20,
     width: 20,
     resizeMode: 'contain',
-    tintColor: '#334155',
+    tintColor: theme.foreground,
   },
   contentContainer: {
     flex: 1,
-    backgroundColor: '#131388',
+    backgroundColor: theme.background,
   },
   topBackdrop: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.background,
     width: '100%',
     paddingTop: 10,
     paddingBottom: 10,
@@ -2101,33 +2308,31 @@ const styles = StyleSheet.create({
   },
   bottomContainer: {
     flex: 1,
-    backgroundColor: '#FCFCFF',
+    backgroundColor: theme.background,
     width: '100%',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    marginTop: -40,
     paddingBottom: 20,
     minHeight: Dimensions.get('screen').height - 250,
   },
   profileImageContainer: {
-    backgroundColor: '#FCFCFF',
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    marginTop: -80,
-    alignSelf: 'center',
+    backgroundColor: theme.background,
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    borderWidth: 3,
+    borderColor: theme.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   profileImage: {
-    width: 150,
-    height: 150,
+    width: 86,
+    height: 86,
     resizeMode: 'cover',
-    borderRadius: 75,
+    borderRadius: 43,
   },
   text: {
     fontFamily: 'OpenSans',
-    color: colors(false).text,
+    color: theme.foreground,
   },
   nameText: {
     fontSize: 36,
@@ -2152,21 +2357,29 @@ const styles = StyleSheet.create({
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-evenly',
-    marginVertical: 30,
+    alignItems: 'stretch',
+    marginVertical: 18,
+    backgroundColor: theme.statsBg,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: theme.statsBorder,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
   },
   statsText: {
     textAlign: 'center',
   },
   divider: {
-    height: '100%',
     width: 1,
-    backgroundColor: '#CBD5E1',
+    alignSelf: 'stretch',
+    backgroundColor: theme.divider,
   },
   actionButtonsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    width: '100%',
-    // backgroundColor:"red"
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'flex-end',
+    marginLeft: 12,
     margin: 10,
   },
   actionButton: {
@@ -2195,25 +2408,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   actionBtn: {
-    backgroundColor: '#3333CC',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    flex: 1,
-    marginHorizontal: 5,
+    backgroundColor: theme.primary,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    minWidth: 88,
+    marginLeft: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   actionBtnText: {
     color: '#FFFFFF',
     fontWeight: '700',
-    fontSize: 16,
+    fontSize: 13,
   },
   msgBtn: {
-    backgroundColor: '#EDEDFF',
-    color: '#3333CC',
-    fontWeight: '700',
-    fontSize: 16,
+    backgroundColor: theme.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.border,
   },
   messageButton: {
     backgroundColor: '#EDEDFF',
@@ -2224,7 +2436,7 @@ const styles = StyleSheet.create({
   preferenceHeading: {
     fontSize: 18,
     fontFamily: 'OpenSans',
-    color: '#4949EE',
+    color: theme.primary,
     fontWeight: 'bold',
     marginHorizontal: '5%',
     marginVertical: 20,
@@ -2232,7 +2444,7 @@ const styles = StyleSheet.create({
   preferenceText: {
     fontSize: 16,
     marginHorizontal: '5%',
-    color: '#334155',
+    color: theme.foreground,
   },
   categoryContainer: {
     flexDirection: 'row',
@@ -2255,7 +2467,7 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     paddingHorizontal: 15,
     borderRadius: 10,
-    backgroundColor: '#4949EE',
+    backgroundColor: theme.primary,
     flexWrap: 'wrap',
     display: 'flex',
     flexDirection: 'column',
@@ -2454,8 +2666,66 @@ const styles = StyleSheet.create({
   eventContainer: {
     flexDirection: 'column',
     width: '100%',
-    padding: 20,
-    marginTop: 2,
+    padding: 0,
+    paddingVertical: 8,
+  },
+  compactCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.card,
+    borderRadius: 14,
+    padding: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.border,
+  },
+  compactCardMain: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  compactThumb: {
+    width: 56,
+    height: 56,
+    borderRadius: 10,
+    backgroundColor: theme.input,
+  },
+  compactCardCopy: {
+    flex: 1,
+    marginLeft: 12,
+    marginRight: 8,
+  },
+  compactCardTitle: {
+    color: theme.foreground,
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  compactCardSubtitle: {
+    color: theme.muted,
+    fontSize: 12,
+    marginTop: 4,
+  },
+  compactLikeBtn: {
+    padding: 6,
+  },
+  compactLikeIcon: {
+    width: 18,
+    height: 16,
+    tintColor: theme.primary,
+    resizeMode: 'contain',
+  },
+  compactLikeIconFilled: {
+    width: 18,
+    height: 16,
+    tintColor: theme.primary,
+    resizeMode: 'contain',
+  },
+  actionIcon: {
+    marginLeft: 8,
+    tintColor: theme.muted,
+    width: 20,
+    height: 20,
+    resizeMode: 'contain',
   },
   flexRow: {
     flexDirection: 'row',
@@ -2471,7 +2741,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 14,
     lineHeight: 22,
-    color: '#334155',
+    color: theme.foreground,
   },
   locationPin: {
     marginRight: 5,
@@ -2500,7 +2770,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   likeIcon: {
-    tintColor: '#4949EE',
+    tintColor: theme.primary,
     height: 20,
     width: 22,
   },
@@ -2508,23 +2778,23 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     fontSize: 14,
     lineHeight: 22,
-    color: '#334155',
+    color: theme.foreground,
   },
   descriptionText: {
     fontWeight: '400',
     fontSize: 14,
     lineHeight: 22,
-    color: '#334155',
+    color: theme.foreground,
   },
   seeCommentsText: {
-    color: '#4949EE',
+    color: theme.primary,
     fontWeight: '400',
     lineHeight: 18,
     fontSize: 14,
     marginLeft: 5,
   },
   notificationIcon: {
-    tintColor: '#334155',
+    tintColor: theme.foreground,
     width: 25,
     resizeMode: 'contain',
   },
@@ -2565,7 +2835,7 @@ const styles = StyleSheet.create({
   },
   month: {
     fontWeight: '700',
-    color: '#334155',
+    color: theme.foreground,
     fontSize: 18,
     marginBottom: 20,
   },
@@ -2579,7 +2849,7 @@ const styles = StyleSheet.create({
   },
   people: {
     fontWeight: '700',
-    color: '#4949EE',
+    color: theme.primary,
   },
   tncModal: {
     backgroundColor: 'white',
@@ -2600,10 +2870,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   privateAccountText: {
-    color: '#334155',
+    color: theme.foreground,
     fontSize: 16,
     textAlign: 'center',
     marginTop: 20,
   },
 });
+
+const darkProfileStyles = createProfileStyles(redesignTheme);
+const lightProfileStyles = createProfileStyles(lightTheme);
 // Customizable Area End

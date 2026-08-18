@@ -18,7 +18,10 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import styles from './AllEventStyle';
+import {
+  darkAllEventStyles,
+  lightAllEventStyles,
+} from './AllEventStyle';
 import { leftArrow } from './assets';
 import Svg, { Path } from 'react-native-svg';
 import Icon from 'react-native-vector-icons/Feather';
@@ -36,7 +39,7 @@ import {
   getStorageData,
   removeStorageData,
 } from '../../../framework/src/Utilities';
-import { redesignTheme } from '../../utilities/src/Colors';
+
 // Customizable Area End
 
 import AllEventController, { Props } from './AllEventController';
@@ -46,6 +49,10 @@ export default class AllEventScreen extends AllEventController {
     super(props);
     // Customizable Area Start
     // Customizable Area End
+  }
+
+  get styles() {
+    return this.state.isDarkMode ? darkAllEventStyles : lightAllEventStyles;
   }
                                                       
   async componentDidMount() {
@@ -164,7 +171,7 @@ export default class AllEventScreen extends AllEventController {
     return (
       <View
         style={{
-          backgroundColor: redesignTheme.background,
+          backgroundColor: this.getHomeTheme().background,
           paddingBottom: 8,
         }}
         key={`guest-state-${stateKey}-${index}`}
@@ -190,28 +197,28 @@ export default class AllEventScreen extends AllEventController {
                   this.handleEventLaunch(show, item.state_name)
                 }
               >
-                <View style={styles.compactShowCard}>
-                  <View style={styles.compactShowMainRow}>
-                    <View style={styles.compactShowThumbWrap}>
+                <View style={this.styles.compactShowCard}>
+                  <View style={this.styles.compactShowMainRow}>
+                    <View style={this.styles.compactShowThumbWrap}>
                       {this.renderCompactShowThumb(show)}
                     </View>
-                    <View style={styles.compactShowBody}>
+                    <View style={this.styles.compactShowBody}>
                       {title !== '' && (
-                        <Text style={styles.compactShowTitle} numberOfLines={2}>
+                        <Text style={this.styles.compactShowTitle} numberOfLines={2}>
                           {title}
                         </Text>
                       )}
                       {(venue !== '' || timeLabel !== '') && (
-                        <View style={styles.compactShowMetaRow}>
+                        <View style={this.styles.compactShowMetaRow}>
                           {venue !== '' && (
                             <>
                               <Icon
                                 name="map-pin"
                                 size={11}
-                                color={redesignTheme.primary}
+                                color={this.getHomeTheme().primary}
                               />
                               <Text
-                                style={styles.compactShowVenue}
+                                style={this.styles.compactShowVenue}
                                 numberOfLines={1}
                               >
                                 {venue}
@@ -219,7 +226,7 @@ export default class AllEventScreen extends AllEventController {
                             </>
                           )}
                           {timeLabel !== '' && (
-                            <Text style={styles.compactShowTime}>
+                            <Text style={this.styles.compactShowTime}>
                               {timeLabel}
                             </Text>
                           )}
@@ -236,7 +243,7 @@ export default class AllEventScreen extends AllEventController {
           (!isLoggedIn && isLastItem)) && (
           <View>
             <Text
-              style={styles.compactSeeMoreText}
+              style={this.styles.compactSeeMoreText}
               testID="toggleSeeMore"
               onPress={() => {
                 if (isLoggedIn) {
@@ -286,14 +293,14 @@ export default class AllEventScreen extends AllEventController {
         activeOpacity={0.92}
         onPress={() => this.handleEventLaunch(show, item.state_name)}
       >
-      <View style={styles.compactShowCard}>
-        <View style={styles.compactShowMainRow}>
-        <View style={styles.compactShowThumbWrap}>
+      <View style={this.styles.compactShowCard}>
+        <View style={this.styles.compactShowMainRow}>
+        <View style={this.styles.compactShowThumbWrap}>
           {this.renderCompactShowThumb(show)}
         </View>
 
-        <View style={styles.compactShowBody}>
-          <View style={styles.compactShowTitleRow}>
+        <View style={this.styles.compactShowBody}>
+          <View style={this.styles.compactShowTitleRow}>
             <TouchableOpacity
               testID="bandProfile"
               onPress={async () =>
@@ -302,7 +309,7 @@ export default class AllEventScreen extends AllEventController {
               style={{ flex: 1 }}
             >
               <Text
-                style={styles.compactShowTitle}
+                style={this.styles.compactShowTitle}
                 numberOfLines={2}
                 testID="bandName"
               >
@@ -325,24 +332,24 @@ export default class AllEventScreen extends AllEventController {
                     ? require('../../../mobile/assets/images/favourite_filled.png')
                     : require('../../../mobile/assets/images/image_favorite.png')
                 }
-                style={styles.compactShowLikeIcon}
+                style={this.styles.compactShowLikeIcon}
               />
             </TouchableOpacity>
           </View>
 
           {genreLabel !== '' && (
-            <Text style={styles.compactShowGenre} numberOfLines={1}>
+            <Text style={this.styles.compactShowGenre} numberOfLines={1}>
               {genreLabel}
             </Text>
           )}
           {lineupLabel !== '' && (
-            <Text style={styles.compactShowLineup} numberOfLines={1}>
+            <Text style={this.styles.compactShowLineup} numberOfLines={1}>
               {lineupLabel}
             </Text>
           )}
 
           {(showType === 'show' || metaTime !== '') && (
-            <View style={styles.compactShowMetaRow}>
+            <View style={this.styles.compactShowMetaRow}>
               {showType === 'show' && (
                 <TouchableOpacity
                   testID="openMaps"
@@ -358,22 +365,22 @@ export default class AllEventScreen extends AllEventController {
                   <Icon
                     name="map-pin"
                     size={11}
-                    color={redesignTheme.primary}
+                    color={this.getHomeTheme().primary}
                   />
-                  <Text style={styles.compactShowVenue} numberOfLines={1}>
+                  <Text style={this.styles.compactShowVenue} numberOfLines={1}>
                     {venue}
                     {venue !== '' ? ' ' : ''}
                   </Text>
                 </TouchableOpacity>
               )}
               {metaTime !== '' && (
-                <Text style={styles.compactShowTime}>{metaTime}</Text>
+                <Text style={this.styles.compactShowTime}>{metaTime}</Text>
               )}
             </View>
           )}
 
-          <View style={styles.compactShowActions}>
-            <View style={styles.compactShowActionIcons}>
+          <View style={this.styles.compactShowActions}>
+            <View style={this.styles.compactShowActionIcons}>
               <TouchableOpacity
                 testID="commentIcon"
                 onPress={() => {
@@ -384,7 +391,7 @@ export default class AllEventScreen extends AllEventController {
               >
                 <Image
                   source={require('../../../mobile/assets/images/image_chat_bubble_outline_24px.png')}
-                  style={styles.compactShowActionIcon}
+                  style={this.styles.compactShowActionIcon}
                 />
               </TouchableOpacity>
               <TouchableOpacity
@@ -397,7 +404,7 @@ export default class AllEventScreen extends AllEventController {
               >
                 <Image
                   source={require('../../../mobile/assets/images/image_share_24px.png')}
-                  style={styles.compactShowActionIcon}
+                  style={this.styles.compactShowActionIcon}
                 />
               </TouchableOpacity>
             </View>
@@ -413,7 +420,7 @@ export default class AllEventScreen extends AllEventController {
                     }
                   }}
                 >
-                  <Text style={styles.compactShowCalendarText}>
+                  <Text style={this.styles.compactShowCalendarText}>
                     Add it to my calendar
                   </Text>
                 </TouchableOpacity>
@@ -429,8 +436,8 @@ export default class AllEventScreen extends AllEventController {
                 }
               }}
             >
-              <Text style={styles.compactShowSocialText}>
-                <Text style={{ fontWeight: '700', color: redesignTheme.primary }}>
+              <Text style={this.styles.compactShowSocialText}>
+                <Text style={{ fontWeight: '700', color: this.getHomeTheme().primary }}>
                   {show.likes_count === 1
                     ? '1 person '
                     : `${show.likes_count} people `}
@@ -440,11 +447,11 @@ export default class AllEventScreen extends AllEventController {
             </TouchableOpacity>
           )}
 
-          <Text testID="commentsCount" style={styles.compactShowSocialText}>
+          <Text testID="commentsCount" style={this.styles.compactShowSocialText}>
             {show.comments_count ? show.comments_count : 0} comments{' '}
             <Text
               testID="commentsCountBtn"
-              style={styles.compactShowSocialLink}
+              style={this.styles.compactShowSocialLink}
               onPress={() => {
                 if (hasShowId) {
                   this.handleShowCommentClicked(showId, showType);
@@ -507,7 +514,7 @@ export default class AllEventScreen extends AllEventController {
 
   renderRedDot = ({ condition }: { condition: boolean }) => {
     if (condition) {
-      return <View style={styles.redDot} />;
+      return <View style={this.styles.redDot} />;
     }
 
     return <></>;
@@ -518,8 +525,8 @@ export default class AllEventScreen extends AllEventController {
     if (count > 0) {
       const displayCount = count > 99 ? '99+' : `${count}`;
       return (
-        <View style={styles.notificationBadge}>
-          <Text style={styles.notificationBadgeText}>{displayCount}</Text>
+        <View style={this.styles.notificationBadge}>
+          <Text style={this.styles.notificationBadgeText}>{displayCount}</Text>
         </View>
       );
     }
@@ -701,8 +708,8 @@ export default class AllEventScreen extends AllEventController {
         transparent={true}
         visible={this.state.modalVisible}
       >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
+        <View style={this.styles.centeredView}>
+          <View style={this.styles.modalView}>
             <TouchableWithoutFeedback
               testID="popupCloseButton"
               onPress={this.handlePopupCloseButton}
@@ -790,7 +797,7 @@ export default class AllEventScreen extends AllEventController {
               }}
               onPress={this.modalYesClicked}
             >
-              <Text style={styles.textStyle}>Yes</Text>
+              <Text style={this.styles.textStyle}>Yes</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -809,15 +816,15 @@ export default class AllEventScreen extends AllEventController {
           behavior={this.isPlatformiOS() ? 'padding' : undefined}
           style={{ flex: 1 }}
         >
-          <View style={[styles.centeredView, styles.commentsParentView]}>
-            <View style={[styles.modalView, styles.commentsView]}>
+          <View style={[this.styles.centeredView, this.styles.commentsParentView]}>
+            <View style={[this.styles.modalView, this.styles.commentsView]}>
               <Pressable
                 style={{ flex: 1 }}
                 testID="commentsModalClick"
                 onPress={() => this.hideKeyboard()}
               >
-                <View style={styles.commentsHeader}>
-                  <Text style={styles.commentsHeadingText}>Comments</Text>
+                <View style={this.styles.commentsHeader}>
+                  <Text style={this.styles.commentsHeadingText}>Comments</Text>
                   <TouchableOpacity
                     testID="closeCommentsPopupButton"
                     onPress={this.handleCloseCommentPopup}
@@ -825,27 +832,27 @@ export default class AllEventScreen extends AllEventController {
                     <Icon name="x" size={25} />
                   </TouchableOpacity>
                 </View>
-                <View style={styles.horizontalRuler} />
+                <View style={this.styles.horizontalRuler} />
                 {this.state.isLoadingComments ? (
-                  <View style={styles.noCommentsContainer}>
+                  <View style={this.styles.noCommentsContainer}>
                     <ActivityIndicator size="large" color="#4949EE" />
                   </View>
                 ) : (
                   this.handleCommentsRendering()
                 )}
               </Pressable>
-              <View style={styles.emojiSelectionBar}>
+              <View style={this.styles.emojiSelectionBar}>
                 {this.defaultEmojisForSelectionBar.map((emoji: string, i: number) => (
                   <TouchableOpacity
                     key={`comment-emoji-${i}`}
                     onPress={() => this.handleEmojiSelected(emoji)}
                   >
-                    <Text style={styles.emojiSelectionBarIcon}>{emoji}</Text>
+                    <Text style={this.styles.emojiSelectionBarIcon}>{emoji}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
-              <View style={styles.commentInputArea}>
-                <View style={styles.userAvatarContainer}>
+              <View style={this.styles.commentInputArea}>
+                <View style={this.styles.userAvatarContainer}>
                   <FastImage
                     source={
                       this.state.userProfilePic
@@ -855,7 +862,7 @@ export default class AllEventScreen extends AllEventController {
                           }
                         : defaultProfile
                     }
-                    style={styles.userAvatar}
+                    style={this.styles.userAvatar}
                     resizeMode={FastImage.resizeMode.cover}
                   />
                 </View>
@@ -864,7 +871,7 @@ export default class AllEventScreen extends AllEventController {
                   ref={input => {
                     this.commentTextInput = input;
                   }}
-                  style={styles.commentTextInput}
+                  style={this.styles.commentTextInput}
                   placeholder={
                     this.state.replying ? 'Add a reply...' : 'Add a comment...'
                   }
@@ -876,7 +883,7 @@ export default class AllEventScreen extends AllEventController {
                 />
                 <TouchableOpacity
                   testID="emojiComment"
-                  style={styles.emojiButton}
+                  style={this.styles.emojiButton}
                   onPress={this.handleSubmitEditing}
                   activeOpacity={0.7}
                 >
@@ -898,12 +905,12 @@ export default class AllEventScreen extends AllEventController {
 
   renderSearch = () => {
     return (
-      <View style={styles.inputContainer}>
-        <Icon name="search" size={16} color={redesignTheme.muted} />
+      <View style={this.styles.inputContainer}>
+        <Icon name="search" size={16} color={this.getHomeTheme().muted} />
         <TextInput
           testID="searchText"
-          style={styles.input}
-          placeholderTextColor={redesignTheme.muted}
+          style={this.styles.input}
+          placeholderTextColor={this.getHomeTheme().muted}
           placeholder="Bands, venues, genres..."
           value={this.state.searchText}
           onChangeText={this.handleSearchTxtChange}
@@ -913,11 +920,11 @@ export default class AllEventScreen extends AllEventController {
         />
         <TouchableOpacity
           testID="nearMeButton"
-          style={styles.nearMeButton}
+          style={this.styles.nearMeButton}
           onPress={this.modalYesClicked}
           activeOpacity={0.75}
         >
-          <Text style={styles.nearMeButtonText}>Near Me</Text>
+          <Text style={this.styles.nearMeButtonText}>Near Me</Text>
         </TouchableOpacity>
       </View>
     );
@@ -1179,16 +1186,16 @@ export default class AllEventScreen extends AllEventController {
       return null;
     }
     return (
-      <View style={styles.compactShowFooter} testID="compactShowFooter">
+      <View style={this.styles.compactShowFooter} testID="compactShowFooter">
         {categoryLabel !== '' ? (
-          <View style={styles.compactShowCategoryPill}>
-            <Text style={styles.compactShowCategoryText}>{categoryLabel}</Text>
+          <View style={this.styles.compactShowCategoryPill}>
+            <Text style={this.styles.compactShowCategoryText}>{categoryLabel}</Text>
           </View>
         ) : (
           <View />
         )}
         {dateLabel !== '' ? (
-          <Text style={styles.compactShowFooterDate}>{dateLabel}</Text>
+          <Text style={this.styles.compactShowFooterDate}>{dateLabel}</Text>
         ) : null}
       </View>
     );
@@ -1200,13 +1207,13 @@ export default class AllEventScreen extends AllEventController {
       return null;
     }
     return (
-      <View style={styles.showsCountRow} testID="showsCountHeader">
-        <View style={styles.showsCountLabelWrap}>
-          <View style={styles.showsCountDot} />
-          <Text style={styles.showsCountText}>{count} SHOWS</Text>
+      <View style={this.styles.showsCountRow} testID="showsCountHeader">
+        <View style={this.styles.showsCountLabelWrap}>
+          <View style={this.styles.showsCountDot} />
+          <Text style={this.styles.showsCountText}>{count} SHOWS</Text>
         </View>
-        <View style={styles.showsCountLine} />
-        <Text style={styles.showsCountArea}>{this.getFeedAreaLabel()}</Text>
+        <View style={this.styles.showsCountLine} />
+        <Text style={this.styles.showsCountArea}>{this.getFeedAreaLabel()}</Text>
       </View>
     );
   };
@@ -1215,7 +1222,7 @@ export default class AllEventScreen extends AllEventController {
     if (show?.profile_image) {
       return (
         <FastImage
-          style={styles.compactShowThumb}
+          style={this.styles.compactShowThumb}
           source={{
             uri: show.profile_image,
             priority: FastImage.priority.high,
@@ -1225,9 +1232,9 @@ export default class AllEventScreen extends AllEventController {
       );
     }
     return (
-      <View style={styles.compactShowThumbPlaceholder}>
+      <View style={this.styles.compactShowThumbPlaceholder}>
         <Image
-          style={[styles.gallery, { tintColor: '#8880aa' }]}
+          style={[this.styles.gallery, { tintColor: '#8880aa' }]}
           source={require('../../../mobile/assets/images/gallery.png')}
         />
       </View>
@@ -1263,13 +1270,13 @@ export default class AllEventScreen extends AllEventController {
     return (
       <TouchableOpacity
         testID="featuredShowCard"
-        style={styles.featuredCard}
+        style={this.styles.featuredCard}
         activeOpacity={0.92}
         onPress={openFeatured}
       >
         {show.profile_image ? (
           <FastImage
-            style={styles.featuredImage}
+            style={this.styles.featuredImage}
             source={{
               uri: show.profile_image,
               priority: FastImage.priority.high,
@@ -1277,39 +1284,39 @@ export default class AllEventScreen extends AllEventController {
             resizeMode={FastImage.resizeMode.cover}
           />
         ) : (
-          <View style={styles.featuredImagePlaceholder}>
+          <View style={this.styles.featuredImagePlaceholder}>
             <Image
-              style={styles.gallery}
+              style={this.styles.gallery}
               source={require('../../../mobile/assets/images/gallery.png')}
             />
           </View>
         )}
-        <View pointerEvents="none" style={styles.featuredOverlay} />
-        <View pointerEvents="none" style={styles.featuredBottomFade} />
-        <View style={styles.featuredBadge} pointerEvents="none">
-          <Text style={styles.featuredBadgeText}>FEATURED TONIGHT</Text>
+        <View pointerEvents="none" style={this.styles.featuredOverlay} />
+        <View pointerEvents="none" style={this.styles.featuredBottomFade} />
+        <View style={this.styles.featuredBadge} pointerEvents="none">
+          <Text style={this.styles.featuredBadgeText}>FEATURED TONIGHT</Text>
         </View>
-        <View style={styles.featuredContentRow}>
-          <View style={styles.featuredTextBlock} pointerEvents="none">
-            <Text style={styles.featuredTitle} numberOfLines={2}>
+        <View style={this.styles.featuredContentRow}>
+          <View style={this.styles.featuredTextBlock} pointerEvents="none">
+            <Text style={this.styles.featuredTitle} numberOfLines={2}>
               {title}
             </Text>
-            <View style={styles.featuredMetaRow}>
+            <View style={this.styles.featuredMetaRow}>
               {(venue !== '' || area !== '') && (
-                <Icon name="map-pin" size={11} color={redesignTheme.muted} />
+                <Icon name="map-pin" size={11} color={this.getHomeTheme().muted} />
               )}
-              <Text style={styles.featuredMetaText} numberOfLines={1}>
+              <Text style={this.styles.featuredMetaText} numberOfLines={1}>
                 {[venue, area].filter(Boolean).join(' · ')}
                 {timeLabel !== '' ? ' · ' : ''}
               </Text>
               {timeLabel !== '' && (
-                <Text style={styles.featuredTimeText}>{timeLabel}</Text>
+                <Text style={this.styles.featuredTimeText}>{timeLabel}</Text>
               )}
             </View>
           </View>
           <TouchableOpacity
             testID="featuredTicketButton"
-            style={styles.featuredTicketButton}
+            style={this.styles.featuredTicketButton}
             onPress={openFeatured}
             activeOpacity={0.85}
           >
@@ -1347,13 +1354,13 @@ export default class AllEventScreen extends AllEventController {
     };
 
     return (
-      <View style={styles.filterPillsRow}>
+      <View style={this.styles.filterPillsRow}>
         <ScrollView
           testID="categoryList"
           horizontal
           showsHorizontalScrollIndicator={false}
           nestedScrollEnabled
-          contentContainerStyle={styles.filterPillsContent}
+          contentContainerStyle={this.styles.filterPillsContent}
         >
           {list.map((item: any, index: number) => {
             const isSelected = this.state.selectedFilterIndex === index;
@@ -1367,8 +1374,8 @@ export default class AllEventScreen extends AllEventController {
                 key={key}
                 testID="filterButton"
                 style={[
-                  styles.filterButton,
-                  isSelected && styles.filterButtonActive,
+                  this.styles.filterButton,
+                  isSelected && this.styles.filterButtonActive,
                 ]}
                 onPress={() => this.handleCategoryFilter(item.id, index)}
                 activeOpacity={0.8}
@@ -1376,13 +1383,13 @@ export default class AllEventScreen extends AllEventController {
                 <Icon
                   name={iconForCategory(name)}
                   size={12}
-                  color={isSelected ? '#FFFFFF' : redesignTheme.muted}
+                  color={isSelected ? '#FFFFFF' : this.getHomeTheme().muted}
                   style={{ marginRight: 6 }}
                 />
                 <Text
                   style={[
-                    styles.filterButtonText,
-                    isSelected && styles.filterButtonTextActive,
+                    this.styles.filterButtonText,
+                    isSelected && this.styles.filterButtonTextActive,
                   ]}
                   numberOfLines={1}
                   ellipsizeMode="tail"
@@ -1428,13 +1435,13 @@ export default class AllEventScreen extends AllEventController {
   renderSortPills = () => {
     const options = this.getSortOptions();
     return (
-      <View style={styles.filterPillsRowLast}>
+      <View style={this.styles.filterPillsRowLast}>
         <ScrollView
           testID="sortPillsList"
           horizontal
           showsHorizontalScrollIndicator={false}
           nestedScrollEnabled
-          contentContainerStyle={styles.filterPillsContent}
+          contentContainerStyle={this.styles.filterPillsContent}
         >
           {options.map((option: { label: string; value: string }) => {
             const isSelected = this.state.selectedSortBy === option.value;
@@ -1442,14 +1449,14 @@ export default class AllEventScreen extends AllEventController {
               <TouchableOpacity
                 key={`sort-${option.value || 'newest'}`}
                 testID="sortPill"
-                style={[styles.sortPill, isSelected && styles.sortPillActive]}
+                style={[this.styles.sortPill, isSelected && this.styles.sortPillActive]}
                 onPress={() => this.handleSortPillPress(option.value)}
                 activeOpacity={0.8}
               >
                 <Text
                   style={[
-                    styles.sortPillText,
-                    isSelected && styles.sortPillTextActive,
+                    this.styles.sortPillText,
+                    isSelected && this.styles.sortPillTextActive,
                   ]}
                 >
                   {option.label}
@@ -1479,17 +1486,17 @@ export default class AllEventScreen extends AllEventController {
     return (
       <TouchableOpacity
         testID="btnSortSelect"
-        style={[styles.textInput, styles.selector, styles.sortByTouchable]}
+        style={[this.styles.textInput, this.styles.selector, this.styles.sortByTouchable]}
         onPress={this.showSort}
       >
         <Text
-          style={[styles.txt, styles.sortByLabel]}
+          style={[this.styles.txt, this.styles.sortByLabel]}
           numberOfLines={1}
           ellipsizeMode="tail"
         >
           {displayText}
         </Text>
-        <Image source={leftArrow} style={[styles.downArrow]} />
+        <Image source={leftArrow} style={[this.styles.downArrow]} />
       </TouchableOpacity>
     );
   };
@@ -1502,16 +1509,16 @@ export default class AllEventScreen extends AllEventController {
     return (
       <View
         style={[
-          styles.textInput,
-          styles.selector,
-          styles.sortByContainerAndroid,
+          this.styles.textInput,
+          this.styles.selector,
+          this.styles.sortByContainerAndroid,
         ]}
       >
-        <View style={styles.sortByAndroidLabelRow} pointerEvents="none">
+        <View style={this.styles.sortByAndroidLabelRow} pointerEvents="none">
           <Text
             style={[
-              styles.txt,
-              styles.sortByLabelAndroid,
+              this.styles.txt,
+              this.styles.sortByLabelAndroid,
               { marginTop: 10, marginRight: 15 },
             ]}
             numberOfLines={1}
@@ -1519,13 +1526,13 @@ export default class AllEventScreen extends AllEventController {
           >
             {displayText}
           </Text>
-          <Image source={leftArrow} style={styles.downArrowAndroid} />
+          <Image source={leftArrow} style={this.styles.downArrowAndroid} />
         </View>
-        <View style={styles.sortByPickerOverlay}>
+        <View style={this.styles.sortByPickerOverlay}>
           <Picker
             testID="sortPicker"
-            style={styles.sortByPickerInvisible}
-            itemStyle={[styles.txt]}
+            style={this.styles.sortByPickerInvisible}
+            itemStyle={[this.styles.txt]}
             selectedValue={this.state.selectedSortBy}
             onValueChange={selectedSortBy =>
               this.handleSortValueChangeAndroid(selectedSortBy)
@@ -1557,11 +1564,11 @@ export default class AllEventScreen extends AllEventController {
           testID="hideSortModal"
           onPress={this.hideModalSort}
         >
-          <View style={styles.centeredView}>
+          <View style={this.styles.centeredView}>
             <TouchableWithoutFeedback>
               <View
                 style={[
-                  styles.modalView,
+                  this.styles.modalView,
                   { borderTopStartRadius: 20, padding: 15, height: '30%' },
                 ]}
               >
@@ -1696,12 +1703,12 @@ export default class AllEventScreen extends AllEventController {
     const rowStyle =
       Platform.OS === 'android'
         ? [
-            styles.textInput,
-            styles.selector,
-            styles.sortByContainerAndroid,
-            styles.sortByTouchable,
+            this.styles.textInput,
+            this.styles.selector,
+            this.styles.sortByContainerAndroid,
+            this.styles.sortByTouchable,
           ]
-        : [styles.textInput, styles.selector, styles.sortByTouchable];
+        : [this.styles.textInput, this.styles.selector, this.styles.sortByTouchable];
     return (
       <TouchableOpacity
         testID="btnStateSelect"
@@ -1711,10 +1718,10 @@ export default class AllEventScreen extends AllEventController {
       >
         <Text
           style={[
-            styles.txt,
+            this.styles.txt,
             Platform.OS === 'android'
-              ? styles.sortByLabelAndroid
-              : styles.sortByLabel,
+              ? this.styles.sortByLabelAndroid
+              : this.styles.sortByLabel,
             Platform.OS === 'android' ? { marginTop: 10, marginRight: 15 } : {},
           ]}
           numberOfLines={1}
@@ -1725,7 +1732,7 @@ export default class AllEventScreen extends AllEventController {
         <Image
           source={leftArrow}
           style={
-            Platform.OS === 'android' ? styles.downArrowAndroid : styles.downArrow
+            Platform.OS === 'android' ? this.styles.downArrowAndroid : this.styles.downArrow
           }
         />
       </TouchableOpacity>
@@ -1740,16 +1747,16 @@ export default class AllEventScreen extends AllEventController {
     return (
       <View
         style={[
-          styles.textInput,
-          styles.selector,
-          styles.sortByContainerAndroid,
+          this.styles.textInput,
+          this.styles.selector,
+          this.styles.sortByContainerAndroid,
         ]}
       >
-        <View style={styles.sortByAndroidLabelRow} pointerEvents="none">
+        <View style={this.styles.sortByAndroidLabelRow} pointerEvents="none">
           <Text
             style={[
-              styles.txt,
-              styles.sortByLabelAndroid,
+              this.styles.txt,
+              this.styles.sortByLabelAndroid,
               { marginTop: 10, marginRight: 15 },
             ]}
             numberOfLines={1}
@@ -1757,13 +1764,13 @@ export default class AllEventScreen extends AllEventController {
           >
             {display}
           </Text>
-          <Image source={leftArrow} style={styles.downArrowAndroid} />
+          <Image source={leftArrow} style={this.styles.downArrowAndroid} />
         </View>
-        <View style={styles.sortByPickerOverlay}>
+        <View style={this.styles.sortByPickerOverlay}>
           <Picker
             testID="statePicker"
-            style={styles.sortByPickerInvisible}
-            itemStyle={[styles.txt]}
+            style={this.styles.sortByPickerInvisible}
+            itemStyle={[this.styles.txt]}
             selectedValue={display}
             onValueChange={selectedState =>
               this.handleStateValueChangeAndroid(selectedState)
@@ -1793,11 +1800,11 @@ export default class AllEventScreen extends AllEventController {
           testID="hideStateModal"
           onPress={this.hideModalState}
         >
-          <View style={styles.centeredView}>
+          <View style={this.styles.centeredView}>
             <TouchableWithoutFeedback>
               <View
                 style={[
-                  styles.modalView,
+                  this.styles.modalView,
                   { borderTopStartRadius: 20, padding: 15, height: '30%' },
                 ]}
               >
@@ -1835,36 +1842,36 @@ export default class AllEventScreen extends AllEventController {
 
     return (
       <View>
-        <View style={styles.feedHeaderBar}>
-          <View style={styles.feedHeaderBrandRow}>
+        <View style={this.styles.feedHeaderBar}>
+          <View style={this.styles.feedHeaderBrandRow}>
             {this.state.expandedItems.length !== 0 && (
               <TouchableOpacity
                 testID="navigationBackButton"
                 style={{ width: 12, marginRight: 8 }}
                 onPress={this.handleBackNav}
               >
-                <Image source={leftArrow} style={styles.feedHeaderBackIcon} />
+                <Image source={leftArrow} style={this.styles.feedHeaderBackIcon} />
               </TouchableOpacity>
             )}
-            <View style={styles.feedHeaderLogo} pointerEvents="none">
+            <View style={this.styles.feedHeaderLogo} pointerEvents="none">
               <Icon name="music" size={14} color="#FFFFFF" />
             </View>
             <Text
               testID="localShowsTitle"
               pointerEvents="none"
-              style={styles.feedHeaderTitle}
+              style={this.styles.feedHeaderTitle}
             >
               Shows In
             </Text>
             <TouchableOpacity
               testID="headerLocationPill"
-              style={styles.feedHeaderLocationPill}
+              style={this.styles.feedHeaderLocationPill}
               onPress={this.showState}
               activeOpacity={0.7}
             >
-              <Icon name="map-pin" size={10} color={redesignTheme.muted} />
+              <Icon name="map-pin" size={10} color={this.getHomeTheme().muted} />
               <Text
-                style={styles.feedHeaderLocationText}
+                style={this.styles.feedHeaderLocationText}
                 numberOfLines={1}
                 ellipsizeMode="tail"
               >
@@ -1873,21 +1880,21 @@ export default class AllEventScreen extends AllEventController {
               <Icon
                 name="chevron-down"
                 size={12}
-                color={redesignTheme.muted}
+                color={this.getHomeTheme().muted}
               />
             </TouchableOpacity>
           </View>
-          <View style={styles.feedHeaderActions}>
+          <View style={this.styles.feedHeaderActions}>
             {null !== this.state.authToken ? (
               <TouchableOpacity
                 testID="bellIcon"
                 hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
                 onPress={this.handleNotificationNavigation}
               >
-                <View style={styles.notificationWrapper}>
+                <View style={this.styles.notificationWrapper}>
                   <Image
                     source={require('../../../mobile/assets/images/notifications.png')}
-                    style={styles.feedHeaderIcon}
+                    style={this.styles.feedHeaderIcon}
                   />
                   {this.renderNotificationIndicator()}
                 </View>
@@ -1900,7 +1907,7 @@ export default class AllEventScreen extends AllEventController {
               onPress={this.onPressDrawer}
             >
               <Image
-                style={styles.feedHeaderMenuIcon}
+                style={this.styles.feedHeaderMenuIcon}
                 source={require('../../../mobile/assets/images/Vector.png')}
               />
             </TouchableOpacity>
@@ -1908,7 +1915,7 @@ export default class AllEventScreen extends AllEventController {
           </View>
         </View>
 
-        <View style={styles.feedToolbarSurface}>
+        <View style={this.styles.feedToolbarSurface}>
           {this.renderSearch()}
           {this.renderFeaturedCard()}
           {this.renderCategories()}
@@ -1940,17 +1947,17 @@ export default class AllEventScreen extends AllEventController {
     const listEmptyGuest = showFeedLoader ? (
       <View
         testID="eventsFeedLoading"
-        style={styles.feedListLoadingEmpty}
+        style={this.styles.feedListLoadingEmpty}
         accessibilityLabel="Loading shows"
       >
-        <ActivityIndicator size="large" color={redesignTheme.primary} />
+        <ActivityIndicator size="large" color={this.getHomeTheme().primary} />
       </View>
     ) : (
       <View
         style={{
           justifyContent: 'center',
           alignItems: 'center',
-          backgroundColor: redesignTheme.background,
+          backgroundColor: this.getHomeTheme().background,
           paddingTop: 50,
           minHeight: 200,
         }}
@@ -1959,7 +1966,7 @@ export default class AllEventScreen extends AllEventController {
           style={{
             fontSize: 14,
             fontWeight: '400',
-            color: redesignTheme.muted,
+            color: this.getHomeTheme().muted,
           }}
         >
           No shows found
@@ -1970,17 +1977,17 @@ export default class AllEventScreen extends AllEventController {
     const listEmptyAuth = showFeedLoader ? (
       <View
         testID="eventsFeedLoading"
-        style={styles.feedListLoadingEmpty}
+        style={this.styles.feedListLoadingEmpty}
         accessibilityLabel="Loading shows"
       >
-        <ActivityIndicator size="large" color={redesignTheme.primary} />
+        <ActivityIndicator size="large" color={this.getHomeTheme().primary} />
       </View>
     ) : (
       <View
         style={{
           justifyContent: 'center',
           alignItems: 'center',
-          backgroundColor: redesignTheme.background,
+          backgroundColor: this.getHomeTheme().background,
           paddingTop: 50,
           minHeight: 200,
         }}
@@ -1989,7 +1996,7 @@ export default class AllEventScreen extends AllEventController {
           style={{
             fontSize: 14,
             fontWeight: '400',
-            color: redesignTheme.muted,
+            color: this.getHomeTheme().muted,
           }}
         >
           No record(s) found
@@ -2003,7 +2010,7 @@ export default class AllEventScreen extends AllEventController {
           <FlatList
             ref={this.eventsFeedListRef}
             testID="eventsList"
-            style={{ flex: 1, backgroundColor: redesignTheme.background }}
+            style={{ flex: 1, backgroundColor: this.getHomeTheme().background }}
             data={eventListWithShows}
             ListHeaderComponent={this.renderFeedListHeader}
             renderItem={({ item, index }) =>
@@ -2018,7 +2025,7 @@ export default class AllEventScreen extends AllEventController {
             }
             showsVerticalScrollIndicator={false}
             contentContainerStyle={[
-              styles.feedListContent,
+              this.styles.feedListContent,
               { paddingBottom: hasEvents ? 20 : 0 },
             ]}
             scrollEnabled
@@ -2027,7 +2034,7 @@ export default class AllEventScreen extends AllEventController {
               <RefreshControl
                 refreshing={false}
                 onRefresh={this.handleRefresh}
-                tintColor={redesignTheme.primary}
+                tintColor={this.getHomeTheme().primary}
               />
             }
             ListEmptyComponent={listEmptyGuest}
@@ -2036,12 +2043,12 @@ export default class AllEventScreen extends AllEventController {
           <FlatList
             ref={this.eventsFeedListRef}
             testID="authenticatedEventsList"
-            style={{ flex: 1, backgroundColor: redesignTheme.background }}
+            style={{ flex: 1, backgroundColor: this.getHomeTheme().background }}
             data={eventList}
             ListHeaderComponent={this.renderFeedListHeader}
             renderItem={({ item, index }: any) => this.renderItems(item, index)}
             contentContainerStyle={[
-              styles.feedListContent,
+              this.styles.feedListContent,
               { paddingBottom: hasEvents ? 20 : 0 },
             ]}
             keyExtractor={(item, idx) =>
@@ -2053,7 +2060,7 @@ export default class AllEventScreen extends AllEventController {
               <RefreshControl
                 refreshing={false}
                 onRefresh={this.handleRefresh}
-                tintColor={redesignTheme.primary}
+                tintColor={this.getHomeTheme().primary}
               />
             }
             ListEmptyComponent={listEmptyAuth}
@@ -2140,10 +2147,10 @@ export default class AllEventScreen extends AllEventController {
     }
 
     return (
-      <SafeAreaView style={styles.container} edges={['left', 'right']}>
+      <SafeAreaView style={this.styles.container} edges={['left', 'right']}>
         <StatusBar
-          barStyle="light-content"
-          backgroundColor={redesignTheme.background}
+          barStyle={this.state.isDarkMode ? 'light-content' : 'dark-content'}
+          backgroundColor={this.getHomeTheme().background}
         />
         {this.renderLocationPopup()}
         {this.renderCommentsModal()}
@@ -2163,7 +2170,7 @@ export default class AllEventScreen extends AllEventController {
     return (
       <>
         {this.state.commentsList.length ? (
-          <View style={styles.commentsListContainer}>
+          <View style={this.styles.commentsListContainer}>
             <SwipeListView
               bounces={false}
               alwaysBounceVertical={false}
@@ -2184,10 +2191,10 @@ export default class AllEventScreen extends AllEventController {
             />
           </View>
         ) : (
-          <View style={styles.noCommentsContainer}>
+          <View style={this.styles.noCommentsContainer}>
             <Icon name="message-square" size={60} color="#0F172A" />
-            <Text style={styles.commentsHeadingText}>No comments yet</Text>
-            <Text style={styles.startConversationText}>
+            <Text style={this.styles.commentsHeadingText}>No comments yet</Text>
+            <Text style={this.styles.startConversationText}>
               Start the conversation
             </Text>
           </View>
@@ -2212,17 +2219,17 @@ export default class AllEventScreen extends AllEventController {
   renderCommentsHiddenItem = (data: any, rowMap: any) => (
     <>
       {this.state.userId === data.item?.attributes?.account_id?.toString() && (
-        <View style={styles.rowBack}>
+        <View style={this.styles.rowBack}>
           <TouchableOpacity
             testID="editComment"
-            style={[styles.backRightBtn, styles.backRightBtnLeft]}
+            style={[this.styles.backRightBtn, this.styles.backRightBtnLeft]}
             onPress={() => this.handleEditComments(data.item, rowMap)}
           >
             <Icon name="corner-up-left" size={25} color={'white'} />
           </TouchableOpacity>
           <TouchableOpacity
             testID="deleteComment"
-            style={[styles.backRightBtn, styles.backRightBtnRight]}
+            style={[this.styles.backRightBtn, this.styles.backRightBtnRight]}
             onPress={() => {
               this.deleteCommentAPI(data.item.id);
             }}
@@ -2236,10 +2243,10 @@ export default class AllEventScreen extends AllEventController {
 
   renderCommentItem = ({ item }: { item: any }) => {
     return (
-      <View style={styles.rowFront}>
+      <View style={this.styles.rowFront}>
         <TouchableOpacity
           testID="imageShowProfile"
-          style={styles.userAvatarContainer}
+          style={this.styles.userAvatarContainer}
           onPress={() =>
             this.showProfile(
               item.attributes.account.id,
@@ -2256,46 +2263,46 @@ export default class AllEventScreen extends AllEventController {
                   }
                 : defaultProfile
             }
-            style={styles.userAvatar}
+            style={this.styles.userAvatar}
             resizeMode={FastImage.resizeMode.cover}
           />
         </TouchableOpacity>
-        <View style={styles.commentContent}>
+        <View style={this.styles.commentContent}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={styles.commenterName}>
+            <Text style={this.styles.commenterName}>
               {`${item.attributes.account.first_name}`}
             </Text>
             <Text
               style={[
-                styles.commenterName,
+                this.styles.commenterName,
                 { fontWeight: '400', marginLeft: 5 },
               ]}
             >
               {this.timeAgo(item.attributes.created_at)}
             </Text>
           </View>
-          <Text style={styles.commentText}>{item.attributes.comment}</Text>
+          <Text style={this.styles.commentText}>{item.attributes.comment}</Text>
           <TouchableOpacity
             testID="replyButton"
-            style={styles.replyButton}
+            style={this.styles.replyButton}
             onPress={() => this.handleReply(item.id)}
           >
-            <Text style={styles.replyButtonText}>Reply</Text>
+            <Text style={this.styles.replyButtonText}>Reply</Text>
           </TouchableOpacity>
           {item.attributes.replies.length !== 0 && (
             <TouchableOpacity
               testID="showReplyButton"
-              style={styles.showReplyButton}
+              style={this.styles.showReplyButton}
               onPress={() => this.handleReplyButton(item)}
             >
-              <View style={styles.horizontalBar} />
-              <Text style={styles.showReplyButtonText}>
+              <View style={this.styles.horizontalBar} />
+              <Text style={this.styles.showReplyButtonText}>
                 {`View ${item.attributes.replies.length} more replies`}
               </Text>
             </TouchableOpacity>
           )}
         </View>
-        <View style={styles.likeContainer}>
+        <View style={this.styles.likeContainer}>
           <TouchableOpacity
             testID="likeCommentButton"
             onPress={() => this.likeComment(item.id)}
@@ -2306,7 +2313,7 @@ export default class AllEventScreen extends AllEventController {
               color={item.attributes.like_by_me ? '#DC2626' : '#94A3B8'}
             />
           </TouchableOpacity>
-          <Text style={styles.likesCountText}>
+          <Text style={this.styles.likesCountText}>
             {item.attributes.likes_count}
           </Text>
         </View>
@@ -2317,17 +2324,17 @@ export default class AllEventScreen extends AllEventController {
   renderRepliesHiddenItem = (data: any, rowMap: any) => (
     <>
       {this.state.userId === data.item.account_id.toString() && (
-        <View style={styles.rowBack}>
+        <View style={this.styles.rowBack}>
           <TouchableOpacity
             testID="editReply"
-            style={[styles.backRightBtn, styles.backRightBtnLeft]}
+            style={[this.styles.backRightBtn, this.styles.backRightBtnLeft]}
             onPress={() => this.handleEditReply(data.item, rowMap)}
           >
             <Icon name="corner-up-left" size={25} color={'white'} />
           </TouchableOpacity>
           <TouchableOpacity
             testID="deleteReply"
-            style={[styles.backRightBtn, styles.backRightBtnRight]}
+            style={[this.styles.backRightBtn, this.styles.backRightBtnRight]}
             onPress={() => {
               this.deleteCommentAPI(data.item.id);
             }}
@@ -2350,8 +2357,8 @@ export default class AllEventScreen extends AllEventController {
           behavior={this.isPlatformiOS() ? 'padding' : undefined}
           style={{ flex: 1 }}
         >
-          <View style={[styles.centeredView, styles.commentsParentView]}>
-            <View style={[styles.modalView, styles.commentsView]}>
+          <View style={[this.styles.centeredView, this.styles.commentsParentView]}>
+            <View style={[this.styles.modalView, this.styles.commentsView]}>
               <Pressable
                 style={{
                   flex: 1,
@@ -2359,7 +2366,7 @@ export default class AllEventScreen extends AllEventController {
                 testID="repliesModalClick"
                 onPress={() => this.hideKeyboard()}
               >
-                <View style={styles.commentsHeader}>
+                <View style={this.styles.commentsHeader}>
                   <TouchableOpacity
                     testID="replyModalBackBtn"
                     onPress={this.handleReplyBackNav}
@@ -2374,7 +2381,7 @@ export default class AllEventScreen extends AllEventController {
                       }}
                     />
                   </TouchableOpacity>
-                  <Text style={styles.commentsHeadingText}>Replies</Text>
+                  <Text style={this.styles.commentsHeadingText}>Replies</Text>
                   <TouchableOpacity
                     testID="closeReplyPopupButton"
                     onPress={this.closeReplyPopup}
@@ -2382,23 +2389,23 @@ export default class AllEventScreen extends AllEventController {
                     <Icon name="x" size={25} />
                   </TouchableOpacity>
                 </View>
-                <View style={styles.horizontalRuler} />
+                <View style={this.styles.horizontalRuler} />
                 {this.renderReplies()}
               </Pressable>
 
-              <View style={styles.emojiSelectionBar}>
+              <View style={this.styles.emojiSelectionBar}>
                 {this.defaultEmojisForSelectionBar.map((emoji: string, i: number) => (
                   <TouchableOpacity
                     testID="emojiReply"
                     key={`reply-emoji-${i}`}
                     onPress={() => this.handleEmojiSelected(emoji)}
                   >
-                    <Text style={styles.emojiSelectionBarIcon}>{emoji}</Text>
+                    <Text style={this.styles.emojiSelectionBarIcon}>{emoji}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
-              <View style={styles.commentInputArea}>
-                <View style={styles.userAvatarContainer}>
+              <View style={this.styles.commentInputArea}>
+                <View style={this.styles.userAvatarContainer}>
                   <FastImage
                     source={
                       this.state.userProfilePic
@@ -2408,7 +2415,7 @@ export default class AllEventScreen extends AllEventController {
                           }
                         : defaultProfile
                     }
-                    style={styles.userAvatar}
+                    style={this.styles.userAvatar}
                     resizeMode={FastImage.resizeMode.cover}
                   />
                 </View>
@@ -2421,13 +2428,13 @@ export default class AllEventScreen extends AllEventController {
                   onChangeText={commentText =>
                     this.handleCommentTextChange(commentText)
                   }
-                  style={styles.commentTextInput}
+                  style={this.styles.commentTextInput}
                   placeholder={'Add a reply...'}
                   multiline={true}
                 />
                 <TouchableOpacity
                   testID="emojiReplyBtn"
-                  style={styles.emojiButton}
+                  style={this.styles.emojiButton}
                   onPress={this.handleSubmitEditing}
                   activeOpacity={0.7}
                 >
@@ -2450,10 +2457,10 @@ export default class AllEventScreen extends AllEventController {
   renderReplies = () => {
     return (
       <>
-        <View style={[styles.rowFront]}>
+        <View style={[this.styles.rowFront]}>
           <TouchableOpacity
             testID="replies"
-            style={styles.userAvatarContainer}
+            style={this.styles.userAvatarContainer}
             onPress={() =>
               this.showProfile(
                 this.state.commentWithReply.attributes.account.id,
@@ -2471,18 +2478,18 @@ export default class AllEventScreen extends AllEventController {
                     }
                   : defaultProfile
               }
-              style={styles.userAvatar}
+              style={this.styles.userAvatar}
               resizeMode={FastImage.resizeMode.cover}
             />
           </TouchableOpacity>
-          <View style={styles.commentContent}>
+          <View style={this.styles.commentContent}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={styles.commenterName}>
+              <Text style={this.styles.commenterName}>
                 {this.state.commentWithReply.attributes?.account.first_name}
               </Text>
               <Text
                 style={[
-                  styles.commenterName,
+                  this.styles.commenterName,
                   { fontWeight: '400', marginLeft: 5 },
                 ]}
               >
@@ -2491,7 +2498,7 @@ export default class AllEventScreen extends AllEventController {
                 )}
               </Text>
             </View>
-            <Text style={styles.replyText}>
+            <Text style={this.styles.replyText}>
               {this.state.commentWithReply.attributes?.comment}
             </Text>
           </View>
@@ -2538,7 +2545,7 @@ export default class AllEventScreen extends AllEventController {
     return (
       <View
         style={[
-          styles.rowFront,
+          this.styles.rowFront,
           {
             width: '95%',
             alignSelf: 'flex-end',
@@ -2546,7 +2553,7 @@ export default class AllEventScreen extends AllEventController {
         ]}
       >
         <TouchableOpacity
-          style={styles.userAvatarContainer}
+          style={this.styles.userAvatarContainer}
           onPress={() => this.showProfile(item.account_id, item.account_type)}
         >
           <FastImage
@@ -2558,23 +2565,23 @@ export default class AllEventScreen extends AllEventController {
                   }
                 : defaultProfile
             }
-            style={styles.userAvatar}
+            style={this.styles.userAvatar}
             resizeMode={FastImage.resizeMode.cover}
           />
         </TouchableOpacity>
-        <View style={styles.commentContent}>
+        <View style={this.styles.commentContent}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={styles.commenterName}>{item.account_name}</Text>
+            <Text style={this.styles.commenterName}>{item.account_name}</Text>
             <Text
               style={[
-                styles.commenterName,
+                this.styles.commenterName,
                 { fontWeight: '400', marginLeft: 5 },
               ]}
             >
               {item.created_at ? this.timeAgo(item.created_at) : ''}
             </Text>
           </View>
-          <Text style={styles.replyText}>{item.reply}</Text>
+          <Text style={this.styles.replyText}>{item.reply}</Text>
         </View>
       </View>
     );

@@ -5,11 +5,18 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
+  DeviceEventEmitter,
 } from 'react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
-import { redesignTheme } from '../../blocks/utilities/src/Colors';
+import {
+  lightTheme,
+  PROFILE_THEME_CHANGED_EVENT,
+  PROFILE_THEME_STORAGE_KEY,
+  redesignTheme,
+} from '../../blocks/utilities/src/Colors';
+import { getStorageData } from '../../framework/src/Utilities';
 
 const ICON_BY_ROUTE: Record<string, string> = {
   HomeFeed: 'compass',
@@ -42,6 +49,7 @@ function isPostRoute(routeName: string, label: string): boolean {
 
 /**
  * Floating dark pill tab bar matching localshows-redesign.
+ * Light theme uses a full-width white bar like the profile mockup.
  * Visual only — uses the same tabPress / navigate flow as the default bar.
  */
 export default function RedesignTabBar({
@@ -51,6 +59,28 @@ export default function RedesignTabBar({
 }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const bottomPad = Math.max(insets.bottom, 8);
+  const [isDarkMode, setIsDarkMode] = React.useState(true);
+  const styles = isDarkMode ? darkStyles : lightStyles;
+  const theme = isDarkMode ? redesignTheme : lightTheme;
+
+  React.useEffect(() => {
+    let mounted = true;
+    getStorageData(PROFILE_THEME_STORAGE_KEY).then(savedTheme => {
+      if (mounted) {
+        setIsDarkMode(savedTheme !== 'false');
+      }
+    });
+    const subscription = DeviceEventEmitter.addListener(
+      PROFILE_THEME_CHANGED_EVENT,
+      (nextIsDarkMode: boolean) => {
+        setIsDarkMode(nextIsDarkMode);
+      },
+    );
+    return () => {
+      mounted = false;
+      subscription.remove();
+    };
+  }, []);
 
   return (
     <View
@@ -69,9 +99,7 @@ export default function RedesignTabBar({
                 : route.name;
 
           const post = isPostRoute(route.name, label);
-          const color = focused
-            ? redesignTheme.primary
-            : redesignTheme.muted;
+          const color = focused ? theme.primary : theme.muted;
           const iconName = resolveIconName(route.name, label);
 
           const onPress = () => {
@@ -146,7 +174,7 @@ export default function RedesignTabBar({
   );
 }
 
-const styles = StyleSheet.create({
+const darkStyles = StyleSheet.create({
   wrap: {
     alignItems: 'center',
     backgroundColor: redesignTheme.background,
@@ -207,9 +235,7 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  iconActiveStroke: {
-    // Feather icons are stroke-based; weight is fixed — color carries focus.
-  },
+  iconActiveStroke: {},
   label: {
     fontSize: 10,
     fontWeight: '600',
@@ -240,6 +266,91 @@ const styles = StyleSheet.create({
   },
   postLabel: {
     color: redesignTheme.primary,
+    marginTop: 2,
+  },
+});
+
+const lightStyles = StyleSheet.create({
+  wrap: {
+    alignItems: 'center',
+    backgroundColor: lightTheme.background,
+    paddingTop: 6,
+    width: '100%',
+  },
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    width: '92%',
+    maxWidth: 420,
+    backgroundColor: lightTheme.background,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: '#D0D0D8',
+    paddingHorizontal: 10,
+    paddingTop: 10,
+    paddingBottom: 8,
+    marginBottom: 0,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.12,
+        shadowRadius: 10,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
+  },
+  item: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    minHeight: 52,
+  },
+  iconSlot: {
+    width: 40,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 2,
+  },
+  iconSlotActive: {
+    backgroundColor: lightTheme.primarySoft,
+  },
+  iconActiveStroke: {},
+  label: {
+    fontSize: 10,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  postGlow: {
+    marginBottom: 2,
+    borderRadius: 24,
+    ...Platform.select({
+      ios: {
+        shadowColor: lightTheme.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.35,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
+  },
+  postButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: lightTheme.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  postLabel: {
+    color: lightTheme.muted,
     marginTop: 2,
   },
 });

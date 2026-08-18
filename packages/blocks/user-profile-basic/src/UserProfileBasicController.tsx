@@ -12,6 +12,12 @@ import {
   removeStorageData,
   setStorageData,
 } from '../../../framework/src/Utilities';
+import {
+  emitProfileThemeChanged,
+  lightTheme,
+  PROFILE_THEME_STORAGE_KEY,
+  redesignTheme,
+} from '../../utilities/src/Colors';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import {
   check,
@@ -264,6 +270,7 @@ interface S {
   isCountryModified: boolean;
   isOtherUser: boolean;
   unreadNotificationCount: number;
+  isDarkMode: boolean;
   newNotification: boolean;
   canShowAccountInfo: boolean;
   expandedCalendarEvents: boolean;
@@ -508,6 +515,7 @@ export default class UserProfileBasicController extends BlockComponent<
       isCountryModified: false,
       isOtherUser: false,
       unreadNotificationCount: 0,
+      isDarkMode: true,
       newNotification: false,
       canShowAccountInfo: true,
       expandedCalendarEvents: false,
@@ -1075,6 +1083,7 @@ export default class UserProfileBasicController extends BlockComponent<
   async componentDidMount() {
     this.handleComponentDidMount();
     this.updateBottomTabVisibility();
+    this.loadProfileTheme();
 
     if (this.isPlatformWeb() === false) {
       const unsubscribeFocus = this.props.navigation.addListener(
@@ -4423,6 +4432,22 @@ export default class UserProfileBasicController extends BlockComponent<
     let items = [...this.state.affiliatesList];
     let affiliatesList = items.filter((item: string) => item !== itemToRemove);
     this.setState({ affiliatesList });
+  };
+
+  loadProfileTheme = async () => {
+    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
+    this.setState({ isDarkMode: savedTheme !== 'false' });
+  };
+
+  toggleProfileTheme = async () => {
+    const isDarkMode = !this.state.isDarkMode;
+    this.setState({ isDarkMode });
+    emitProfileThemeChanged(isDarkMode);
+    await setStorageData(PROFILE_THEME_STORAGE_KEY, isDarkMode ? 'true' : 'false');
+  };
+
+  getProfileTheme = () => {
+    return this.state.isDarkMode ? redesignTheme : lightTheme;
   };
 
   handleNavigateToNotifications = () => {

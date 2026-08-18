@@ -13,6 +13,7 @@ import {
   Modal,
   ActivityIndicator,
   Alert,
+  DeviceEventEmitter,
   PermissionsAndroid,
   // Customizable Area End
 } from 'react-native';
@@ -86,7 +87,7 @@ import Filteritems from '../../blocks/filteritems/src/Filteritems';
 import SearchResult from '../../blocks/search/src/SearchResult';
 import Followers from '../../blocks/followers/src/Followers';
 import Icon from 'react-native-vector-icons/Feather';
-import { colors, redesignTheme } from '../../blocks/utilities/src/Colors';
+import { colors, lightTheme, PROFILE_THEME_CHANGED_EVENT, PROFILE_THEME_STORAGE_KEY, redesignTheme } from '../../blocks/utilities/src/Colors';
 import AboutUs from '../../blocks/helpcentre/src/AboutUs';
 import PostSelection from '../../blocks/postcreation/src/PostSelection';
 import PostCreation from '../../blocks/postcreation/src/PostCreation';
@@ -923,6 +924,7 @@ interface State {
   haveUnreadChat: boolean;
   IsGettingToken: boolean;
   initialRoute: string;
+  isDarkMode: boolean;
 }
 
 class HomeScreen extends BlockComponent<Props, State, SS> {
@@ -930,6 +932,7 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
   globalWebSocket: any;
   getChatListApiCallId: string = '';
   getFavouritesCallId: string = '';
+  profileThemeListener: { remove: () => void } | null = null;
   constructor(props: Props) {
     super(props);
     this.subScribedMessages = [
@@ -954,6 +957,7 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
       haveUnreadChat: false,
       IsGettingToken: true,
       initialRoute: 'Home',
+      isDarkMode: true,
     };
   }
 
@@ -1301,6 +1305,7 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
   async componentDidMount(): Promise<void> {
     try {
       super.componentDidMount();
+      this.loadHomeTheme();
 
       // Add a timeout to prevent getting stuck in loading state
       setTimeout(() => {
@@ -1399,11 +1404,32 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
     }, 7000); // Delay location permission by 7 seconds
   };
 
+  loadHomeTheme = async () => {
+    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
+    this.setState({ isDarkMode: savedTheme !== 'false' });
+    if (!this.profileThemeListener) {
+      this.profileThemeListener = DeviceEventEmitter.addListener(
+        PROFILE_THEME_CHANGED_EVENT,
+        (isDarkMode: boolean) => {
+          this.setState({ isDarkMode });
+        },
+      );
+    }
+  };
+
+  getHomeTheme = () => {
+    return this.state.isDarkMode ? redesignTheme : lightTheme;
+  };
+
   async componentWillUnmount(): Promise<void> {
     super.componentWillUnmount();
     // Close WebSocket connection when component unmounts
     if (this.globalWebSocket) {
       this.globalWebSocket.close();
+    }
+    if (this.profileThemeListener) {
+      this.profileThemeListener.remove();
+      this.profileThemeListener = null;
     }
   }
 
@@ -1968,7 +1994,7 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
           <SafeAreaView
             style={{
               flex: 1,
-              backgroundColor: redesignTheme.background,
+              backgroundColor: this.getHomeTheme().background,
               justifyContent: 'center',
               alignItems: 'center',
             }}
@@ -1976,18 +2002,18 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
             <Text
               style={{
                 fontSize: 20,
-                color: redesignTheme.foreground,
+                color: this.getHomeTheme().foreground,
                 marginBottom: 20,
               }}
             >
               Loading...
             </Text>
-            <ActivityIndicator size={'large'} color={redesignTheme.primary} />
+            <ActivityIndicator size={'large'} color={this.getHomeTheme().primary} />
             <TouchableOpacity
               style={{
                 marginTop: 20,
                 padding: 15,
-                backgroundColor: redesignTheme.primary,
+                backgroundColor: this.getHomeTheme().primary,
                 borderRadius: 8,
               }}
               onPress={() => {
@@ -2180,8 +2206,8 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
                         styles.searchIcons,
                         {
                           tintColor: focused
-                            ? redesignTheme.primary
-                            : redesignTheme.muted,
+                            ? this.getHomeTheme().primary
+                            : this.getHomeTheme().muted,
                         },
                       ]}
                     />
@@ -2219,8 +2245,8 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
                         styles.searchIcons,
                         {
                           tintColor: focused
-                            ? redesignTheme.primary
-                            : redesignTheme.muted,
+                            ? this.getHomeTheme().primary
+                            : this.getHomeTheme().muted,
                         },
                       ]}
                     />
@@ -2260,8 +2286,8 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
                         styles.searchIcons,
                         {
                           tintColor: focused
-                            ? redesignTheme.primary
-                            : redesignTheme.muted,
+                            ? this.getHomeTheme().primary
+                            : this.getHomeTheme().muted,
                         },
                       ]}
                     />
@@ -2299,8 +2325,8 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
                         styles.searchIcons,
                         {
                           tintColor: focused
-                            ? redesignTheme.primary
-                            : redesignTheme.muted,
+                            ? this.getHomeTheme().primary
+                            : this.getHomeTheme().muted,
                         },
                       ]}
                     />
@@ -2340,8 +2366,8 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
                       styles.searchIcons,
                       {
                         tintColor: focused
-                          ? redesignTheme.primary
-                          : redesignTheme.muted,
+                          ? this.getHomeTheme().primary
+                          : this.getHomeTheme().muted,
                       },
                     ]}
                   />
@@ -2383,8 +2409,8 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
                     styles.searchIcons,
                     {
                       tintColor: focused
-                        ? redesignTheme.primary
-                        : redesignTheme.muted,
+                        ? this.getHomeTheme().primary
+                        : this.getHomeTheme().muted,
                     },
                   ]}
                 />
@@ -2422,8 +2448,8 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
                     styles.searchIcons,
                     {
                       tintColor: focused
-                        ? redesignTheme.primary
-                        : redesignTheme.muted,
+                        ? this.getHomeTheme().primary
+                        : this.getHomeTheme().muted,
                     },
                   ]}
                 />
@@ -2462,8 +2488,8 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
                     styles.searchIcons,
                     {
                       tintColor: focused
-                        ? redesignTheme.primary
-                        : redesignTheme.muted,
+                        ? this.getHomeTheme().primary
+                        : this.getHomeTheme().muted,
                     },
                   ]}
                 />
@@ -2503,10 +2529,10 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
         {
           initialRouteName: 'HomeFeed',
           tabBarOptions: {
-            activeTintColor: redesignTheme.primary,
-            inactiveTintColor: redesignTheme.muted,
+            activeTintColor: this.getHomeTheme().primary,
+            inactiveTintColor: this.getHomeTheme().muted,
             style: {
-              backgroundColor: redesignTheme.background,
+              backgroundColor: this.getHomeTheme().background,
               borderTopWidth: 0,
               elevation: 0,
               height: 88,
@@ -2555,18 +2581,18 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
           <SafeAreaView
             style={{
               flex: 1,
-              backgroundColor: redesignTheme.background,
+              backgroundColor: this.getHomeTheme().background,
               justifyContent: 'center',
               alignItems: 'center',
             }}
           >
-            <ActivityIndicator size={'large'} color={redesignTheme.primary} />
+            <ActivityIndicator size={'large'} color={this.getHomeTheme().primary} />
           </SafeAreaView>
         );
       }
       return (
         <SafeAreaView
-          style={{ flex: 1, backgroundColor: redesignTheme.background }}
+          style={{ flex: 1, backgroundColor: this.getHomeTheme().background }}
         >
           <Drawer />
         </SafeAreaView>
@@ -2577,12 +2603,12 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
         <SafeAreaView
           style={{
             flex: 1,
-            backgroundColor: redesignTheme.background,
+            backgroundColor: this.getHomeTheme().background,
             justifyContent: 'center',
             alignItems: 'center',
           }}
         >
-          <Text style={{ fontSize: 18, color: redesignTheme.foreground }}>
+          <Text style={{ fontSize: 18, color: this.getHomeTheme().foreground }}>
             Something went wrong. Please restart the app.
           </Text>
         </SafeAreaView>

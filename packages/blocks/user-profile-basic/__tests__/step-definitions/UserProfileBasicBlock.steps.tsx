@@ -1507,6 +1507,10 @@ defineFeature(feature, (test) => {
 
     then("User clicks the back button", () => {
       userProfileBasicBlock
+        .findWhere((node) => node.prop("testID") === "themeToggle")
+        .simulate("press");
+
+      userProfileBasicBlock
         .findWhere((node) => node.prop("testID") === "hamburgerIcon")
         .simulate("press");
 

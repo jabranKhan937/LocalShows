@@ -15,8 +15,15 @@ import {
   setStorageData,
 } from '../../../framework/src/Utilities';
 import {
+  lightTheme,
+  PROFILE_THEME_CHANGED_EVENT,
+  PROFILE_THEME_STORAGE_KEY,
+  redesignTheme,
+} from '../../utilities/src/Colors';
+import {
   Alert,
   BackHandler,
+  DeviceEventEmitter,
   InteractionManager,
   Linking,
   PermissionsAndroid,
@@ -139,6 +146,7 @@ interface S {
   currentLocationState: string;
   forceUpdateRequired: boolean;
   forceUpdateStoreUrl: string;
+  isDarkMode: boolean;
   // Customizable Area End
 }
 
@@ -174,6 +182,7 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
   /** Main events feed list; used to scroll to top when the Home tab is pressed */
   eventsFeedListRef = createRef<any>();
   homeFeedTabScrollListenerAttached = false;
+  profileThemeListener: { remove: () => void } | null = null;
   // Customizable Area End
   constructor(props: Props) {
     super(props);
@@ -244,6 +253,7 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
       currentLocationState: '',
       forceUpdateRequired: false,
       forceUpdateStoreUrl: '',
+      isDarkMode: true,
       // Customizable Area End
     };
 
@@ -266,6 +276,7 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
     this.getToken();
     this.getAuthToken();
     this.handlePayloadFromNav();
+    this.loadHomeTheme();
 
     if (DEVICE_GEOLOCATION_ENABLED_FOR_FEED) {
       try {
@@ -451,6 +462,11 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
     });
     this.navigationListeners = [];
     this.homeFeedTabScrollListenerAttached = false;
+
+    if (this.profileThemeListener) {
+      this.profileThemeListener.remove();
+      this.profileThemeListener = null;
+    }
 
     // Close WebSocket connection
     if (this.globalWebSocket) {
@@ -3767,6 +3783,23 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
     if (typeof this.props.navigation.pop === 'function') {
       this.props.navigation.pop();
     }
+  };
+
+  loadHomeTheme = async () => {
+    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
+    this.safeSetState({ isDarkMode: savedTheme !== 'false' });
+    if (!this.profileThemeListener) {
+      this.profileThemeListener = DeviceEventEmitter.addListener(
+        PROFILE_THEME_CHANGED_EVENT,
+        (isDarkMode: boolean) => {
+          this.safeSetState({ isDarkMode });
+        },
+      );
+    }
+  };
+
+  getHomeTheme = () => {
+    return this.state.isDarkMode ? redesignTheme : lightTheme;
   };
   // Customizable Area End
 }

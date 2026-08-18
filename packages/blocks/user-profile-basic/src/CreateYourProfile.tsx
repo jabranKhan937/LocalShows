@@ -11,128 +11,152 @@ import {
   TouchableWithoutFeedback,
   KeyboardAvoidingView,
   StatusBar,
-  SafeAreaView,
   TextInput,
   Modal,
   ActivityIndicator,
   FlatList,
   Pressable,
+  Dimensions,
 } from 'react-native';
                                                                                                                                                                                                                                                                                                            
 import { leftArrowWhite, defaultProfile, editIcon } from './assets';
 import { leftArrow, usFlag } from '../../email-account-registration/src/assets';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Feather from 'react-native-vector-icons/Feather';
 import { Picker } from '@react-native-picker/picker';
                                                                                     
-import { colors } from '../../utilities/src/Colors';
+import {
+  lightTheme,
+  redesignTheme,
+} from '../../utilities/src/Colors';
 import FastImage from '../../../components/src/SafeFastImage';
+import { SafeAreaView } from 'react-native-safe-area-context';
 // Customizable Area End
                                                                                                                                                                                                           
 import UserProfileBasicController from './UserProfileBasicController';
                              
 export default class CreateYourProfile extends UserProfileBasicController {
-  // Customizable Area Start.                                   
+  // Customizable Area Start.
+  get styles() {
+    return this.state.isDarkMode ? darkEditStyles : lightEditStyles;
+  }
+
   abbreviateDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   renderAffiliateItem = ({ item }: { item: string }) => (
-    <View style={styles.selectedAffiliate}>
-      <Text style={styles.selectedAffiliateText}>{item}</Text>
+    <View style={this.styles.selectedAffiliate}>
+      <Text style={this.styles.selectedAffiliateText}>{item}</Text>
       <Feather
         testID="btnRemoveAffiliate"
         name="x"
         size={17}
-        color="#4949EE"
+        color={this.getProfileTheme().primary}
         onPress={() => this.handleRemoveAffiliate(item)}
       />
     </View>
   );
                                  
   renderInfluenceItem = ({ item }: { item: string }) => (
-    <View style={styles.selectedAffiliate}>
-      <Text style={styles.selectedAffiliateText}>{item}</Text>
+    <View style={this.styles.selectedAffiliate}>
+      <Text style={this.styles.selectedAffiliateText}>{item}</Text>
       <Feather
         testID="btnRemoveInfluence"
         name="x"
         size={17}
-        color="#4949EE"
+        color={this.getProfileTheme().primary}
         onPress={() => this.handleRemoveInfluence(item)}
       />
     </View>
   );
                                    
   renderBackBtnAndHeader = () => {
-    // Use state editMode (set in componentDidMount) with fallback to navigation params
     const editMode =
       this.state.editMode ||
       this.props.navigation?.state?.params?.editMode ||
       (this.props as any).route?.params?.editMode ||
       false;
-    console.log('now check props', editMode);
 
     return (
-      <>
-        <TouchableOpacity
-          testID="navigationBackButton"
-          style={styles.backBtn}
-          onPress={() => {
-            this.props.navigation.goBack();
-          }}
-        >
-          <Image source={leftArrow} style={styles.headerIcon} />
-        </TouchableOpacity>
-        <Text testID="testLabel" style={styles.headerTitle}>
-          {editMode ? 'Edit Profile' : 'Create your profile'}
-        </Text>
-      </>
+      <SafeAreaView
+        edges={['top']}
+        style={this.styles.bannerOverlay}
+        pointerEvents="box-none"
+      >
+        <View style={this.styles.bannerOverlayInner} pointerEvents="box-none">
+          <TouchableOpacity
+            testID="navigationBackButton"
+            style={this.styles.overlayCircleBtn}
+            onPress={() => {
+              this.props.navigation.goBack();
+            }}
+            activeOpacity={0.8}
+          >
+            <Feather name="chevron-left" size={22} color="#FFFFFF" />
+          </TouchableOpacity>
+          <Text
+            testID="testLabel"
+            style={this.styles.overlayTitle}
+            numberOfLines={1}
+          >
+            {editMode ? 'Edit Profile' : 'Create your profile'}
+          </Text>
+          <View style={this.styles.overlaySideSpacer} />
+        </View>
+      </SafeAreaView>
     );
   };
-                       
+
+  getEditCoverSource = () => {
+    const coverUri = (this.state.coverPic || '').trim();
+    if (coverUri !== '' && coverUri !== 'null' && coverUri !== 'undefined') {
+      return { uri: coverUri, priority: FastImage.priority.high };
+    }
+    return require('../../../mobile/assets/images/profile_concert_bg.png');
+  };
+
   renderImageSection = () => {
     return (
-      <View style={[styles.topBackdrop, { marginTop: 20 }]}>
-        <View style={styles.topContainer}>
-          <Image
-            source={{ uri: this.state.coverPic }}
-            style={styles.topBackdrop}
-          ></Image>
+      <View style={this.styles.heroWrap}>
+        <View style={this.styles.bannerWrap}>
+          <FastImage
+            source={this.getEditCoverSource()}
+            style={this.styles.bannerImage}
+            resizeMode={FastImage.resizeMode.cover}
+          />
+          {this.renderBackBtnAndHeader()}
           <TouchableOpacity
             testID="coverPicButton"
-            style={styles.coverPicBtn}
+            style={this.styles.coverPicBtn}
             onPress={() => {
               this.handleProfilePic('cover');
             }}
           >
-            <Image source={editIcon} style={styles.editIcon} />
+            <Feather name="edit-2" size={14} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
-        <View style={{ position: 'absolute' }}>
-          <View style={styles.profileImageContainer}>
-            <FastImage
-              source={
-                this.state.profilePic
-                  ? {
-                      uri: this.state.profilePic,
-                      priority: FastImage.priority.high,
-                    }
-                  : defaultProfile
-              }
-              style={styles.profileImage}
-              resizeMode={FastImage.resizeMode.cover}
-            />
+        <View style={this.styles.avatarRow}>
+          <View style={this.styles.avatarWrap}>
+            <View style={this.styles.profileImageContainer}>
+              <FastImage
+                source={
+                  this.state.profilePic
+                    ? {
+                        uri: this.state.profilePic,
+                        priority: FastImage.priority.high,
+                      }
+                    : defaultProfile
+                }
+                style={this.styles.profileImage}
+                resizeMode={FastImage.resizeMode.cover}
+              />
+            </View>
             <TouchableOpacity
               testID="profilePicButton"
-              style={styles.profilePicBtn}
+              style={this.styles.profilePicBtn}
               onPress={() => {
                 this.handleProfilePic('profile');
               }}
             >
-              <Image source={editIcon} style={styles.editIcon} />
+              <Feather name="edit-2" size={14} color="#FFFFFF" />
             </TouchableOpacity>
-          </View>
-          <Text style={styles.bandNameText}>{this.state.firstName}</Text>
-          <View style={styles.locationContainer}>
-            <Icon name="map-marker" size={20} color="white" />
-            <Text style={styles.locationText}>{this.getLocation()}</Text>
           </View>
         </View>
       </View>
@@ -142,21 +166,21 @@ export default class CreateYourProfile extends UserProfileBasicController {
   renderAdmin = () => {
     return (
       <>
-        {/* <Text style={[styles.text, styles.textInputLabel]}>
+        {/* <Text style={[this.styles.text, this.styles.textInputLabel]}>
           Administrator Name
         </Text>
         <TextInput
           testID="adminNameTextInput"
           placeholder="Enter admin name"
-          placeholderTextColor="#CBD5E1"
-          style={styles.textInput}
+          placeholderTextColor={this.getProfileTheme().muted}
+          style={this.styles.textInput}
           value={this.state.adminName}
           onChangeText={name => this.setState({ adminName: name })}
         /> */}
         <Text
           style={[
-            styles.text,
-            styles.errorText,
+            this.styles.text,
+            this.styles.errorText,
             {
               marginBottom: this.state.nameError !== '' ? 10 : 0,
             },
@@ -171,12 +195,12 @@ export default class CreateYourProfile extends UserProfileBasicController {
   renderTitle = () => {
     return (
       <>
-        <Text style={[styles.text, styles.textInputLabel]}>Title</Text>
+        <Text style={[this.styles.text, this.styles.textInputLabel]}>Title</Text>
         <TextInput
           testID="titleTextInput"
           placeholder="Enter title"
-          placeholderTextColor="#CBD5E1"
-          style={styles.textInput}
+          placeholderTextColor={this.getProfileTheme().muted}
+          style={this.styles.textInput}
           value={this.state.title}
           onChangeText={title => this.setState({ title })}
         />
@@ -192,21 +216,21 @@ export default class CreateYourProfile extends UserProfileBasicController {
 
     return (
       <>
-        <Text style={[styles.text, styles.textInputLabel, { marginTop: 20 }]}>
+        <Text style={[this.styles.text, this.styles.textInputLabel, { marginTop: 20 }]}>
           {'Account Type'}
         </Text>
         <View
           style={[
-            styles.textInput,
-            styles.selector,
-            { backgroundColor: '#F1F5F9', opacity: 0.7 },
+            this.styles.textInput,
+            this.styles.selector,
+            { backgroundColor: this.getProfileTheme().input, opacity: 0.7 },
             isVenue && { pointerEvents: 'none' as const },
           ]}
         >
           <Text
             style={[
-              styles.text,
-              { marginHorizontal: 10, color: colors(false).text },
+              this.styles.text,
+              { marginHorizontal: 10, color: this.getProfileTheme().foreground },
             ]}
           >
             {this.getAccountTypeDisplayLabel(this.state.accountType)}
@@ -221,20 +245,20 @@ export default class CreateYourProfile extends UserProfileBasicController {
       <>
 
  <>
-        <Text style={[styles.text, styles.textInputLabel, { marginTop: 20 }]}>
+        <Text style={[this.styles.text, this.styles.textInputLabel, { marginTop: 20 }]}>
           {'Account Type'}
         </Text>
         <View
           style={[
-            styles.textInput,
-            styles.selector,
-            { backgroundColor: '#F1F5F9', opacity: 0.7 }
+            this.styles.textInput,
+            this.styles.selector,
+            { backgroundColor: this.getProfileTheme().input, opacity: 0.7 }
           ]}
         >
           <Text
             style={[
-              styles.text,
-              { marginHorizontal: 10, color: colors(false).text },
+              this.styles.text,
+              { marginHorizontal: 10, color: this.getProfileTheme().foreground },
             ]}
           >
 
@@ -243,20 +267,20 @@ Business
         </View>
       </>
 
-        <Text style={[styles.text, styles.textInputLabel, { marginTop: 20 }]}>
+        <Text style={[this.styles.text, this.styles.textInputLabel, { marginTop: 20 }]}>
           {'Category'}
         </Text>
         <View
           style={[
-            styles.textInput,
-            styles.selector,
-            { backgroundColor: '#F1F5F9', opacity: 0.7 },
+            this.styles.textInput,
+            this.styles.selector,
+            { backgroundColor: this.getProfileTheme().input, opacity: 0.7 },
           ]}
         >
           <Text
             style={[
-              styles.text,
-              { marginHorizontal: 10, color: colors(false).text },
+              this.styles.text,
+              { marginHorizontal: 10, color: this.getProfileTheme().foreground },
             ]}
           >
             {this.getAccountTypeDisplayLabel(this.state.accountType)}
@@ -281,7 +305,7 @@ Business
           });
         }}
       >
-        <Text style={{ color: '#4949EE', fontSize: 16, fontWeight: '600' }}>
+        <Text style={{ color: this.getProfileTheme().primary, fontSize: 16, fontWeight: '600' }}>
           Describe what you do
         </Text>
       </TouchableOpacity>
@@ -291,13 +315,13 @@ Business
   renderCategory = () => {
     return (
       <>
-        <Text style={[styles.text, styles.textInputLabel, { marginTop: 20 }]}>
+        <Text style={[this.styles.text, this.styles.textInputLabel, { marginTop: 20 }]}>
           Category
         </Text>
         {Platform.OS === 'ios' ? (
           <TouchableOpacity
             testID="btnCategoryPicker"
-            style={[styles.textInput, styles.selector]}
+            style={[this.styles.textInput, this.styles.selector]}
             onPress={() => {
               this.setState({
                 showPickerModal: true,
@@ -312,19 +336,19 @@ Business
               };
             }}
           >
-            <Text style={[styles.text, { marginHorizontal: 10 }]}>
+            <Text style={[this.styles.text, { marginHorizontal: 10 }]}>
               {this.state.bandType}
             </Text>
             <Image
               source={leftArrowWhite}
-              style={[styles.downArrow, { tintColor: '#3333CC' }]}
+              style={[this.styles.downArrow, { tintColor: this.getProfileTheme().primary }]}
             />
           </TouchableOpacity>
         ) : (
           <View
             style={[
-              styles.textInput,
-              styles.selector,
+              this.styles.textInput,
+              this.styles.selector,
               {
                 paddingHorizontal: 0,
               },
@@ -332,8 +356,8 @@ Business
           >
             <Picker
               testID="categoryPicker"
-              style={[styles.textInput, styles.selector]}
-              itemStyle={styles.text}
+              style={[this.styles.textInput, this.styles.selector]}
+              itemStyle={this.styles.text}
               selectedValue={this.state.bandType}
               onValueChange={bandType =>
                 this.setState({
@@ -349,7 +373,7 @@ Business
             </Picker>
             <Image
               source={leftArrowWhite}
-              style={[styles.downArrow, { tintColor: '#3333CC' }]}
+              style={[this.styles.downArrow, { tintColor: this.getProfileTheme().primary }]}
             />
           </View>
         )}
@@ -360,30 +384,30 @@ Business
   renderWhatKindOf = () => {
     return (
       <>
-        <Text style={[styles.text, styles.textInputLabel, { marginTop: 20 }]}>
+        <Text style={[this.styles.text, this.styles.textInputLabel, { marginTop: 20 }]}>
           {`What kind of ${this.state.bandType}?`}
         </Text>
         {Platform.OS === 'ios' ? (
           <TouchableOpacity
             testID="btnCategoryListPicker"
-            style={[styles.textInput, styles.selector]}
+            style={[this.styles.textInput, this.styles.selector]}
             onPress={() => {
               this.setState({ categoryPickerModal: true });
             }}
           >
-            <Text style={[styles.text, { marginHorizontal: 10 }]}>
+            <Text style={[this.styles.text, { marginHorizontal: 10 }]}>
               {this.state.selectedCategoryName || 'Select'}
             </Text>
             <Image
               source={leftArrowWhite}
-              style={[styles.downArrow, { tintColor: '#3333CC' }]}
+              style={[this.styles.downArrow, { tintColor: this.getProfileTheme().primary }]}
             />
           </TouchableOpacity>
         ) : (
           <View
             style={[
-              styles.textInput,
-              styles.selector,
+              this.styles.textInput,
+              this.styles.selector,
               {
                 paddingHorizontal: 0,
               },
@@ -391,8 +415,8 @@ Business
           >
             <Picker
               testID="categoryListPicker"
-              style={[styles.textInput, styles.selector]}
-              itemStyle={styles.text}
+              style={[this.styles.textInput, this.styles.selector]}
+              itemStyle={this.styles.text}
               selectedValue={this.state.selectedCategoryName}
               onValueChange={(item: string) =>
                 this.handleCategorySelection(item)
@@ -409,7 +433,7 @@ Business
             </Picker>
             <Image
               source={leftArrowWhite}
-              style={[styles.downArrow, { tintColor: '#3333CC' }]}
+              style={[this.styles.downArrow, { tintColor: this.getProfileTheme().primary }]}
             />
           </View>
         )}
@@ -420,30 +444,30 @@ Business
   renderType = () => {
     return (
       <>
-        <Text style={[styles.text, styles.textInputLabel, { marginTop: 20 }]}>
+        <Text style={[this.styles.text, this.styles.textInputLabel, { marginTop: 20 }]}>
           {`${this.state.selectedCategoryName} Type`}
         </Text>
         {Platform.OS === 'ios' ? (
           <TouchableOpacity
             testID="btnSubCategoryListPicker"
-            style={[styles.textInput, styles.selector]}
+            style={[this.styles.textInput, this.styles.selector]}
             onPress={() => {
               this.setState({ subCategoryPickerModal: true });
             }}
           >
-            <Text style={[styles.text, { marginHorizontal: 10 }]}>
+            <Text style={[this.styles.text, { marginHorizontal: 10 }]}>
               {'Select'}
             </Text>
             <Image
               source={leftArrowWhite}
-              style={[styles.downArrow, { tintColor: '#3333CC' }]}
+              style={[this.styles.downArrow, { tintColor: this.getProfileTheme().primary }]}
             />
           </TouchableOpacity>
         ) : (
           <View
             style={[
-              styles.textInput,
-              styles.selector,
+              this.styles.textInput,
+              this.styles.selector,
               {
                 paddingHorizontal: 0,
               },
@@ -451,8 +475,8 @@ Business
           >
             <Picker
               testID="subCategoryListPicker"
-              style={[styles.textInput, styles.selector]}
-              itemStyle={styles.text}
+              style={[this.styles.textInput, this.styles.selector]}
+              itemStyle={this.styles.text}
               onValueChange={(item: string) =>
                 this.handleSubCategorySelection(item)
               }
@@ -468,7 +492,7 @@ Business
             </Picker>
             <Image
               source={leftArrowWhite}
-              style={[styles.downArrow, { tintColor: '#3333CC' }]}
+              style={[this.styles.downArrow, { tintColor: this.getProfileTheme().primary }]}
             />
           </View>
         )}
@@ -487,11 +511,11 @@ Business
           columnWrapperStyle={{ flexWrap: 'wrap' }}
           renderItem={({ item }) => {
             return (
-              <View style={styles.rowItem}>
+              <View style={this.styles.rowItem}>
                 <Text
                   style={[
-                    styles.label,
-                    { fontWeight: '400', color: '#3333CC', marginTop: 1 },
+                    this.styles.label,
+                    { fontWeight: '400', color: this.getProfileTheme().primary, marginTop: 1 },
                   ]}
                 >
                   {item}
@@ -504,7 +528,7 @@ Business
                 >
                   <Image
                     source={require('../../../mobile/assets/images/close.png')}
-                    style={styles.crossBtn}
+                    style={this.styles.crossBtn}
                   />
                 </TouchableOpacity>
               </View>
@@ -519,7 +543,7 @@ Business
   renderBusinessHours = () => {
     return (
       <>
-        <Text style={[styles.text, styles.textInputLabel, { marginTop: 20 }]}>
+        <Text style={[this.styles.text, this.styles.textInputLabel, { marginTop: 20 }]}>
           Business hours
         </Text>
         <FlatList
@@ -530,22 +554,22 @@ Business
           renderItem={({ item }) => {
             const isSelected = this.state.selectedBusinessDays.includes(item);
             return (
-              <View style={styles.daysItem}>
+              <View style={this.styles.daysItem}>
                 <TouchableOpacity
                   testID={isSelected ? 'selectedDay' : 'unselectedDay'}
-                  style={styles.checkbox}
+                  style={this.styles.checkbox}
                   onPress={() => this.handleBusinessDayToggle(item)}
                 >
                   {isSelected && (
                     <Image
                       source={require('../../../mobile/assets/images/checkbox.png')}
-                      style={styles.checkboxImage}
+                      style={this.styles.checkboxImage}
                     />
                   )}
                 </TouchableOpacity>
                 <Text
                   style={[
-                    styles.label,
+                    this.styles.label,
                     { fontWeight: '400', marginTop: 1, width: '80%' },
                   ]}
                 >
@@ -566,7 +590,7 @@ Business
     return (
       <View style={{ flexDirection: 'row', flex: 2 }}>
         <View style={{ flex: 1, marginRight: 20 }}>
-          <Text style={[styles.text, styles.textInputLabel, { marginTop: 20 }]}>
+          <Text style={[this.styles.text, this.styles.textInputLabel, { marginTop: 20 }]}>
             Open at
           </Text>
           {Platform.OS === 'ios' ? (
@@ -576,7 +600,7 @@ Business
           )}
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.text, styles.textInputLabel, { marginTop: 20 }]}>
+          <Text style={[this.styles.text, this.styles.textInputLabel, { marginTop: 20 }]}>
             Close at
           </Text>
           {Platform.OS === 'ios' ? (
@@ -593,17 +617,17 @@ Business
     return (
       <TouchableOpacity
         testID="btnOpenAtPicker"
-        style={[styles.textInput, styles.selector]}
+        style={[this.styles.textInput, this.styles.selector]}
         onPress={() => {
           this.setState({ openAtPickerModal: true });
         }}
       >
-        <Text style={[styles.text, { marginHorizontal: 10 }]}>
+        <Text style={[this.styles.text, { marginHorizontal: 10 }]}>
           {this.state.openAt || 'Select'}
         </Text>
         <Image
           source={leftArrowWhite}
-          style={[styles.downArrow, { tintColor: '#3333CC' }]}
+          style={[this.styles.downArrow, { tintColor: this.getProfileTheme().primary }]}
         />
       </TouchableOpacity>
     );
@@ -613,8 +637,8 @@ Business
     return (
       <View
         style={[
-          styles.textInput,
-          styles.selector,
+          this.styles.textInput,
+          this.styles.selector,
           {
             paddingHorizontal: 0,
           },
@@ -622,8 +646,8 @@ Business
       >
         <Picker
           testID="openAtPicker"
-          style={[styles.textInput, styles.selector]}
-          itemStyle={styles.text}
+          style={[this.styles.textInput, this.styles.selector]}
+          itemStyle={this.styles.text}
           onValueChange={(item: string) => this.handleOpenAtSelection(item)}
           selectedValue={this.state.openAt}
         >
@@ -634,7 +658,7 @@ Business
         </Picker>
         <Image
           source={leftArrowWhite}
-          style={[styles.downArrow, { tintColor: '#3333CC' }]}
+          style={[this.styles.downArrow, { tintColor: this.getProfileTheme().primary }]}
         />
       </View>
     );
@@ -645,8 +669,8 @@ Business
       <TouchableOpacity
         testID="btncloseAtPicker"
         style={[
-          styles.textInput,
-          styles.selector,
+          this.styles.textInput,
+          this.styles.selector,
           { opacity: this.state.openAt ? 1 : 0.5 },
         ]}
         onPress={() => {
@@ -656,12 +680,12 @@ Business
         }}
         disabled={!this.state.openAt}
       >
-        <Text style={[styles.text, { marginHorizontal: 10 }]}>
+        <Text style={[this.styles.text, { marginHorizontal: 10 }]}>
           {this.state.closeAt || 'Select'}
         </Text>
         <Image
           source={leftArrowWhite}
-          style={[styles.downArrow, { tintColor: '#3333CC' }]}
+          style={[this.styles.downArrow, { tintColor: this.getProfileTheme().primary }]}
         />
       </TouchableOpacity>
     );
@@ -671,8 +695,8 @@ Business
     return (
       <View
         style={[
-          styles.textInput,
-          styles.selector,
+          this.styles.textInput,
+          this.styles.selector,
           {
             paddingHorizontal: 0,
           },
@@ -680,8 +704,8 @@ Business
       >
         <Picker
           testID="closeAtPicker"
-          style={[styles.textInput, styles.selector]}
-          itemStyle={styles.text}
+          style={[this.styles.textInput, this.styles.selector]}
+          itemStyle={this.styles.text}
           onValueChange={(item: string) => this.handleCloseAtSelection(item)}
           selectedValue={this.state.closeAt}
           enabled={this.state.openAt !== ''}
@@ -693,7 +717,7 @@ Business
         </Picker>
         <Image
           source={leftArrowWhite}
-          style={[styles.downArrow, { tintColor: '#3333CC' }]}
+          style={[this.styles.downArrow, { tintColor: this.getProfileTheme().primary }]}
         />
       </View>
     );
@@ -702,21 +726,21 @@ Business
   renderAddress = () => {
     return (
       <>
-        <Text style={[styles.text, styles.textInputLabel, { marginTop: 20 }]}>
+        <Text style={[this.styles.text, this.styles.textInputLabel, { marginTop: 20 }]}>
           Address
         </Text>
         <TextInput
           testID="addressTextInput"
           placeholder="Enter address"
-          placeholderTextColor="#CBD5E1"
-          style={styles.textInput}
+          placeholderTextColor={this.getProfileTheme().muted}
+          style={this.styles.textInput}
           value={this.state.address}
           onChangeText={address => this.setState({ address })}
         />
         <Text
           style={[
-            styles.text,
-            styles.errorText,
+            this.styles.text,
+            this.styles.errorText,
             {
               marginBottom: this.state.addressError !== '' ? 10 : 0,
             },
@@ -731,14 +755,14 @@ Business
   renderZipCode = () => {
     return (
       <>
-        <Text style={[styles.text, styles.textInputLabel, { marginTop: 0 }]}>
+        <Text style={[this.styles.text, this.styles.textInputLabel, { marginTop: 0 }]}>
           Zip Code
         </Text>
         <TextInput
           testID="zipCodeTextInput"
           placeholder="Enter zip code"
-          placeholderTextColor="#CBD5E1"
-          style={styles.textInput}
+          placeholderTextColor={this.getProfileTheme().muted}
+          style={this.styles.textInput}
           value={this.state.zipCode}
           onChangeText={zipCode => this.handleZipCode(zipCode)}
           keyboardType="numeric"
@@ -746,8 +770,8 @@ Business
         />
         <Text
           style={[
-            styles.text,
-            styles.errorText,
+            this.styles.text,
+            this.styles.errorText,
             {
               marginBottom: this.state.zipCodeError !== '' ? 10 : 0,
             },
@@ -762,22 +786,22 @@ Business
   renderCapacity = () => {
     return (
       <>
-        <Text style={[styles.text, styles.textInputLabel]}>
+        <Text style={[this.styles.text, this.styles.textInputLabel]}>
           Maximum capacity (people)
         </Text>
         <TextInput
           testID="capacityTextInput"
           placeholder="Enter capacity"
-          placeholderTextColor="#CBD5E1"
-          style={styles.textInput}
+          placeholderTextColor={this.getProfileTheme().muted}
+          style={this.styles.textInput}
           value={this.state.capacity}
           onChangeText={capacity => this.handleCapacity(capacity)}
           keyboardType="numeric"
         />
         <Text
           style={[
-            styles.text,
-            styles.errorText,
+            this.styles.text,
+            this.styles.errorText,
             {
               marginBottom: this.state.capacityError !== '' ? 10 : 0,
             },
@@ -792,21 +816,21 @@ Business
   renderOfficialWebsite = () => {
     return (
       <>
-        <Text style={[styles.text, styles.textInputLabel, { marginTop: 10 }]}>
+        <Text style={[this.styles.text, this.styles.textInputLabel, { marginTop: 10 }]}>
           Official Website
         </Text>
         <TextInput
           testID="websiteTextInput"
           placeholder="Enter web address"
-          placeholderTextColor="#CBD5E1"
-          style={styles.textInput}
+          placeholderTextColor={this.getProfileTheme().muted}
+          style={this.styles.textInput}
           value={this.state.website}
           onChangeText={website => this.setState({ website })}
         />
         <Text
           style={[
-            styles.text,
-            styles.errorText,
+            this.styles.text,
+            this.styles.errorText,
             {
               marginBottom: this.state.websiteError !== '' ? 10 : 0,
             },
@@ -828,22 +852,22 @@ Business
     return (
       <>
        <View style={{ marginTop: 20,marginBottom: -20 }}>
-         <Text style={[styles.text, styles.textInputLabel]}>Email address</Text>
+         <Text style={[this.styles.text, this.styles.textInputLabel]}>Email address</Text>
         <TextInput
           testID="emailTextInput"
           placeholder="Enter your email address"
-          placeholderTextColor="#CBD5E1"
-          style={[styles.textInput, editMode && styles.disabledInput]}
+          placeholderTextColor={this.getProfileTheme().muted}
+          style={[this.styles.textInput, editMode && this.styles.disabledInput]}
           value={this.state.email}
           editable={!editMode}
           onChangeText={editMode ? undefined : (email) => this.handleEmail(email.replace(' ', ''))}
         />
         {editMode && (
-          <Text style={[styles.text, styles.emailSecurityText]}>
+          <Text style={[this.styles.text, this.styles.emailSecurityText]}>
             You cannot change the email for security reasons, if you need to change the email, please contact us
           </Text>
         )}
-        <Text style={[styles.text, styles.errorText]}>
+        <Text style={[this.styles.text, this.styles.errorText]}>
           {this.state.emailError}
         </Text>
        </View>
@@ -854,12 +878,12 @@ Business
   renderPhoneBand = () => {
     return (
       <>
-        <Text style={[styles.text, styles.textInputLabel]}>Cell phone</Text>
+        <Text style={[this.styles.text, this.styles.textInputLabel]}>Cell phone</Text>
         {Platform.OS === 'ios' ? (
           <View>
             <TextInput
               testID="phoneTextInputBand"
-              style={[styles.textInput, styles.textInputPhone]}
+              style={[this.styles.textInput, this.styles.textInputPhone]}
               keyboardType="numeric"
               value={this.state.phoneNumber}
               onChangeText={phone => this.handlePhoneNumber(phone)}
@@ -870,7 +894,7 @@ Business
         ) : (
           this.renderCountryCodeAndroid()
         )}
-        <Text style={[styles.text, styles.errorText]}>
+        <Text style={[this.styles.text, this.styles.errorText]}>
           {this.state.phoneError}
         </Text>
       </>
@@ -889,7 +913,7 @@ Business
     return (
       <TouchableOpacity
         testID="btnCountryCodeSelect"
-        style={styles.countryCodeContainer}
+        style={this.styles.countryCodeContainer}
         onPress={this.handleShowCountryCode}
       >
         <Image
@@ -898,17 +922,17 @@ Business
               ? { uri: this.state.selectedCountryCode.attributes.map_url }
               : usFlag
           }
-          style={styles.usFlag}
+          style={this.styles.usFlag}
         />
         <Image
           source={leftArrowWhite}
           style={[
-            styles.downArrow,
-            styles.countryCodeArrow,
-            { tintColor: '#3333CC' },
+            this.styles.downArrow,
+            this.styles.countryCodeArrow,
+            { tintColor: this.getProfileTheme().primary },
           ]}
         />
-        <Text style={[styles.text, styles.textCountryCode]}>{code}</Text>
+        <Text style={[this.styles.text, this.styles.textCountryCode]}>{code}</Text>
       </TouchableOpacity>
     );
   };
@@ -926,7 +950,7 @@ Business
       <View>
         <TextInput
           testID="phoneTextInput"
-          style={[styles.textInput, styles.textInputPhone]}
+          style={[this.styles.textInput, this.styles.textInputPhone]}
           keyboardType="numeric"
           value={this.state.phoneNumber}
           onChangeText={phone => this.handlePhoneNumber(phone)}
@@ -934,7 +958,7 @@ Business
         />
         <TouchableOpacity
           testID="btnCountryCodeSelectAndroid"
-          style={styles.countryCodeContainer}
+          style={this.styles.countryCodeContainer}
           onPress={() => {
             this.setState({ countryCodeClickedAndroid: true });
           }}
@@ -945,17 +969,17 @@ Business
                 ? { uri: this.state.selectedCountryCode.attributes.map_url }
                 : usFlag
             }
-            style={styles.usFlag}
+            style={this.styles.usFlag}
           />
           <Image
             source={leftArrowWhite}
             style={[
-              styles.downArrow,
-              styles.countryCodeArrow,
-              { tintColor: '#3333CC' },
+              this.styles.downArrow,
+              this.styles.countryCodeArrow,
+              { tintColor: this.getProfileTheme().primary },
             ]}
           />
-          <Text style={[styles.text, styles.textCountryCode]}>{code}</Text>
+          <Text style={[this.styles.text, this.styles.textCountryCode]}>{code}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -972,11 +996,11 @@ Business
           testID="hideCountryCodeModal"
           onPress={this.hideCountryCodeModal}
         >
-          <View style={styles.centeredView}>
+          <View style={this.styles.centeredView}>
             <TouchableWithoutFeedback>
               <View
                 style={[
-                  styles.modalView,
+                  this.styles.modalView,
                   { borderTopStartRadius: 20, padding: 15 },
                 ]}
               >
@@ -1004,10 +1028,10 @@ Business
   renderSocialMedia = () => {
     return (
       <>
-        <Text style={[styles.text, styles.socialMediaHeading]}>
+        <Text style={[this.styles.text, this.styles.socialMediaHeading]}>
           Social Media
         </Text>
-        <Text style={[styles.text, styles.textInputLabel, { marginTop: 20 }]}>
+        <Text style={[this.styles.text, this.styles.textInputLabel, { marginTop: 20 }]}>
           Instagram
         </Text>
         <Pressable
@@ -1029,7 +1053,7 @@ Business
           <Text
             style={{
               fontSize: 16,
-              color: colors(false).text,
+              color: this.getProfileTheme().foreground,
             }}
           >
             {'https://www.instagram.com/'.trim()}
@@ -1038,17 +1062,17 @@ Business
             ref={this.InstaInputRef}
             testID="instagramTextInput"
             placeholder="UserName"
-            placeholderTextColor="#CBD5E1"
+            placeholderTextColor={this.getProfileTheme().muted}
             onChangeText={instagram => this.setState({ instagram })}
             value={this.state.instagram}
-            style={{ flex: 1, fontSize: 16, color: colors(false).text }}
+            style={{ flex: 1, fontSize: 16, color: this.getProfileTheme().foreground }}
           />
         </Pressable>
         {this.state.instagramLinkError !== '' && (
           <Text
             style={[
-              styles.text,
-              styles.errorText,
+              this.styles.text,
+              this.styles.errorText,
               {
                 marginBottom: this.state.instagramLinkError !== '' ? 10 : 0,
               },
@@ -1057,7 +1081,7 @@ Business
             {this.state.instagramLinkError}
           </Text>
         )}
-        <Text style={[styles.text, styles.textInputLabel, { marginTop: 20 }]}>
+        <Text style={[this.styles.text, this.styles.textInputLabel, { marginTop: 20 }]}>
           Facebook
         </Text>
                                          
@@ -1080,7 +1104,7 @@ Business
           <Text
             style={{
               fontSize: 16,
-              color: colors(false).text,
+              color: this.getProfileTheme().foreground,
             }}
           >
             {'https://www.facebook.com/'.trim()}
@@ -1090,20 +1114,20 @@ Business
             testID="facebookTextInput"
             value={this.state.facebook}
             placeholder="UserName"
-            placeholderTextColor="#CBD5E1"
+            placeholderTextColor={this.getProfileTheme().muted}
             onChangeText={facebook => this.setState({ facebook })}
             style={{
               flex: 1,
               fontSize: 16,
-              color: colors(false).text,
+              color: this.getProfileTheme().foreground,
             }}
           />
         </Pressable>
         {this.state.facebookLinkError !== '' && (
           <Text
             style={[
-              styles.text,
-              styles.errorText,
+              this.styles.text,
+              this.styles.errorText,
               {
                 marginBottom: this.state.facebookLinkError !== '' ? 10 : 0,
               },
@@ -1112,7 +1136,7 @@ Business
             {this.state.facebookLinkError}
           </Text>
         )}
-        <Text style={[styles.text, styles.textInputLabel, { marginTop: 20 }]}>
+        <Text style={[this.styles.text, this.styles.textInputLabel, { marginTop: 20 }]}>
           LinkedIn
         </Text>
 
@@ -1135,7 +1159,7 @@ Business
           <Text
             style={{
               fontSize: 16,
-              color: colors(false).text,
+              color: this.getProfileTheme().foreground,
             }}
           >
             {'https://www.linkedin.com/in/'.trim()}
@@ -1144,17 +1168,17 @@ Business
             ref={this.LdinInputRef}
             testID="linkedinTextInput"
             placeholder="UserName"
-            placeholderTextColor="#CBD5E1"
+            placeholderTextColor={this.getProfileTheme().muted}
             value={this.state.linkedin}
             onChangeText={linkedin => this.setState({ linkedin })}
-            style={{ flex: 1, fontSize: 16, color: colors(false).text }}
+            style={{ flex: 1, fontSize: 16, color: this.getProfileTheme().foreground }}
           />
         </Pressable>
         {this.state.linkedInLinkError !== '' && (
           <Text
             style={[
-              styles.text,
-              styles.errorText,
+              this.styles.text,
+              this.styles.errorText,
               {
                 marginBottom: this.state.linkedInLinkError !== '' ? 10 : 0,
               },
@@ -1170,23 +1194,23 @@ Business
   renderAboutUs = () => {
     return (
       <>
-        <Text style={[styles.text, styles.textInputLabel, { marginTop: 20 }]}>
+        <Text style={[this.styles.text, this.styles.textInputLabel, { marginTop: 20 }]}>
           Bio / About us{' '}
           <Text style={{ fontWeight: 'normal' }}>(max 2,000 characters)</Text>
         </Text>
         <TextInput
           testID="aboutUsTxtInput"
           placeholder="About you"
-          placeholderTextColor="#CBD5E1"
-          style={[styles.textInput, styles.textInputBio]}
+          placeholderTextColor={this.getProfileTheme().muted}
+          style={[this.styles.textInput, this.styles.textInputBio]}
           value={this.state.aboutUs}
           onChangeText={aboutUs => this.setState({ aboutUs })}
           multiline
         />
         <Text
           style={[
-            styles.text,
-            styles.errorText,
+            this.styles.text,
+            this.styles.errorText,
             {
               marginBottom: this.state.aboutUsError !== '' ? 10 : 0,
             },
@@ -1206,14 +1230,14 @@ Business
 
     return (
       <>
-        <Text style={[styles.text, styles.textInputLabel]}>Influences</Text>
+        <Text style={[this.styles.text, this.styles.textInputLabel]}>Influences</Text>
 
-        <View style={styles.rosterInputContainer}>
+        <View style={this.styles.rosterInputContainer}>
           <TextInput
             testID="influencesTextInput"
             placeholder="Enter your influences"
-            placeholderTextColor="#CBD5E1"
-            style={styles.rosterInput}
+            placeholderTextColor={this.getProfileTheme().muted}
+            style={this.styles.rosterInput}
             value={this.state.influenceText}
             onChangeText={text =>
               this.setState({ influenceText: text.replace('  ', ' ') })
@@ -1223,16 +1247,16 @@ Business
           {this.state.influenceText.trim() !== '' && (
             <TouchableOpacity
               testID="saveInfluenceBtn"
-              style={styles.rosterSaveButton}
+              style={this.styles.rosterSaveButton}
               onPress={this.handleArtistSelection}
             >
-              <Text style={styles.rosterSaveButtonText}>Save</Text>
+              <Text style={this.styles.rosterSaveButtonText}>Save</Text>
             </TouchableOpacity>
           )}
         </View>
 
         {this.state.influencesList && this.state.influencesList.length > 0 && (
-          <View style={styles.selectionsContainer}>
+          <View style={this.styles.selectionsContainer}>
             <FlatList
               testID="influencesFlatList"
               data={this.state.influencesList}
@@ -1256,15 +1280,15 @@ Business
 
     return (
       <>
-        <Text style={[styles.text, styles.textInputLabel, { marginTop: 20 }]}>
+        <Text style={[this.styles.text, this.styles.textInputLabel, { marginTop: 20 }]}>
           Affiliates
         </Text>
-        <View style={styles.rosterInputContainer}>
+        <View style={this.styles.rosterInputContainer}>
           <TextInput
             testID="affiliateTextInput"
             placeholder="Enter your affiliates"
-            placeholderTextColor="#CBD5E1"
-            style={styles.rosterInput}
+            placeholderTextColor={this.getProfileTheme().muted}
+            style={this.styles.rosterInput}
             value={this.state.affiliateText}
             onChangeText={text =>
               this.setState({ affiliateText: text.replace('  ', ' ') })
@@ -1274,15 +1298,15 @@ Business
           {this.state.affiliateText.trim() !== '' && (
             <TouchableOpacity
               testID="saveAffiliateBtn"
-              style={styles.rosterSaveButton}
+              style={this.styles.rosterSaveButton}
               onPress={this.handleAddAffiliatesItem}
             >
-              <Text style={styles.rosterSaveButtonText}>Save</Text>
+              <Text style={this.styles.rosterSaveButtonText}>Save</Text>
             </TouchableOpacity>
           )}
         </View>
         {this.state.affiliatesList && this.state.affiliatesList.length > 0 && (
-          <View style={styles.selectionsContainer}>
+          <View style={this.styles.selectionsContainer}>
             <FlatList
               testID="affiliateFlatList"
               data={this.state.affiliatesList}
@@ -1301,7 +1325,7 @@ Business
   renderCountry = () => {
     return (
       <>
-        <Text style={[styles.text, styles.textInputLabel, { marginTop: 20 }]}>
+        <Text style={[this.styles.text, this.styles.textInputLabel, { marginTop: 20 }]}>
           Country
         </Text>
         {Platform.OS === 'ios' ? (
@@ -1309,7 +1333,7 @@ Business
         ) : (
           <>{this.renderCountryPickerAndroid()}</>
         )}
-        <Text style={[styles.text, styles.errorText]}>
+        <Text style={[this.styles.text, this.styles.errorText]}>
           {this.state.countryError}
         </Text>
       </>
@@ -1320,15 +1344,15 @@ Business
     return (
       <TouchableOpacity
         testID="countrySelectButton"
-        style={[styles.textInput, styles.selector]}
+        style={[this.styles.textInput, this.styles.selector]}
         onPress={this.handleCountryClick}
       >
-        <Text style={[styles.text, { marginHorizontal: 10 }]}>
+        <Text style={[this.styles.text, { marginHorizontal: 10 }]}>
           {this.state.selectedCountry || 'Select a country'}
         </Text>
         <Image
           source={leftArrowWhite}
-          style={[styles.downArrow, { tintColor: '#3333CC' }]}
+          style={[this.styles.downArrow, { tintColor: this.getProfileTheme().primary }]}
         />
       </TouchableOpacity>
     );
@@ -1338,8 +1362,8 @@ Business
     return (
       <View
         style={[
-          styles.textInput,
-          styles.selector,
+          this.styles.textInput,
+          this.styles.selector,
           {
             paddingHorizontal: 0,
           },
@@ -1347,8 +1371,8 @@ Business
       >
         <Picker
           testID="countryAndroidPicker"
-          style={[styles.textInput, styles.selector]}
-          itemStyle={[styles.text]}
+          style={[this.styles.textInput, this.styles.selector]}
+          itemStyle={[this.styles.text]}
           selectedValue={this.state.selectedCountry}
           onValueChange={(country: string) => {
             this.onCountrySelect(country);
@@ -1373,7 +1397,7 @@ Business
         </Picker>
         <Image
           source={leftArrowWhite}
-          style={[styles.downArrow, { tintColor: '#3333CC' }]}
+          style={[this.styles.downArrow, { tintColor: this.getProfileTheme().primary }]}
         />
       </View>
     );
@@ -1382,13 +1406,13 @@ Business
   renderState = () => {
     return (
       <>
-        <Text style={[styles.text, styles.textInputLabel]}>State</Text>
+        <Text style={[this.styles.text, this.styles.textInputLabel]}>State</Text>
         {Platform.OS === 'ios' ? (
           <>{this.renderStatePickerIOS()}</>
         ) : (
           <>{this.renderStatePickerAndroid()}</>
         )}
-        <Text style={[styles.text, styles.errorText]}>
+        <Text style={[this.styles.text, this.styles.errorText]}>
           {this.state.stateError}
         </Text>
       </>
@@ -1400,8 +1424,8 @@ Business
       <TouchableOpacity
         testID="stateSelectButton"
         style={[
-          styles.textInput,
-          styles.selector,
+          this.styles.textInput,
+          this.styles.selector,
           {
             opacity: this.dynamicOpacity(
               this.state.selectedCountry !== '' &&
@@ -1415,7 +1439,7 @@ Business
         }
         onPress={this.handleStateClick}
       >
-        <Text style={[styles.text, { marginHorizontal: 10 }]}>
+        <Text style={[this.styles.text, { marginHorizontal: 10 }]}>
           {this.state.selectedState
             ? this.state.states.filter(
                 ({ key }) => key === this.state.selectedState,
@@ -1424,7 +1448,7 @@ Business
         </Text>
         <Image
           source={leftArrowWhite}
-          style={[styles.downArrow, { tintColor: '#3333CC' }]}
+          style={[this.styles.downArrow, { tintColor: this.getProfileTheme().primary }]}
         />
       </TouchableOpacity>
     );
@@ -1434,8 +1458,8 @@ Business
     return (
       <View
         style={[
-          styles.textInput,
-          styles.selector,
+          this.styles.textInput,
+          this.styles.selector,
           {
             paddingHorizontal: 0,
             opacity: this.dynamicOpacity(
@@ -1447,8 +1471,8 @@ Business
       >
         <Picker
           testID="statePicker"
-          style={[styles.textInput, styles.selector]}
-          itemStyle={[styles.text]}
+          style={[this.styles.textInput, this.styles.selector]}
+          itemStyle={[this.styles.text]}
           selectedValue={this.state.selectedState}
           onValueChange={(state: string) => {
             this.onSelectState(state);
@@ -1467,7 +1491,7 @@ Business
         </Picker>
         <Image
           source={leftArrowWhite}
-          style={[styles.downArrow, { tintColor: '#3333CC' }]}
+          style={[this.styles.downArrow, { tintColor: this.getProfileTheme().primary }]}
         />
       </View>
     );
@@ -1476,13 +1500,13 @@ Business
   renderCity = () => {
     return (
       <>
-        <Text style={[styles.textInputLabel, styles.text]}>City</Text>
+        <Text style={[this.styles.textInputLabel, this.styles.text]}>City</Text>
         {Platform.OS === 'ios' ? (
           <>{this.renderCityPickerIOS()}</>
         ) : (
           <>{this.renderCityPickerAndroid()}</>
         )}
-        <Text style={[styles.text, styles.errorText]}>
+        <Text style={[this.styles.text, this.styles.errorText]}>
           {this.state.cityError}
         </Text>
       </>
@@ -1493,20 +1517,20 @@ Business
     return (
       <TouchableOpacity
         style={[
-          styles.textInput,
-          styles.selector,
+          this.styles.textInput,
+          this.styles.selector,
           { opacity: this.dynamicOpacity(this.state.selectedState) },
         ]}
         onPress={this.handleCityClick}
         disabled={this.state.selectedState === ''}
         testID="citySelectButton"
       >
-        <Text style={[styles.text, { marginHorizontal: 10 }]}>
+        <Text style={[this.styles.text, { marginHorizontal: 10 }]}>
           {this.state.selectedCity || 'Select a city'}
         </Text>
         <Image
           source={leftArrowWhite}
-          style={[styles.downArrow, { tintColor: '#3333CC' }]}
+          style={[this.styles.downArrow, { tintColor: this.getProfileTheme().primary }]}
         />
       </TouchableOpacity>
     );
@@ -1516,8 +1540,8 @@ Business
     return (
       <View
         style={[
-          styles.selector,
-          styles.textInput,
+          this.styles.selector,
+          this.styles.textInput,
           {
             paddingHorizontal: 0,
             opacity: this.state.selectedState ? 1 : 0.5,
@@ -1526,8 +1550,8 @@ Business
       >
         <Picker
           testID="cityPicker"
-          style={[styles.selector, styles.textInput]}
-          itemStyle={[styles.text]}
+          style={[this.styles.selector, this.styles.textInput]}
+          itemStyle={[this.styles.text]}
           selectedValue={this.state.selectedCity}
           onValueChange={(city: string) => {
             this.handleSelectedCity(city);
@@ -1541,7 +1565,7 @@ Business
         </Picker>
         <Image
           source={leftArrowWhite}
-          style={[styles.downArrow, { tintColor: '#3333CC' }]}
+          style={[this.styles.downArrow, { tintColor: this.getProfileTheme().primary }]}
         />
       </View>
     );
@@ -1567,7 +1591,7 @@ Business
               this.props.navigation.goBack();
             }}
           >
-            <Text style={styles.cancelTxt}>Cancel</Text>
+            <Text style={this.styles.cancelTxt}>Cancel</Text>
           </TouchableOpacity>
         )}
       </>
@@ -1582,20 +1606,20 @@ Business
           transparent={true}
           visible={this.state.modalVisible}
         >
-          <View style={styles.centerView}>
-            <View style={styles.modalViewContainer}>
-              <Text style={styles.textOutsideCountry}>
+          <View style={this.styles.centerView}>
+            <View style={this.styles.modalViewContainer}>
+              <Text style={this.styles.textOutsideCountry}>
                 Are you outside the US?
               </Text>
-              <Text style={[styles.text, styles.textOnlySupportCountry]}>
+              <Text style={[this.styles.text, this.styles.textOnlySupportCountry]}>
                 We only support the United States right now.
               </Text>
               <TouchableOpacity
                 testID="btnAccept"
-                style={styles.continueBtn}
+                style={this.styles.continueBtn}
                 onPress={this.hideCountryCodeDropdown}
               >
-                <Text style={[styles.text, styles.textContinueBtn]}>
+                <Text style={[this.styles.text, this.styles.textContinueBtn]}>
                   Accept
                 </Text>
               </TouchableOpacity>
@@ -1618,11 +1642,11 @@ Business
             testID="hideCountryModal"
             onPress={this.hideModalCountry}
           >
-            <View style={[styles.centeredView]}>
+            <View style={[this.styles.centeredView]}>
               <TouchableWithoutFeedback>
                 <View
                   style={[
-                    styles.modalView,
+                    this.styles.modalView,
                     { borderTopStartRadius: 20, padding: 15 },
                   ]}
                 >
@@ -1670,11 +1694,11 @@ Business
             testID="hideStateModal"
             onPress={this.hideModalState}
           >
-            <View style={[styles.centeredView]}>
+            <View style={[this.styles.centeredView]}>
               <TouchableWithoutFeedback>
                 <View
                   style={[
-                    styles.modalView,
+                    this.styles.modalView,
                     { borderTopStartRadius: 20, padding: 15 },
                   ]}
                 >
@@ -1712,11 +1736,11 @@ Business
             testID="hideCityModal"
             onPress={this.hideModalCity}
           >
-            <View style={styles.centeredView}>
+            <View style={this.styles.centeredView}>
               <TouchableWithoutFeedback>
                 <View
                   style={[
-                    styles.modalView,
+                    this.styles.modalView,
                     { borderTopStartRadius: 20, padding: 15 },
                   ]}
                 >
@@ -1743,7 +1767,7 @@ Business
   renderRulesRegulation = () => {
     return (
       <>
-        <Text style={[styles.text, styles.textInputLabel]}>
+        <Text style={[this.styles.text, this.styles.textInputLabel]}>
           {'Rules / Regulations'}
           <Text style={{ fontWeight: '400' }}>
             {' (max. 2,000 characters)'}
@@ -1752,9 +1776,9 @@ Business
         <TextInput
           testID="rulesRegulationInputText"
           placeholder="Enter rules / regulations"
-          style={styles.textInput}
+          style={this.styles.textInput}
           multiline
-          placeholderTextColor="#CBD5E1"
+          placeholderTextColor={this.getProfileTheme().muted}
           value={this.state.rulesRegulations}
           maxLength={300}
           onChangeText={rulesRegulations =>
@@ -1775,11 +1799,11 @@ Business
         keyExtractor={(item: any) => item}
         renderItem={({ item }) => {
           return (
-            <View style={styles.showFeatureItem}>
+            <View style={this.styles.showFeatureItem}>
               {true ? (
                 <TouchableOpacity
                   testID="unselectedShowFeature"
-                  style={styles.checkbox}
+                  style={this.styles.checkbox}
                   onPress={() => {}}
                 />
               ) : (
@@ -1789,13 +1813,13 @@ Business
                 >
                   <Image
                     source={require('../../../mobile/assets/images/checkbox.png')}
-                    style={[styles.backBtn, { marginRight: 10 }]}
+                    style={[this.styles.backBtn, { marginRight: 10 }]}
                   />
                 </TouchableOpacity>
               )}
               <Text
                 style={[
-                  styles.label,
+                  this.styles.label,
                   { fontWeight: '400', marginTop: 1, width: '80%' },
                 ]}
               >
@@ -1879,7 +1903,7 @@ Business
 
     return (
       <>
-        <Text style={[styles.text, styles.textInputLabel, { marginTop: -20 }]}>
+        <Text style={[this.styles.text, this.styles.textInputLabel, { marginTop: -20 }]}>
           Rules and Regulations
         </Text>
 
@@ -1897,17 +1921,17 @@ Business
             );
 
             return (
-              <View style={styles.rulesItem}>
+              <View style={this.styles.rulesItem}>
                 <TouchableOpacity
-                  style={styles.checkboxTouchable}
+                  style={this.styles.checkboxTouchable}
                   testID={`ruleCheckbox_${ruleId}`}
                   onPress={() => this.handleToggleRuleSelection(ruleId)}
                 >
                   {isSelected ? (
-                    <Feather name="check" size={14} color="#3333CC" />
+                    <Feather name="check" size={14} color={this.getProfileTheme().primary} />
                   ) : null}
                 </TouchableOpacity>
-                <Text style={styles.rulesItemText}>
+                <Text style={this.styles.rulesItemText}>
                   {ruleTitle || 'No Title'}
                 </Text>
               </View>
@@ -1916,16 +1940,16 @@ Business
           keyExtractor={(item: any) =>
             (item.id || item.attributes?.id || Math.random()).toString()
           }
-          contentContainerStyle={styles.rulesListContainer}
+          contentContainerStyle={this.styles.rulesListContainer}
         />
 
         {/* Custom Rules Input - at the end of list */}
-        <View style={styles.rosterInputContainer}>
+        <View style={this.styles.rosterInputContainer}>
           <TextInput
             testID="customRuleTextInput"
             placeholder="Enter custom rule or regulation"
-            placeholderTextColor="#CBD5E1"
-            style={styles.rosterInput}
+            placeholderTextColor={this.getProfileTheme().muted}
+            style={this.styles.rosterInput}
             value={this.state.customRuleTxt}
             onChangeText={text =>
               this.setState({ customRuleTxt: text.replace('  ', ' ') })
@@ -1935,10 +1959,10 @@ Business
           {this.state.customRuleTxt.trim() !== '' && (
             <TouchableOpacity
               testID="saveCustomRuleBtn"
-              style={styles.rosterSaveButton}
+              style={this.styles.rosterSaveButton}
               onPress={this.handleAddCustomRule}
             >
-              <Text style={styles.rosterSaveButtonText}>Save</Text>
+              <Text style={this.styles.rosterSaveButtonText}>Save</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -1954,15 +1978,15 @@ Business
 
     return (
       <>
-        <Text style={[styles.text, styles.textInputLabel, { marginTop: -20 }]}>
+        <Text style={[this.styles.text, this.styles.textInputLabel, { marginTop: -20 }]}>
           Roster
         </Text>
-        <View style={styles.rosterInputContainer}>
+        <View style={this.styles.rosterInputContainer}>
           <TextInput
             testID="rosterTextInput"
             placeholder="E.g. Aerosmith"
-            placeholderTextColor="#CBD5E1"
-            style={styles.rosterInput}
+            placeholderTextColor={this.getProfileTheme().muted}
+            style={this.styles.rosterInput}
             value={this.state.rosterTxt}
             onChangeText={text =>
               this.setState({ rosterTxt: text.replace('  ', ' ') })
@@ -1972,24 +1996,24 @@ Business
           {this.state.rosterTxt.trim() !== '' && (
             <TouchableOpacity
               testID="saveRosterBtn"
-              style={styles.rosterSaveButton}
+              style={this.styles.rosterSaveButton}
               onPress={this.handleAddRosterItem}
             >
-              <Text style={styles.rosterSaveButtonText}>Save</Text>
+              <Text style={this.styles.rosterSaveButtonText}>Save</Text>
             </TouchableOpacity>
           )}
         </View>
         {this.state.roster && this.state.roster.length > 0 && (
-          <View style={styles.selectionsContainer}>
+          <View style={this.styles.selectionsContainer}>
             <FlatList
               data={this.state.roster}
               renderItem={({ item }: { item: string }) => (
-                <View style={styles.selectedAffiliate}>
-                  <Text style={styles.selectedAffiliateText}>{item}</Text>
+                <View style={this.styles.selectedAffiliate}>
+                  <Text style={this.styles.selectedAffiliateText}>{item}</Text>
                   <Feather
                     name="x"
                     size={17}
-                    color="#4949EE"
+                    color={this.getProfileTheme().primary}
                     onPress={() => this.handleRemoveRosterItem(item)}
                   />
                 </View>
@@ -2011,19 +2035,26 @@ Business
     return (
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}
+        style={{ flex: 1, backgroundColor: this.getProfileTheme().background }}
       >
-        <SafeAreaView style={styles.container}>
-          <ScrollView style={styles.contentContainer}>
-            <View style={styles.contentContainer}>
+        <View style={this.styles.container}>
+          <ScrollView
+            style={this.styles.contentContainer}
+            showsVerticalScrollIndicator={false}
+            contentInsetAdjustmentBehavior="never"
+            automaticallyAdjustContentInsets={false}
+            contentInset={{ top: 0 }}
+            contentContainerStyle={{ paddingTop: 0 }}
+          >
+            <View style={this.styles.contentContainer}>
               <StatusBar
-                backgroundColor={colors(false).background}
-                barStyle="dark-content"
+                translucent
+                backgroundColor="transparent"
+                barStyle="light-content"
               />
-              {this.renderBackBtnAndHeader()}
               {this.renderImageSection()}
-              <View style={styles.bottomContainer}>
-                <View style={{ marginHorizontal: 30 }}>
+              <View style={this.styles.bottomContainer}>
+                <View style={this.styles.formContent}>
                   {this.renderAdmin()}
                   {this.renderTitle()}
                   {this.state.editMode && this.renderEmailId()}
@@ -2047,8 +2078,8 @@ Business
                     transparent={true}
                     visible={this.state.countryCodeClickedAndroid}
                   >
-                    <View style={styles.countryCodeAndroidModal}>
-                      <View style={styles.countryCodeAndroidModalView}>
+                    <View style={this.styles.countryCodeAndroidModal}>
+                      <View style={this.styles.countryCodeAndroidModalView}>
                         <ScrollView>
                           {this.state.countryCodesList.map((item: any) => (
                             <TouchableOpacity
@@ -2085,13 +2116,13 @@ Business
                   {this.renderCancel()}
                   <TouchableOpacity
                     testID="saveBtn"
-                    style={styles.saveButton}
+                    style={this.styles.saveButton}
                     onPress={() => {
                       // this.props.navigation.goBack()
                       this.createBandProfile();
                     }}
                   >
-                    <Text style={styles.textStyle}>Save</Text>
+                    <Text style={this.styles.textStyle}>Save</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -2105,11 +2136,11 @@ Business
                 testID="hidePickerModal"
                 onPress={this.hideModalPicker}
               >
-                <View style={[styles.centeredView]}>
+                <View style={[this.styles.centeredView]}>
                   <TouchableWithoutFeedback>
                     <View
                       style={[
-                        styles.modalView,
+                        this.styles.modalView,
                         { borderTopStartRadius: 20, padding: 15 },
                       ]}
                     >
@@ -2136,11 +2167,11 @@ Business
                 testID="hideCategoryModal"
                 onPress={this.hideModalCategory}
               >
-                <View style={[styles.centeredView]}>
+                <View style={[this.styles.centeredView]}>
                   <TouchableWithoutFeedback>
                     <View
                       style={[
-                        styles.modalView,
+                        this.styles.modalView,
                         { borderTopStartRadius: 20, padding: 15 },
                       ]}
                     >
@@ -2173,11 +2204,11 @@ Business
                 testID="hideSubCategoryModal"
                 onPress={this.hideModalSubCategory}
               >
-                <View style={[styles.centeredView]}>
+                <View style={[this.styles.centeredView]}>
                   <TouchableWithoutFeedback>
                     <View
                       style={[
-                        styles.modalView,
+                        this.styles.modalView,
                         { borderTopStartRadius: 20, padding: 15 },
                       ]}
                     >
@@ -2210,11 +2241,11 @@ Business
                 testID="hideOpenAtModal"
                 onPress={() => this.setState({ openAtPickerModal: false })}
               >
-                <View style={[styles.centeredView]}>
+                <View style={[this.styles.centeredView]}>
                   <TouchableWithoutFeedback>
                     <View
                       style={[
-                        styles.modalView,
+                        this.styles.modalView,
                         { borderTopStartRadius: 20, padding: 15 },
                       ]}
                     >
@@ -2245,11 +2276,11 @@ Business
                 testID="hideCloseAtModal"
                 onPress={() => this.setState({ closeAtPickerModal: false })}
               >
-                <View style={[styles.centeredView]}>
+                <View style={[this.styles.centeredView]}>
                   <TouchableWithoutFeedback>
                     <View
                       style={[
-                        styles.modalView,
+                        this.styles.modalView,
                         { borderTopStartRadius: 20, padding: 15 },
                       ]}
                     >
@@ -2272,35 +2303,60 @@ Business
             </Modal>
           </ScrollView>
           <Modal
-            animationType="slide"
+            animationType="fade"
             transparent={true}
             visible={this.state.showCameraGalleryPopup}
+            statusBarTranslucent
+            presentationStyle="overFullScreen"
+            onRequestClose={this.handleCameraGalleryCancelPopup}
           >
-            <View style={[styles.centerView, { padding: 10 }]}>
-              <View style={styles.galleryOptions}>
-                <Text
-                  testID="cameraOption"
-                  style={styles.takeChoosePhoto}
-                  onPress={this.handleCamera}
-                >
-                  Take photo
-                </Text>
-                <View style={styles.separator} />
-                <Text
-                  testID="galleryOption"
-                  style={styles.takeChoosePhoto}
-                  onPress={this.handleGallery}
-                >
-                  Choose photo
-                </Text>
-              </View>
+            <View style={this.styles.photoSheetOverlay}>
               <TouchableOpacity
-                testID="cancelOption"
-                style={styles.cancelPhotoOption}
+                activeOpacity={1}
+                style={this.styles.photoSheetBackdrop}
                 onPress={this.handleCameraGalleryCancelPopup}
-              >
-                <Text style={styles.cancelPhotoText}>Cancel</Text>
-              </TouchableOpacity>
+              />
+              <View style={this.styles.photoSheetWrap}>
+                <View style={this.styles.galleryOptions}>
+                  <View style={this.styles.photoSheetHandle} />
+                  <Text style={this.styles.photoSheetTitle}>Update photo</Text>
+                  <TouchableOpacity
+                    testID="cameraOption"
+                    style={this.styles.photoSheetRow}
+                    onPress={this.handleCamera}
+                    activeOpacity={0.8}
+                  >
+                    <Feather
+                      name="camera"
+                      size={18}
+                      color={this.getProfileTheme().foreground}
+                    />
+                    <Text style={this.styles.takeChoosePhoto}>Take photo</Text>
+                  </TouchableOpacity>
+                  <View style={this.styles.photoSheetDivider} />
+                  <TouchableOpacity
+                    testID="galleryOption"
+                    style={this.styles.photoSheetRow}
+                    onPress={this.handleGallery}
+                    activeOpacity={0.8}
+                  >
+                    <Feather
+                      name="image"
+                      size={18}
+                      color={this.getProfileTheme().foreground}
+                    />
+                    <Text style={this.styles.takeChoosePhoto}>Choose photo</Text>
+                  </TouchableOpacity>
+                </View>
+                <TouchableOpacity
+                  testID="cancelOption"
+                  style={this.styles.cancelPhotoOption}
+                  onPress={this.handleCameraGalleryCancelPopup}
+                  activeOpacity={0.8}
+                >
+                  <Text style={this.styles.cancelPhotoText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </Modal>
           {this.renderCountryPopup()}
@@ -2308,11 +2364,11 @@ Business
           {this.renderStateModal()}
           {this.renderCityModal()}
           {this.state.isLoading && (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size={'large'} color="black" />
+            <View style={this.styles.loadingContainer}>
+              <ActivityIndicator size={'large'} color={this.getProfileTheme().primary} />
             </View>
           )}
-        </SafeAreaView>
+        </View>
       </KeyboardAvoidingView>
     );
     // Customizable Area End
@@ -2321,10 +2377,13 @@ Business
   // Customizable Area End
 }
 // Customizable Area Start
-const styles = StyleSheet.create({
+const EDIT_BANNER_HEIGHT = Math.round(Dimensions.get('window').height * 0.28);
+
+const createEditProfileStyles = (theme: typeof redesignTheme) =>
+  StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: theme.background,
   },
   headerIcon: {
     width: 12,
@@ -2332,48 +2391,137 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontWeight: '700',
-    fontSize: 24,
-    color: colors(false).text,
+    fontSize: 20,
+    color: theme.foreground,
     textAlign: 'center',
-    textAlignVertical: 'center',
-    marginHorizontal: 50,
-    alignSelf: 'center',
-    marginTop: 15,
+  },
+  heroWrap: {
+    backgroundColor: theme.background,
+    marginBottom: 8,
+  },
+  bannerWrap: {
+    width: '100%',
+    height: EDIT_BANNER_HEIGHT,
+    backgroundColor: theme.input,
+    overflow: 'hidden',
+  },
+  bannerImage: {
+    width: '100%',
+    height: EDIT_BANNER_HEIGHT,
+  },
+  bannerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+  },
+  bannerOverlayInner: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 12,
+  },
+  overlayCircleBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(8, 8, 15, 0.55)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255, 255, 255, 0.14)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  overlaySideSpacer: {
+    width: 36,
+    height: 36,
+  },
+  overlayTitle: {
+    flex: 1,
+    textAlign: 'center',
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+    textShadowColor: 'rgba(0, 0, 0, 0.45)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  avatarRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    marginTop: -42,
+  },
+  avatarWrap: {
+    width: 92,
+    height: 92,
+  },
+  editProfilePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.editButtonBorder,
+    backgroundColor: theme.editButton,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    marginBottom: 8,
+    maxWidth: '62%',
+  },
+  editProfilePillText: {
+    color: theme.editButtonText,
+    fontWeight: '600',
+    fontSize: 14,
   },
   contentContainer: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: theme.background,
   },
   topBackdrop: {
-    backgroundColor: '#131388',
-    height: 350,
+    backgroundColor: theme.input,
+    height: EDIT_BANNER_HEIGHT,
     width: '100%',
-    borderBottomRightRadius: 30,
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  coverImage: {
+    width: '100%',
+    height: EDIT_BANNER_HEIGHT,
+  },
+  heroOverlay: {
+    position: 'absolute',
+    alignItems: 'center',
   },
   bottomContainer: {
     flex: 1,
-    backgroundColor: '#FCFCFF',
+    backgroundColor: theme.background,
     width: '100%',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    paddingVertical: 20,
+    paddingBottom: 20,
+  },
+  formContent: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
   },
   profileImageContainer: {
-    backgroundColor: '#FCFCFF',
-    width: 130,
-    height: 130,
-    borderRadius: 80,
-    alignSelf: 'center',
+    backgroundColor: theme.background,
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    borderWidth: 3,
+    borderColor: theme.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   profileImage: {
-    width: 120,
-    height: 120,
+    width: 86,
+    height: 86,
     resizeMode: 'cover',
-    borderRadius: 75,
+    borderRadius: 43,
   },
   coverImageButton: {
     position: 'absolute',
@@ -2383,9 +2531,10 @@ const styles = StyleSheet.create({
   bandNameText: {
     alignSelf: 'center',
     color: 'white',
-    fontWeight: 'bold',
-    fontSize: 28,
-    marginTop: 20,
+    fontWeight: '800',
+    fontSize: 22,
+    letterSpacing: 0.4,
+    marginTop: 16,
   },
   locationContainer: {
     alignSelf: 'center',
@@ -2401,7 +2550,7 @@ const styles = StyleSheet.create({
   text: {
     fontFamily: 'OpenSans',
     alignSelf: 'flex-start',
-    color: colors(false).text,
+    color: theme.foreground,
     fontSize: 16,
   },
   errorText: {
@@ -2415,21 +2564,22 @@ const styles = StyleSheet.create({
   },
   textInput: {
     width: '100%',
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 0.5,
-    borderColor: '#C5C5FF',
-    color: colors(false).text,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.border,
+    backgroundColor: theme.card,
+    color: theme.foreground,
     height: 50,
     fontSize: 16,
   },
   disabledInput: {
-    backgroundColor: '#F1F5F9',
-    opacity: 0.8,
+    backgroundColor: theme.input,
+    opacity: 1,
   },
   emailSecurityText: {
     fontSize: 12,
-    color: '#64748B',
+    color: theme.muted,
     marginTop: 6,
   },
   textInputBio: {
@@ -2445,7 +2595,7 @@ const styles = StyleSheet.create({
     right: 15,
     marginRight: 5,
     width: 8,
-    backgroundColor: 'white',
+    backgroundColor: theme.background,
     transform: [{ rotate: '-90deg' }],
     resizeMode: 'contain',
   },
@@ -2487,7 +2637,7 @@ const styles = StyleSheet.create({
   modalViewContainer: {
     height: '30%',
     justifyContent: 'space-between',
-    backgroundColor: 'white',
+    backgroundColor: theme.background,
     borderTopEndRadius: 20,
     padding: 35,
     shadowColor: '#000',
@@ -2513,7 +2663,7 @@ const styles = StyleSheet.create({
   modalView: {
     height: '30%',
     justifyContent: 'space-between',
-    backgroundColor: 'white',
+    backgroundColor: theme.background,
     borderTopEndRadius: 20,
     padding: 35,
     shadowColor: '#000',
@@ -2526,11 +2676,12 @@ const styles = StyleSheet.create({
     elevation: 100,
   },
   saveButton: {
-    backgroundColor: '#3333CC',
-    borderRadius: 8,
+    backgroundColor: theme.primary,
+    borderRadius: 24,
     height: 56,
     justifyContent: 'center',
     marginTop: 25,
+    marginBottom: 20,
   },
   selectionsContainer: {},
   rosterInputContainer: {
@@ -2544,14 +2695,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 10,
     borderWidth: 0.5,
-    borderColor: '#C5C5FF',
-    backgroundColor: '#FFFFFF',
+    borderColor: theme.border,
+    backgroundColor: theme.card,
     height: 50,
     fontSize: 16,
     marginRight: 10,
   },
   rosterSaveButton: {
-    backgroundColor: '#3333CC',
+    backgroundColor: theme.primary,
     borderRadius: 10,
     paddingHorizontal: 20,
     height: 50,
@@ -2564,7 +2715,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   selectedAffiliate: {
-    backgroundColor: '#EDEDFF',
+    backgroundColor: theme.primarySoft,
     paddingHorizontal: 10,
     paddingVertical: 5,
     fontSize: 14,
@@ -2576,7 +2727,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   selectedAffiliateText: {
-    color: '#4949EE',
+    color: theme.primary,
     paddingRight: 5,
   },
   socialMediaHeading: {
@@ -2591,7 +2742,7 @@ const styles = StyleSheet.create({
   rowItem: {
     flexDirection: 'row',
     borderRadius: 15,
-    backgroundColor: '#EDEDFF',
+    backgroundColor: theme.primarySoft,
     paddingVertical: 5,
     marginRight: 10,
     paddingHorizontal: 10,
@@ -2599,7 +2750,7 @@ const styles = StyleSheet.create({
   },
   crossBtn: {
     marginLeft: 10,
-    tintColor: '#3333CC',
+    tintColor: theme.primary,
     width: 10,
     height: 10,
     resizeMode: 'contain',
@@ -2608,7 +2759,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#334155',
+    color: theme.foreground,
     marginTop: 20,
   },
   textOutsideCountry: {
@@ -2616,20 +2767,20 @@ const styles = StyleSheet.create({
     fontSize: 26,
     lineHeight: 28,
     marginVertical: 10,
-    color: '#0F172A',
+    color: theme.foreground,
   },
   textOnlySupportCountry: {
     fontSize: 18,
   },
   continueBtn: {
-    backgroundColor: '#3333CC',
+    backgroundColor: theme.primary,
     width: '100%',
     padding: 15,
     borderRadius: 10,
     marginTop: 25,
   },
   textContinueBtn: {
-    color: colors(false).white,
+    color: '#FFFFFF',
     fontWeight: '700',
     fontSize: 18,
     alignSelf: 'center',
@@ -2641,35 +2792,40 @@ const styles = StyleSheet.create({
   },
   topContainer: {
     flex: 1,
-    height: 350,
+    height: 320,
     width: '100%',
   },
   coverPicBtn: {
-    width: 45,
-    height: 45,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     position: 'absolute',
-    right: 10,
-    bottom: 10,
+    right: 14,
+    bottom: 14,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(8, 8, 15, 0.55)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.22)',
   },
   editIcon: {
     width: 20,
     height: 20,
   },
   profilePicBtn: {
-    borderRadius: 25,
-    backgroundColor: '#4949EE',
-    width: 45,
-    height: 45,
+    borderRadius: 16,
+    backgroundColor: theme.primary,
+    width: 32,
+    height: 32,
     position: 'absolute',
-    right: 0,
-    bottom: 0,
+    right: -2,
+    bottom: -2,
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 2,
   },
   cancelTxt: {
-    color: '#3333CC',
+    color: theme.primary,
     fontWeight: '700',
     lineHeight: 24,
     marginBottom: '4%',
@@ -2678,27 +2834,75 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   galleryOptions: {
-    borderRadius: 10,
-    backgroundColor: '#EDEDFF',
+    borderRadius: 16,
+    backgroundColor: theme.card,
+    alignItems: 'stretch',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: theme.border,
+  },
+  photoSheetOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(8, 8, 15, 0.72)',
+    zIndex: 9999,
+    elevation: 9999,
+  },
+  photoSheetBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  photoSheetWrap: {
+    paddingHorizontal: 16,
+    paddingBottom: 118,
+    zIndex: 2,
+  },
+  photoSheetDivider: {
+    backgroundColor: theme.border,
+    height: 1,
+    marginHorizontal: 16,
+  },
+  photoSheetHandle: {
+    alignSelf: 'center',
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: theme.border,
+    marginTop: 10,
+    marginBottom: 8,
+  },
+  photoSheetTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: theme.muted,
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  photoSheetRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
   },
   takeChoosePhoto: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: '#4949EE',
-    marginVertical: 15,
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.foreground,
+    marginLeft: 10,
   },
   cancelPhotoOption: {
-    borderRadius: 10,
-    backgroundColor: '#EDEDFF',
-    marginTop: 15,
+    borderRadius: 16,
+    backgroundColor: theme.card,
+    marginTop: 10,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: theme.border,
   },
   cancelPhotoText: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
-    color: '#4949EE',
-    marginVertical: 20,
+    color: theme.primary,
+    marginVertical: 16,
   },
   daysItem: {
     flexDirection: 'row',
@@ -2710,7 +2914,7 @@ const styles = StyleSheet.create({
     width: 20,
     borderWidth: 1,
     borderRadius: 5,
-    borderColor: colors(false).text,
+    borderColor: theme.foreground,
     marginRight: 10,
     alignItems: 'center',
     justifyContent: 'center',
@@ -2745,7 +2949,7 @@ const styles = StyleSheet.create({
   },
   rulesItemText: {
     fontSize: 16,
-    color: colors(false).text,
+    color: theme.foreground,
     fontFamily: 'OpenSans',
     flex: 1,
     marginLeft: 10,
@@ -2755,7 +2959,7 @@ const styles = StyleSheet.create({
     width: 20,
     borderWidth: 1,
     borderRadius: 5,
-    borderColor: colors(false).text,
+    borderColor: theme.foreground,
     marginRight: 10,
     alignItems: 'center',
     justifyContent: 'center',
@@ -2766,5 +2970,8 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
 });
+
+const darkEditStyles = createEditProfileStyles(redesignTheme);
+const lightEditStyles = createEditProfileStyles(lightTheme);
 // Customizable Area End.                                                                                                              
                                      

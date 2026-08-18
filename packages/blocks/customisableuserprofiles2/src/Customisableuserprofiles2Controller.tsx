@@ -13,8 +13,14 @@ import {
   removeStorageData,
   setStorageData,
 } from '../../../framework/src/Utilities';
-import { CommonActions } from '@react-navigation/native';
-import { Linking, TextInput, ScrollView, View } from 'react-native';
+import {
+  emitProfileThemeChanged,
+  lightTheme,
+  PROFILE_THEME_STORAGE_KEY,
+  redesignTheme,
+} from '../../utilities/src/Colors';
+import { CommonActions, DrawerActions } from '@react-navigation/native';
+import { Alert, Linking, TextInput, ScrollView, View } from 'react-native';
 import { RowMap } from 'react-native-swipe-list-view';
 import React from 'react';
 
@@ -133,6 +139,8 @@ interface S {
   newNotification: boolean;
   showRulesMoreModal: boolean;
   officialRulesAndRegulationsIconsList: { id: number; title: string }[];
+  profileContentTab: 'shows' | 'posts';
+  isDarkMode: boolean;
   // Customizable Area End
 }
 
@@ -231,6 +239,8 @@ export default class Customisableuserprofiles2Controller extends BlockComponent<
       newNotification: false,
       showRulesMoreModal: false,
       officialRulesAndRegulationsIconsList: [],
+      profileContentTab: 'shows',
+      isDarkMode: true,
       // Customizable Area End
     };
     runEngine.attachBuildingBlock(this as IBlock, this.subScribedMessages);
@@ -357,6 +367,7 @@ export default class Customisableuserprofiles2Controller extends BlockComponent<
     }
 
     this.fetchOfficialRulesAndRegulationsIcons();
+    await this.loadProfileTheme();
 
     // Load profile data on initial mount
     await this.loadProfileData(true);
@@ -1737,7 +1748,7 @@ export default class Customisableuserprofiles2Controller extends BlockComponent<
     this.send(message);
   };
 
-  scrollToPosts = () => {
+  scrollToContentSection = () => {
     this.postViewRef.current?.measureLayout(
       this.scrollViewRef.current as any,
       (x, y) => {
@@ -1745,6 +1756,75 @@ export default class Customisableuserprofiles2Controller extends BlockComponent<
       },
       () => console.error('error'),
     );
+  };
+
+  scrollToPosts = () => {
+    this.setState({ profileContentTab: 'posts' }, () => {
+      this.scrollToContentSection();
+    });
+  };
+
+  setProfileContentTab = (tab: 'shows' | 'posts') => {
+    this.setState({ profileContentTab: tab });
+  };
+
+  loadProfileTheme = async () => {
+    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
+    this.setState({ isDarkMode: savedTheme !== 'false' });
+  };
+
+  toggleProfileTheme = async () => {
+    const isDarkMode = !this.state.isDarkMode;
+    this.setState({ isDarkMode });
+    emitProfileThemeChanged(isDarkMode);
+    await setStorageData(PROFILE_THEME_STORAGE_KEY, isDarkMode ? 'true' : 'false');
+  };
+
+  getProfileTheme = () => {
+    return this.state.isDarkMode ? redesignTheme : lightTheme;
+  };
+
+  openProfileDrawer = () => {
+    let navigator = this.props.navigation;
+    let drawerFound = false;
+
+    while (navigator) {
+      if (navigator.openDrawer) {
+        navigator.openDrawer();
+        drawerFound = true;
+        break;
+      }
+      navigator = navigator.getParent?.();
+    }
+
+    if (!drawerFound) {
+      this.props.navigation.dispatch(DrawerActions.openDrawer());
+    }
+  };
+
+  navigateToSettings = () => {
+    if (this.props.navigation?.navigate) {
+      this.props.navigation.navigate('Settings2');
+    }
+  };
+
+  handleLogoutPress = () => {
+    Alert.alert('Logout', 'Are you sure you want to logout?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: this.logoutUser,
+      },
+    ]);
+  };
+
+  logoutUser = async () => {
+    const { clearAllUserData } = require('../../../framework/src/Utilities');
+    await clearAllUserData();
+    if (this.props.navigation?.navigate) {
+      this.props.navigation.navigate('EmailAccountLoginBlock');
+    }
   };
   // Customizable Area End
 }

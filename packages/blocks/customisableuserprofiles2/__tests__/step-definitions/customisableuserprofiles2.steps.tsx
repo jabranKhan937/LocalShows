@@ -617,6 +617,7 @@ defineFeature(feature, (test) => {
 
       customisableuserprofiles2.findWhere(node => node.prop("testID") === "scrollView");
       customisableuserprofiles2.findWhere((node) => node.prop("testID") === "navigationBackButton").simulate("press");
+      customisableuserprofiles2.findWhere((node) => node.prop("testID") === "themeToggle").simulate("press");
       customisableuserprofiles2.findWhere((node) => node.prop("testID") === "notificationIcon").simulate("press");
       customisableuserprofiles2.findWhere((node) => node.prop("testID") === "hamburgerMenu").simulate("press");
       customisableuserprofiles2.findWhere((node) => node.prop("testID") === "postsCount").simulate("press");
@@ -930,6 +931,7 @@ defineFeature(feature, (test) => {
           "band_profile_image": "/rails/active_storage/blobs/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBBalFCIiwiZXhwIjpudWxsLCJwdXIiOiJibG9iX2lkIn19--6af042f15d91b9e158905e3ba5e9eb74089cacab/profilePic.jpg"
         }
       ] } })
+      instance.setState({ profileContentTab: 'posts' });
       const postsFlatList = customisableuserprofiles2.findWhere(node => node.prop("testID") === "postsFlatList");
       mockSuccessResponse.data.attributes.post_list.forEach((item: any, index: number) => {
         const innerItem = postsFlatList.renderProp("renderItem")({
