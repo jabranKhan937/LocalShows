@@ -42,9 +42,11 @@ defineFeature(feature, test => {
 
     then("User interacts with UI", () => {
       postSelectionWrapper.findWhere(node => node.prop("testID") === "showBtn").simulate("press")
+      expect(instance.state.optionSelected).toBe("show")
       postSelectionWrapper.findWhere(node => node.prop("testID") === "pictureBtn").simulate("press")
-      postSelectionWrapper.findWhere(node => node.prop("testID") === "continueBtn").simulate("press")
       expect(instance.state.optionSelected).toBe("picture")
+      postSelectionWrapper.findWhere(node => node.prop("testID") === "closeBtn").simulate("press")
+      expect(screenProps.navigation.navigate).toHaveBeenCalled()
     });
   });
 
