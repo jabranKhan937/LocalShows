@@ -301,7 +301,15 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
     // Customizable Area End
   }
 
-  isEventDetailScreen = () => this.props.id === 'AllEventDetailScreen';
+  isEventDetailScreen = () => {
+    if (this.props.id === 'AllEventDetailScreen') {
+      return true;
+    }
+    const routeName =
+      (this.props as any).route?.name ||
+      this.props.navigation?.state?.routeName;
+    return routeName === 'AllEventDetailScreen';
+  };
 
   hasCachedHomeFeedEvents = () =>
     !this.isEventDetailScreen() &&
@@ -366,6 +374,7 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
       detailsLoading: true,
       detailsLoadError: null,
       eventDetail: {},
+      commentsList: [],
     });
   };
 
@@ -757,6 +766,9 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
             if (this.isComponentMounted) {
               this.getAllBandsList();
               this.getEventDetailAPI();
+              this.prefetchDetailComments({
+                data: { id: payloadData.eventId, type: 'show' },
+              });
             }
           });
         }
@@ -905,6 +917,9 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
             if (this.isComponentMounted) {
               this.getAllBandsList();
               this.getEventDetailAPI();
+              this.prefetchDetailComments({
+                data: { id: payloadData.eventId, type: 'show' },
+              });
             }
           });
         }
@@ -1209,6 +1224,10 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
     const response = message.getData(
       getName(MessageEnum.RestAPIResponceSuccessMessage),
     );
+    if (response?.errors) {
+      this.setState({ commentsLoading: false, isLoadingComments: false });
+      return;
+    }
     const data = response?.data ?? [];
     const newList = [];
     if (data.length) {
@@ -1232,7 +1251,47 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
       commentsLoading: false,
       isLoadingComments: false,
       commentsList: newList,
+      ...this.getDetailCommentsCountState(newList),
     });
+  };
+
+  getDetailCommentsCountState = (commentsList: any[]) => {
+    if (!this.isEventDetailScreen()) {
+      return {};
+    }
+    const attributes = this.state.eventDetail?.attributes;
+    if (!attributes) {
+      return {};
+    }
+    const count = Array.isArray(commentsList) ? commentsList.length : 0;
+    return {
+      eventDetail: {
+        ...this.state.eventDetail,
+        attributes: {
+          ...attributes,
+          comments_count: count,
+        },
+      },
+    };
+  };
+
+  prefetchDetailComments = (eventDetail?: any) => {
+    if (!this.isEventDetailScreen()) {
+      return;
+    }
+    if ((this.state.commentsList || []).length > 0) {
+      return;
+    }
+    const eventId =
+      this.state.selectedEventId ||
+      eventDetail?.data?.id ||
+      eventDetail?.attributes?.id;
+    if (!eventId) {
+      return;
+    }
+    const type = eventDetail?.data?.type || 'show';
+    const postType = type === 'show' ? 'Show' : 'BxBlockPosts::Post';
+    this.getCommentsAPI(String(eventId), postType);
   };
 
   handleAllCategoriesAPIResponse = (message: Message) => {
@@ -1793,12 +1852,17 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
         if (!result?.attributes) {
           throw new Error('Invalid event detail response');
         }
-        this.setState({
-          eventDetail: result,
-          isLoading: false,
-          detailsLoading: false,
-          detailsLoadError: null,
-        });
+        this.setState(
+          {
+            eventDetail: result,
+            isLoading: false,
+            detailsLoading: false,
+            detailsLoadError: null,
+          },
+          () => {
+            this.prefetchDetailComments(result);
+          },
+        );
       } catch {
         this.setState(detailLoadFailedState);
       }
@@ -1851,6 +1915,9 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
       () => {
         this.getCategoriesListAPI();
         this.getUnreadNotificationsCount();
+        if (this.isEventDetailScreen() && this.state.eventDetail?.attributes) {
+          this.prefetchDetailComments(this.state.eventDetail);
+        }
       },
     );
   };
@@ -2623,8 +2690,13 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
     runEngine.sendMessage(message.id, message);
   };
 
-  getCommentsAPI = (eventId: string, type: any) => {
+  getCommentsAPI = async (eventId: string, type: any) => {
     this.setState({ commentsLoading: true });
+    const authToken =
+      this.state.authToken || (await getStorageData('authToken'));
+    if (authToken && authToken !== this.state.authToken) {
+      this.setState({ authToken });
+    }
     const message = new Message(getName(MessageEnum.RestAPIRequestMessage));
 
     this.getCommentsAPICallID = message.messageId;
@@ -2638,7 +2710,7 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
       getName(MessageEnum.RestAPIRequestHeaderMessage),
       JSON.stringify({
         'Content-Type': configJSON.validationApiContentType,
-        token: this.state.authToken,
+        token: authToken,
       }),
     );
 
