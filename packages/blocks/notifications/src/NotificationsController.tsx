@@ -8,8 +8,15 @@ import { runEngine } from "../../../framework/src/RunEngine";
 
 // Customizable Area Start
 import { CommonActions } from "@react-navigation/native";
+import { DeviceEventEmitter } from "react-native";
 import { imgBell } from "./assets";
 import { getStorageData, setStorageData } from "../../../framework/src/Utilities";
+import {
+  lightTheme,
+  redesignTheme,
+  PROFILE_THEME_CHANGED_EVENT,
+  PROFILE_THEME_STORAGE_KEY,
+} from "../../utilities/src/Colors";
 
 // Customizable Area End
 
@@ -33,6 +40,7 @@ interface S {
   filteredNotificationList: any[];
   isLoading: boolean;
   selectedNotificationID: string;
+  isDarkMode: boolean;
   // Customizable Area End
 }
 
@@ -55,6 +63,7 @@ export default class NotificationsController extends BlockComponent<
   readNotificationCallId: string = "";
   confirmRemoveRequestCallId: string = "";
   followBackRequestCallId: string = "";
+  profileThemeListener: { remove: () => void } | null = null;
   // Customizable Area End
 
   constructor(props: Props) {
@@ -80,6 +89,7 @@ export default class NotificationsController extends BlockComponent<
       filteredNotificationList: [],
       isLoading: true,
       selectedNotificationID: "",
+      isDarkMode: true,
       // Customizable Area End
     };
     runEngine.attachBuildingBlock(this as IBlock, this.subScribedMessages);
@@ -97,10 +107,36 @@ export default class NotificationsController extends BlockComponent<
       });
     }
     // Customizable Area Start
+    this.loadNotificationsTheme();
     this.getNotificationListAPI();
     this.checkLoggedOutAndNavigateToLogin();
     // Customizable Area End
   }
+
+  async componentWillUnmount() {
+    if (this.profileThemeListener) {
+      this.profileThemeListener.remove();
+      this.profileThemeListener = null;
+    }
+    await super.componentWillUnmount();
+  }
+
+  loadNotificationsTheme = async () => {
+    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
+    this.setState({ isDarkMode: savedTheme !== "false" });
+    if (!this.profileThemeListener) {
+      this.profileThemeListener = DeviceEventEmitter.addListener(
+        PROFILE_THEME_CHANGED_EVENT,
+        (isDarkMode: boolean) => {
+          this.setState({ isDarkMode });
+        },
+      );
+    }
+  };
+
+  getNotificationsTheme = () => {
+    return this.state.isDarkMode ? redesignTheme : lightTheme;
+  };
 
   /** When user has logged out (e.g. from drawer), navigate to login screen. */
   checkLoggedOutAndNavigateToLogin = async () => {

@@ -17,14 +17,14 @@ import {
   KeyboardAvoidingView,
   TextInput,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { notificationIcon } from '../../search/src/assets';
 import {
   lightTheme,
   redesignTheme,
 } from '../../utilities/src/Colors';
-import { backButtonIcon, leftArrow } from '../../events/src/assets';
+import { leftArrow } from '../../events/src/assets';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import FastImage from '../../../components/src/SafeFastImage';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
@@ -149,7 +149,7 @@ export default class Customisableuserprofiles2 extends Customisableuserprofiles2
             onPress={this.handleBackButton}
             activeOpacity={0.8}
           >
-            <Image source={backButtonIcon} style={this.styles.overlayBackIcon} />
+            <Feather name="arrow-left" size={18} color="#FFFFFF" />
           </TouchableOpacity>
           <View style={this.styles.overlayRightActions}>
             {this.renderThemeToggle()}
@@ -160,10 +160,7 @@ export default class Customisableuserprofiles2 extends Customisableuserprofiles2
               activeOpacity={0.8}
             >
               <View style={this.styles.notificationWrapper}>
-                <Image
-                  source={notificationIcon}
-                  style={this.styles.overlayNotificationIcon}
-                />
+                <Feather name="bell" size={16} color="#FFFFFF" />
                 {this.renderNotificationIndicator()}
               </View>
             </TouchableOpacity>
@@ -293,19 +290,25 @@ export default class Customisableuserprofiles2 extends Customisableuserprofiles2
           {this.renderHeader()}
         </View>
         <View style={this.styles.avatarRow}>
-          <View style={this.styles.profileImageContainer}>
-            <FastImage
-              source={
-                this.state.userProfileData.profile_image
-                  ? {
-                      uri: this.state.userProfileData.profile_image,
-                      priority: FastImage.priority.high,
-                    }
-                  : require('../../../mobile/assets/images/default_profile.png')
-              }
-              style={this.styles.profileImage}
-              resizeMode={FastImage.resizeMode.cover}
-            />
+          <View style={this.styles.avatarShadowWrap}>
+            <View style={this.styles.profileImageContainer}>
+              {this.state.userProfileData.profile_image ? (
+                <FastImage
+                  source={{
+                    uri: this.state.userProfileData.profile_image,
+                    priority: FastImage.priority.high,
+                  }}
+                  style={this.styles.profileImage}
+                  resizeMode={FastImage.resizeMode.cover}
+                />
+              ) : (
+                <Feather
+                  name="user"
+                  size={40}
+                  color={this.getProfileTheme().muted}
+                />
+              )}
+            </View>
           </View>
           {this.isViewingOwnProfile() ? (
             <TouchableOpacity
@@ -2501,6 +2504,21 @@ const createProfileStyles = (theme: typeof redesignTheme) =>
     paddingHorizontal: 16,
     marginTop: -42,
   },
+  avatarShadowWrap: {
+    borderRadius: 46,
+    backgroundColor: 'transparent',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.4,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 10,
+      },
+    }),
+  },
   identityBlock: {
     marginTop: 16,
     marginBottom: 8,
@@ -2658,7 +2676,7 @@ const createProfileStyles = (theme: typeof redesignTheme) =>
     resizeMode: 'contain',
   },
   profileImageContainer: {
-    backgroundColor: theme.background,
+    backgroundColor: theme.input,
     width: 92,
     height: 92,
     borderRadius: 46,

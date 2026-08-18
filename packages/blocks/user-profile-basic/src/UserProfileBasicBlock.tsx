@@ -960,10 +960,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
             onPress={this.handleBack}
             activeOpacity={0.8}
           >
-            <Image
-              source={leftArrow}
-              style={[this.styles.headerIcon, { tintColor: '#FFFFFF' }]}
-            />
+            <Feather name="arrow-left" size={18} color="#FFFFFF" />
           </TouchableOpacity>
           <View style={this.styles.overlayRightActions}>
             {this.renderThemeToggle()}
@@ -974,10 +971,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
               activeOpacity={0.8}
             >
               <View style={this.styles.notificationWrapper}>
-                <Image
-                  source={require('../../../mobile/assets/images/notifications.png')}
-                  style={this.styles.overlayNotificationIcon}
-                />
+                <Feather name="bell" size={16} color="#FFFFFF" />
                 {this.renderNotificationIndicator()}
               </View>
             </TouchableOpacity>
@@ -1146,19 +1140,25 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
           {this.renderHeader()}
         </View>
         <View style={this.styles.avatarRow}>
-          <View style={this.styles.profileImageContainer}>
-            <FastImage
-              source={
-                attrs?.profile_image
-                  ? {
-                      uri: attrs.profile_image,
-                      priority: FastImage.priority.high,
-                    }
-                  : defaultProfile
-              }
-              style={this.styles.profileImage}
-              resizeMode={FastImage.resizeMode.cover}
-            />
+          <View style={this.styles.avatarShadowWrap}>
+            <View style={this.styles.profileImageContainer}>
+              {attrs?.profile_image ? (
+                <FastImage
+                  source={{
+                    uri: attrs.profile_image,
+                    priority: FastImage.priority.high,
+                  }}
+                  style={this.styles.profileImage}
+                  resizeMode={FastImage.resizeMode.cover}
+                />
+              ) : (
+                <Feather
+                  name="user"
+                  size={40}
+                  color={this.getProfileTheme().muted}
+                />
+              )}
+            </View>
           </View>
           {this.isViewingOwnProfile() ? (
             this.renderActionButtons()
@@ -2160,6 +2160,21 @@ const createProfileStyles = (theme: typeof redesignTheme) =>
     paddingHorizontal: 16,
     marginTop: -42,
   },
+  avatarShadowWrap: {
+    borderRadius: 46,
+    backgroundColor: 'transparent',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.4,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 10,
+      },
+    }),
+  },
   identityBlock: {
     marginTop: 16,
     marginBottom: 8,
@@ -2314,7 +2329,7 @@ const createProfileStyles = (theme: typeof redesignTheme) =>
     minHeight: Dimensions.get('screen').height - 250,
   },
   profileImageContainer: {
-    backgroundColor: theme.background,
+    backgroundColor: theme.input,
     width: 92,
     height: 92,
     borderRadius: 46,
