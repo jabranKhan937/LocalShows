@@ -12,7 +12,13 @@ import {
   getStorageData,
   setStorageData,
 } from '../../../framework/src/Utilities';
-import { Platform } from 'react-native';
+import { DeviceEventEmitter, Platform } from 'react-native';
+import {
+  lightTheme,
+  redesignTheme,
+  PROFILE_THEME_CHANGED_EVENT,
+  PROFILE_THEME_STORAGE_KEY,
+} from '../../utilities/src/Colors';
 import { pushOtherUserProfileScreen } from '../../../components/src/NavigationCompat';
 export interface DataListItem {
   id: string;
@@ -86,6 +92,7 @@ interface S {
   userToken: '';
   accountId: string;
   loginUserId: string;
+  isDarkMode: boolean;
   // Customizable Area End
 }
 
@@ -104,6 +111,7 @@ export default class FollowersController extends BlockComponent<Props, S, SS> {
   unFollowFromFollowingCallId: string = '';
   getFollowersFollowingsListAPICallID: any;
   removeFollowRequestCallId: any;
+  profileThemeListener: { remove: () => void } | null = null;
   // Customizable Area End
 
   constructor(props: Props) {
@@ -150,6 +158,7 @@ export default class FollowersController extends BlockComponent<Props, S, SS> {
       userToken: '',
       accountId: '',
       loginUserId: '',
+      isDarkMode: true,
       // Customizable Area End
     };
 
@@ -161,10 +170,36 @@ export default class FollowersController extends BlockComponent<Props, S, SS> {
   async componentDidMount() {
     super.componentDidMount();
     // Customizable Area Start
+    this.loadFollowersTheme();
     await this.getUserToken();
     this.checkPreviousScreen();
     // Customizable Area End
   }
+
+  async componentWillUnmount() {
+    if (this.profileThemeListener) {
+      this.profileThemeListener.remove();
+      this.profileThemeListener = null;
+    }
+    await super.componentWillUnmount();
+  }
+
+  loadFollowersTheme = async () => {
+    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
+    this.setState({ isDarkMode: savedTheme !== 'false' });
+    if (!this.profileThemeListener) {
+      this.profileThemeListener = DeviceEventEmitter.addListener(
+        PROFILE_THEME_CHANGED_EVENT,
+        (isDarkMode: boolean) => {
+          this.setState({ isDarkMode });
+        },
+      );
+    }
+  };
+
+  getFollowersTheme = () => {
+    return this.state.isDarkMode ? redesignTheme : lightTheme;
+  };
 
   async receive(from: string, message: Message) {
     // Customizable Area Start

@@ -87,7 +87,7 @@ import Filteritems from '../../blocks/filteritems/src/Filteritems';
 import SearchResult from '../../blocks/search/src/SearchResult';
 import Followers from '../../blocks/followers/src/Followers';
 import Icon from 'react-native-vector-icons/Feather';
-import { colors, lightTheme, PROFILE_THEME_CHANGED_EVENT, PROFILE_THEME_STORAGE_KEY, redesignTheme } from '../../blocks/utilities/src/Colors';
+import { lightTheme, PROFILE_THEME_CHANGED_EVENT, PROFILE_THEME_STORAGE_KEY, redesignTheme } from '../../blocks/utilities/src/Colors';
 import AboutUs from '../../blocks/helpcentre/src/AboutUs';
 import PostSelection from '../../blocks/postcreation/src/PostSelection';
 import PostCreation from '../../blocks/postcreation/src/PostCreation';
@@ -1683,44 +1683,54 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
     }
   }
 
-  ListHeaderComponent = (props: any) => {
+  ListHeaderComponent = (
+    props: any,
+    theme: typeof redesignTheme,
+    ds: ReturnType<typeof createDrawerStyles>,
+  ) => {
+    const photoUri = (this.state.userProfilePic || '').trim();
     return (
       <View>
-        <View style={{ alignItems: 'flex-end' }}>
-          <TouchableOpacity onPress={() => props.navigation.closeDrawer()}>
-            <Image
-              source={require('../../mobile/assets/images/close.png')}
-              style={{
-                width: Scale(15),
-                height: Scale(15),
-                resizeMode: 'contain',
-              }}
-            />
+        <View style={ds.drawerCloseRow}>
+          <TouchableOpacity
+            onPress={() => props.navigation.closeDrawer()}
+            style={ds.drawerCloseBtn}
+            activeOpacity={0.8}
+          >
+            <Icon name="x" size={18} color={theme.foreground} />
           </TouchableOpacity>
         </View>
         {this.state.authToken !== null && (
-          <View style={styles.drawerInnerContainer}>
-            <Text style={styles.profileText}>{this.state.userName}</Text>
-            <FastImage
-              source={
-                this.state.userProfilePic !== undefined &&
-                this.state.userProfilePic !== null &&
-                this.state.userProfilePic !== ''
-                  ? {
-                      uri: this.state.userProfilePic,
+          <View style={ds.drawerInnerContainer}>
+            <Text style={ds.profileText}>{this.state.userName}</Text>
+            <View style={ds.avatarShadowWrap}>
+              <View style={ds.profileImgStyle}>
+                {photoUri ? (
+                  <FastImage
+                    source={{
+                      uri: photoUri,
                       priority: FastImage.priority.high,
-                    }
-                  : require('../../mobile/assets/images/default_profile.png')
-              }
-              style={styles.profileImgStyle}
-            />
+                    }}
+                    style={ds.profileImgFill}
+                  />
+                ) : (
+                  <Icon name="user" size={48} color={theme.muted} />
+                )}
+              </View>
+            </View>
           </View>
         )}
       </View>
     );
   };
 
-  renderRedDot = ({ condition }: { condition: boolean }) => {
+  renderRedDot = ({
+    condition,
+    color,
+  }: {
+    condition: boolean;
+    color: string;
+  }) => {
     if (condition) {
       return (
         <View
@@ -1728,10 +1738,10 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
             height: 9,
             width: 9,
             borderRadius: 32,
-            backgroundColor: '#F87171',
+            backgroundColor: color,
             position: 'absolute',
-            left: 26,
-            top: 0,
+            left: 22,
+            top: -2,
           }}
         />
       );
@@ -1747,43 +1757,43 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
             id: 1,
             title: 'About Local Shows',
             navigation: 'navigateTo',
-            icon: require('../../mobile/assets/images/aboutLocalShows.png'),
+            icon: 'home',
           },
           {
             id: 2,
             title: 'Chat',
             navigation: 'navigateTo',
-            icon: require('../../mobile/assets/images/chat.png'),
+            icon: 'message-circle',
           },
           {
             id: 3,
             title: 'Contact us',
             navigation: 'navigateTo',
-            icon: require('../../mobile/assets/images/contactUs.png'),
+            icon: 'phone',
           },
           {
             id: 4,
             title: 'Settings',
             navigation: 'navigateTo',
-            icon: require('../../mobile/assets/images/settings.png'),
+            icon: 'settings',
           },
           {
             id: 5,
             title: 'Help Center',
             navigation: 'navigateTo',
-            icon: require('../../mobile/assets/images/helpCenter.png'),
+            icon: 'help-circle',
           },
           {
             id: 6,
             title: 'Terms & Conditions',
             navigation: 'navigateTo',
-            icon: require('../../mobile/assets/images/termsAndConditions.png'),
+            icon: 'info',
           },
           {
             id: 7,
             title: 'Logout',
             navigation: 'navigateTo',
-            icon: require('../../mobile/assets/images/logout.png'),
+            icon: 'log-out',
           },
         ]
       : [
@@ -1791,25 +1801,25 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
             id: 1,
             title: 'About Local Shows',
             navigation: 'navigateTo',
-            icon: require('../../mobile/assets/images/aboutLocalShows.png'),
+            icon: 'home',
           },
           {
             id: 2,
             title: 'Contact us',
             navigation: 'navigateTo',
-            icon: require('../../mobile/assets/images/contactUs.png'),
+            icon: 'phone',
           },
           {
             id: 3,
             title: 'Help Center',
             navigation: 'navigateTo',
-            icon: require('../../mobile/assets/images/helpCenter.png'),
+            icon: 'help-circle',
           },
           {
             id: 4,
             title: 'Terms & Conditions',
             navigation: 'navigateTo',
-            icon: require('../../mobile/assets/images/termsAndConditions.png'),
+            icon: 'info',
           },
         ];
 
@@ -1908,81 +1918,105 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
       } else {
       }
     };
-    const renderMenu = ({ item, index }: any) => {
-      return (
-        <TouchableOpacity
-          onPress={() => onPressMenu(item)}
-          style={styles.drawerMenuItemStyle}
-        >
-          <View style={styles.menuContainerStyle}>
-            <Image source={item.icon} style={styles.menuIconStyle} />
-            {item.title === 'Chat' &&
-              this.renderRedDot({ condition: this.state.haveUnreadChat })}
-            <Text style={styles.drawerMenuTextStyle}>{item.title}</Text>
-          </View>
-          <Image
-            source={require('../../mobile/assets/images/next.png')}
-            style={{
-              width: Scale(15),
-              height: Scale(15),
-              resizeMode: 'contain',
-            }}
-          />
-        </TouchableOpacity>
-      );
-    };
-
     return (
-      <SafeAreaView style={styles.drawerStyle}>
-        <FlatList
-          ListHeaderComponent={this.ListHeaderComponent(props)}
-          data={drawrMenu}
-          keyExtractor={(item: any) => item.id.toString()}
-          renderItem={renderMenu}
-        />
+      <DrawerThemedRoot
+        render={(theme, ds) => {
+          const renderMenu = ({ item }: any) => {
+            const isLogout = item.title === 'Logout';
+            return (
+              <TouchableOpacity
+                onPress={() => onPressMenu(item)}
+                style={ds.drawerMenuItemStyle}
+                activeOpacity={0.8}
+              >
+                <View style={ds.menuContainerStyle}>
+                  <View style={ds.menuIconWrap}>
+                    <Icon
+                      name={item.icon}
+                      size={18}
+                      color={isLogout ? theme.primary : theme.foreground}
+                    />
+                  </View>
+                  {item.title === 'Chat' &&
+                    this.renderRedDot({
+                      condition: this.state.haveUnreadChat,
+                      color: theme.primary,
+                    })}
+                  <Text
+                    style={[
+                      ds.drawerMenuTextStyle,
+                      isLogout && { color: theme.primary },
+                    ]}
+                  >
+                    {item.title}
+                  </Text>
+                </View>
+                <Icon name="chevron-right" size={18} color={theme.muted} />
+              </TouchableOpacity>
+            );
+          };
 
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={this.state.isLogoutConfirmationModal}
-        >
-          <View style={styles.modalParentView}>
-            <View style={styles.modalContainerView}>
-              <TouchableOpacity
-                style={styles.disablePopupIconContainer}
-                onPress={() =>
-                  this.setState({ isLogoutConfirmationModal: false })
-                }
+          return (
+            <SafeAreaView style={ds.drawerStyle}>
+              <FlatList
+                ListHeaderComponent={this.ListHeaderComponent(
+                  props,
+                  theme,
+                  ds,
+                )}
+                data={drawrMenu}
+                keyExtractor={(item: any) => item.id.toString()}
+                renderItem={renderMenu}
+                showsVerticalScrollIndicator={false}
+              />
+
+              <Modal
+                animationType="slide"
+                transparent={true}
+                visible={this.state.isLogoutConfirmationModal}
               >
-                <Icon name="x" color="#0F172A" size={25} />
-              </TouchableOpacity>
-              <Text style={styles.txtDeleteHeading}>Logout Confirmation</Text>
-              <Text style={styles.txtDelete}>
-                Are you sure you want to logout of the application?
-              </Text>
-              <TouchableOpacity
-                style={[
-                  styles.deleteButtonContainer,
-                  styles.keepButtonContainer,
-                ]}
-                onPress={() =>
-                  this.setState({ isLogoutConfirmationModal: false })
-                }
-              >
-                <Text style={[styles.textDeleteButton, styles.textKeepButton]}>
-                  No, Stay!
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.deleteButtonContainer}
-                onPress={() => logoutUser()}
-              >
-                <Text style={styles.textDeleteButton}>Yes, Logout!</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
-      </SafeAreaView>
+                <View style={ds.modalParentView}>
+                  <View style={ds.modalContainerView}>
+                    <TouchableOpacity
+                      style={ds.disablePopupIconContainer}
+                      onPress={() =>
+                        this.setState({ isLogoutConfirmationModal: false })
+                      }
+                    >
+                      <Icon name="x" color={theme.foreground} size={22} />
+                    </TouchableOpacity>
+                    <Text style={ds.txtDeleteHeading}>Logout Confirmation</Text>
+                    <Text style={ds.txtDelete}>
+                      Are you sure you want to logout of the application?
+                    </Text>
+                    <TouchableOpacity
+                      style={[
+                        ds.deleteButtonContainer,
+                        ds.keepButtonContainer,
+                      ]}
+                      onPress={() =>
+                        this.setState({ isLogoutConfirmationModal: false })
+                      }
+                    >
+                      <Text
+                        style={[ds.textDeleteButton, ds.textKeepButton]}
+                      >
+                        No, Stay!
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={ds.deleteButtonContainer}
+                      onPress={() => logoutUser()}
+                    >
+                      <Text style={ds.textDeleteButton}>Yes, Logout!</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </Modal>
+            </SafeAreaView>
+          );
+        }}
+      />
     );
   };
 
@@ -2570,8 +2604,8 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
           contentComponent: this.CustomDrawer,
           headerMode: 'slide',
           drawerPosition: 'right',
-          overlayColor: 'transparent',
-          drawerBackgroundColor: '#F8FAFC',
+          overlayColor: 'rgba(8, 8, 15, 0.45)',
+          drawerBackgroundColor: 'transparent',
           drawerWidth: 314,
           drawerLockMode: 'locked-closed',
         },
@@ -2619,6 +2653,209 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
 // Customizable Area End
 
 // Customizable Area Start
+type DrawerTheme = typeof redesignTheme;
+
+const createDrawerStyles = (theme: DrawerTheme) =>
+  StyleSheet.create({
+    drawerStyle: {
+      flex: 1,
+      backgroundColor: theme.background,
+      paddingHorizontal: 16,
+      paddingTop: 8,
+      ...Platform.select({
+        ios: {
+          shadowColor: '#000000',
+          shadowOffset: { width: -6, height: 0 },
+          shadowOpacity: 0.28,
+          shadowRadius: 16,
+        },
+        android: {
+          elevation: 16,
+        },
+      }),
+    },
+    drawerCloseRow: {
+      alignItems: 'flex-end',
+      marginBottom: 8,
+    },
+    drawerCloseBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: theme.input,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    profileText: {
+      color: theme.foreground,
+      fontWeight: '800',
+      textAlign: 'center',
+      fontSize: 22,
+      letterSpacing: 0.2,
+      marginVertical: Scale(10),
+    },
+    drawerInnerContainer: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingBottom: Scale(8),
+    },
+    avatarShadowWrap: {
+      borderRadius: Scale(66),
+      backgroundColor: 'transparent',
+      marginVertical: Scale(12),
+      ...Platform.select({
+        ios: {
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.35,
+          shadowRadius: 12,
+        },
+        android: {
+          elevation: 10,
+        },
+      }),
+    },
+    profileImgStyle: {
+      width: Scale(112),
+      height: Scale(112),
+      borderRadius: Scale(56),
+      borderWidth: 3,
+      borderColor: theme.primary,
+      backgroundColor: theme.input,
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
+    },
+    profileImgFill: {
+      width: '100%',
+      height: '100%',
+    },
+    drawerMenuItemStyle: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: Scale(16),
+      borderColor: theme.divider,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+    },
+    menuContainerStyle: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+      paddingRight: 8,
+    },
+    menuIconWrap: {
+      width: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    drawerMenuTextStyle: {
+      marginLeft: Scale(14),
+      color: theme.foreground,
+      fontSize: Scale(15),
+      fontWeight: '600',
+    },
+    modalParentView: {
+      flex: 1,
+      justifyContent: 'flex-end',
+      backgroundColor: 'rgba(8, 8, 15, 0.72)',
+    },
+    modalContainerView: {
+      justifyContent: 'space-between',
+      backgroundColor: theme.card,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      padding: 35,
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+      elevation: 100,
+    },
+    txtDeleteHeading: {
+      fontWeight: '700',
+      fontSize: 26,
+      lineHeight: 28,
+      marginBottom: 10,
+      marginTop: 25,
+      color: theme.foreground,
+    },
+    txtDelete: {
+      fontSize: 18,
+      color: theme.muted,
+    },
+    deleteButtonContainer: {
+      backgroundColor: theme.primary,
+      width: '100%',
+      padding: 15,
+      borderRadius: 10,
+      marginTop: 15,
+    },
+    textDeleteButton: {
+      color: '#FFFFFF',
+      fontWeight: '700',
+      fontSize: 18,
+      alignSelf: 'center',
+    },
+    keepButtonContainer: {
+      backgroundColor: 'transparent',
+      borderWidth: 1,
+      borderColor: theme.divider,
+    },
+    textKeepButton: {
+      color: theme.foreground,
+    },
+    disablePopupIconContainer: {
+      position: 'absolute',
+      right: 20,
+      top: 20,
+    },
+  });
+
+const darkDrawerStyles = createDrawerStyles(redesignTheme);
+const lightDrawerStyles = createDrawerStyles(lightTheme);
+
+const DrawerThemedRoot = ({
+  render,
+}: {
+  render: (
+    theme: DrawerTheme,
+    ds: ReturnType<typeof createDrawerStyles>,
+  ) => React.ReactNode;
+}) => {
+  const [isDarkMode, setIsDarkMode] = React.useState(true);
+
+  React.useEffect(() => {
+    let mounted = true;
+    getStorageData(PROFILE_THEME_STORAGE_KEY).then((saved: string) => {
+      if (mounted) {
+        setIsDarkMode(saved !== 'false');
+      }
+    });
+    const sub = DeviceEventEmitter.addListener(
+      PROFILE_THEME_CHANGED_EVENT,
+      (value: boolean) => setIsDarkMode(!!value),
+    );
+    return () => {
+      mounted = false;
+      sub.remove();
+    };
+  }, []);
+
+  const theme = isDarkMode ? redesignTheme : lightTheme;
+  const ds = isDarkMode ? darkDrawerStyles : lightDrawerStyles;
+  return (
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
+      {render(theme, ds)}
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
   instructions: {
     textAlign: 'center',
@@ -2633,106 +2870,6 @@ const styles = StyleSheet.create({
     height: 25,
     resizeMode: 'contain',
     marginVertical: 5,
-  },
-  drawerStyle: {
-    flex: 1,
-    margin: 15,
-  },
-  profileText: {
-    color: '#334155',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    fontSize: 24,
-    marginVertical: Scale(10),
-  },
-  drawerInnerContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  profileImgStyle: {
-    width: Scale(132),
-    height: Scale(132),
-    borderWidth: Scale(5),
-    borderRadius: Scale(150),
-    marginVertical: Scale(15),
-    borderColor: '#E0E7FF',
-  },
-  drawerMenuItemStyle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: Scale(15),
-    borderColor: '#CBD5E1',
-    borderBottomWidth: Scale(2),
-  },
-  menuContainerStyle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  drawerMenuTextStyle: {
-    marginLeft: Scale(15),
-    color: '#334155',
-    fontSize: Scale(14),
-  },
-  menuIconStyle: {
-    width: Scale(24),
-    height: Scale(24),
-    resizeMode: 'contain',
-    marginLeft: Scale(10),
-  },
-  modalParentView: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: '#33415580',
-  },
-  modalContainerView: {
-    justifyContent: 'space-between',
-    backgroundColor: 'white',
-    borderTopEndRadius: 20,
-    padding: 35,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 100,
-  },
-  txtDeleteHeading: {
-    fontWeight: '700',
-    fontSize: 26,
-    lineHeight: 28,
-    marginBottom: 10,
-    marginTop: 25,
-    color: '#0F172A',
-  },
-  txtDelete: {
-    fontSize: 18,
-  },
-  deleteButtonContainer: {
-    backgroundColor: '#3333CC',
-    width: '100%',
-    padding: 15,
-    borderRadius: 10,
-    marginTop: 15,
-  },
-  textDeleteButton: {
-    color: colors(false).white,
-    fontWeight: '700',
-    fontSize: 18,
-    alignSelf: 'center',
-  },
-  keepButtonContainer: {
-    backgroundColor: 'transparent',
-  },
-  textKeepButton: {
-    color: '#3333CC',
-  },
-  disablePopupIconContainer: {
-    position: 'absolute',
-    right: 20,
-    top: 20,
   },
 });
 // Customizable Area End
