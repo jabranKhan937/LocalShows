@@ -28,4 +28,8 @@ exports.putApiMethodType = "PUT";
 exports.deleteApiMethodType = "DELETE";
 exports.createFollowApiEndpoint = "/bx_block_favourites/follows";
 exports.checkUnreadNotificationsEndpoint = "/account_block/check_unread_notifications";
+exports.allCategoriesEndPoint = "/bx_block_categories/categories/all_categories";
+exports.genreEndPoint = "/bx_block_categories/categories/all_subcategories?category_id=";
+exports.getAllShowEndPoint = "/get_all_show";
+exports.showUserProfileEndPoint = "/account_block/show_user_profile?id=";
 // Customizable Area End

@@ -78,6 +78,7 @@ import Rolesandpermissions from '../../blocks/rolesandpermissions/src/Rolesandpe
 import TermsConditions from '../../blocks/termsconditions/src/TermsConditions';
 import HelpCentre from '../../blocks/helpcentre/src/HelpCentre';
 import Search from '../../blocks/search/src/Search';
+import BrowseGenres from '../../blocks/search/src/BrowseGenres';
 import Notifications from '../../blocks/notifications/src/Notifications';
 import Contactus from '../../blocks/contactus/src/Contactus';
 import Settings2 from '../../blocks/settings2/src/Settings2';
@@ -458,6 +459,12 @@ ProfileStack.navigationOptions = () => ({
 const SearchStack = createStackNavigator({
   Search: {
     screen: Search,
+    navigationOptions: {
+      header: null,
+    },
+  },
+  BrowseGenres: {
+    screen: BrowseGenres,
     navigationOptions: {
       header: null,
     },

@@ -9,7 +9,14 @@ import { CommonActions } from '@react-navigation/native';
 
 // Customizable Area Start
 import { URLSearchParams } from 'url';
-import { Alert, Linking, PermissionsAndroid, Platform } from 'react-native';
+import {
+  Alert,
+  DeviceEventEmitter,
+  InteractionManager,
+  Linking,
+  PermissionsAndroid,
+  Platform,
+} from 'react-native';
 import {
   getStorageData,
   removeStorageData,
@@ -18,6 +25,13 @@ import {
 import Geolocation from 'react-native-geolocation-service';
 import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import _ from 'lodash';
+import {
+  lightTheme,
+  PROFILE_THEME_CHANGED_EVENT,
+  PROFILE_THEME_STORAGE_KEY,
+  redesignTheme,
+} from '../../utilities/src/Colors';
+const searchApiBaseURL = require('../../../framework/src/config.js').baseURL;
 interface IPlaceRecord {
   key: string;
   name: string;
@@ -107,6 +121,16 @@ interface S {
   FollowUserId: string;
   unreadNotificationCount: number;
   newNotification: boolean;
+  isDarkMode: boolean;
+  searchFilter: string;
+  categoriesList: any[];
+  genreList: any[];
+  pendingGenreCategoryIds: string[];
+  showAllGenres: boolean;
+  nearMeShows: any[];
+  loadingNearMeShows: boolean;
+  catalogShowResults: any[];
+  loadingCatalogShows: boolean;
   // Customizable Area End
 }
 
@@ -130,6 +154,25 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
   commentTextInput: any;
   createSearchFollowApiCallID: string = '';
   checkUnreadNotificationsApiCallId: any;
+  getCategoriesAPICallId: any;
+  getGenresAPICallId: any;
+  getGenreArtworkAPICallId: any;
+  searchAllShowsAPICallId: any;
+  previewNearMeAPICallId: any;
+  catalogShowsCache: any[] = [];
+  genreArtworkByName: {[key: string]: string} = {};
+  upcomingShowsByName: {[key: string]: number} = {};
+  genreByName: {[key: string]: string} = {};
+  venueArtworkByName: {[key: string]: string} = {};
+  venueCityByName: {[key: string]: string} = {};
+  venueProfileApiCallIds: {[key: string]: string} = {};
+  venueProfileInFlight: {[key: string]: boolean} = {};
+  indexedUpcomingShowIds: {[key: string]: boolean} = {};
+  profileThemeListener: any;
+  debouncedLoadNearMePreview: any;
+  debouncedLiveSearch: any;
+  isNearMePreviewInFlight: boolean = false;
+  nearMePreviewTimer: ReturnType<typeof setTimeout> | null = null;
   // Customizable Area End
   constructor(props: Props) {
     super(props);
@@ -171,7 +214,7 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
       selectedEventId: '',
       authToken: '',
       loginPopup: false,
-      maxMiles: '50',
+      maxMiles: '100',
       minRange: 0,
       maxRange: 0,
       selectRange: true,
@@ -198,9 +241,25 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
       FollowUserId: '',
       unreadNotificationCount: 0,
       newNotification: false,
+      isDarkMode: true,
+      searchFilter: 'All',
+      categoriesList: [],
+      genreList: [],
+      pendingGenreCategoryIds: [],
+      showAllGenres: false,
+      nearMeShows: [],
+      loadingNearMeShows: false,
+      catalogShowResults: [],
+      loadingCatalogShows: false,
       // Customizable Area End
     };
     // Customizable Area Start
+    this.debouncedLoadNearMePreview = _.debounce(() => {
+      this.loadNearMePreview();
+    }, 500);
+    this.debouncedLiveSearch = _.debounce(() => {
+      this.runLiveSearch();
+    }, 400);
     // Customizable Area End
     runEngine.attachBuildingBlock(this as IBlock, this.subScribedMessages);
   }
@@ -218,6 +277,10 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
     this.getUserAuthToken();
     this.getStatesListAPI();
     this.getUnreadNotificationsCount();
+    this.loadSearchTheme();
+    this.getCategoriesListAPI();
+    this.getGenreArtworkFromShowsAPI();
+    this.scheduleNearMePreview();
 
     // Check for navigation params immediately on mount
     const initialResponse =
@@ -242,6 +305,11 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
     if (this.isPlatformWeb() === false) {
       // React Navigation v4 listener
       this.props.navigation.addListener('willFocus', async () => {
+        if (this.applyPendingGenreSearch()) {
+          this.getUserAuthToken();
+          this.getUnreadNotificationsCount();
+          return;
+        }
         let IsFromComment = await getStorageData('IsFromCommentSearch', true);
         if (IsFromComment !== null && IsFromComment) {
           this.setState({ showComments: true });
@@ -275,6 +343,11 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
 
       // React Navigation v5+ listener
       this.props.navigation.addListener('focus', async () => {
+        if (this.applyPendingGenreSearch()) {
+          this.getUserAuthToken();
+          this.getUnreadNotificationsCount();
+          return;
+        }
         let IsFromComment = await getStorageData('IsFromCommentSearch', true);
         if (IsFromComment !== null && IsFromComment) {
           this.setState({ showComments: true });
@@ -355,7 +428,41 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
   };
 
   setSelectedTab = (tab: string) => {
-    this.setState({ SelectedTab: tab });
+    this.setState(
+      {
+        SelectedTab: tab,
+        searchFilter:
+          tab === 'People' ? 'People' : tab === 'Shows' ? 'Shows' : tab,
+      },
+      () => {
+        this.runLiveSearch();
+      },
+    );
+  };
+
+  handleSearchFilter = (filter: string) => {
+    if (filter === 'People' || filter === 'Bands' || filter === 'Venues') {
+      this.setState(
+        {
+          searchFilter: filter,
+          SelectedTab: 'People',
+        },
+        () => {
+          this.runLiveSearch();
+        },
+      );
+      return;
+    }
+
+    this.setState(
+      {
+        searchFilter: filter,
+        SelectedTab: 'Shows',
+      },
+      () => {
+        this.runLiveSearch();
+      },
+    );
   };
 
   handleRestAPIResponseMessage = (message: Message) => {
@@ -372,6 +479,11 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
     );
 
     runEngine.debugLog('API Message Recived', message);
+
+    if (apiRequestCallId === this.previewNearMeAPICallId) {
+      this.handleNearMePreviewApi(responseJson);
+      return;
+    }
 
     if (apiRequestCallId === this.getSearchShowAPICallId) {
       const mode = this.state.selectRange ? 'shows_near_me' : 'shows_by_state';
@@ -418,6 +530,20 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
       this.handleSearchFollowandUnfollowAPIResponse(responseJson);
     } else if (apiRequestCallId === this.checkUnreadNotificationsApiCallId) {
       this.handleUnreadNotificationsApiResponse(responseJson);
+    } else if (apiRequestCallId === this.getCategoriesAPICallId) {
+      this.handleGetCategoriesApi(responseJson);
+    } else if (apiRequestCallId === this.getGenresAPICallId) {
+      this.handleGetGenresApi(responseJson);
+    } else if (apiRequestCallId === this.getGenreArtworkAPICallId) {
+      this.handleGenreArtworkFromShowsApi(responseJson);
+    } else if (apiRequestCallId === this.searchAllShowsAPICallId) {
+      this.handleSearchAllShowsApi(responseJson);
+    } else if (apiRequestCallId === this.previewNearMeAPICallId) {
+      this.handleNearMePreviewApi(responseJson);
+    } else if (this.venueProfileApiCallIds[apiRequestCallId]) {
+      const venueId = this.venueProfileApiCallIds[apiRequestCallId];
+      delete this.venueProfileApiCallIds[apiRequestCallId];
+      this.handleVenueProfileApi(venueId, responseJson);
     }
   };
 
@@ -449,8 +575,16 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
 
   handleSearchApiResponse = (responseJson: any) => {
     if (responseJson != null && !responseJson.errors) {
+      const selectedStateObject = this.state.statesList.find(
+        item => item.key === this.state.selectedState,
+      );
+      const stateName = selectedStateObject ? selectedStateObject.name : '';
+      const cityName = this.state.wholeStateSelected
+        ? ''
+        : this.state.selectedCity;
       this.props.navigation.navigate('SearchResult', {
         eventList: responseJson,
+        searchAreaLabel: cityName || stateName || 'All areas',
       });
     } else {
       this.parseApiErrorResponse(responseJson);
@@ -619,6 +753,65 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
   onSelectState = (selectedState: string) => {
     this.setState({ selectedState, selectedCity: '', citiesList: [] });
     this.getCitiesListAPI(selectedState);
+  };
+
+  handleStateBoxPress = (stateKey: string) => {
+    if (!stateKey) {
+      return;
+    }
+    this.setState(
+      {
+        selectRange: false,
+        stateError: '',
+        cityError: '',
+        wholeStateSelected: false,
+      },
+      () => {
+        this.onSelectState(stateKey);
+      },
+    );
+  };
+
+  handleBackToStateGrid = () => {
+    this.setState({
+      selectedState: '',
+      selectedCity: '',
+      citiesList: [],
+      wholeStateSelected: false,
+      stateError: '',
+      cityError: '',
+    });
+  };
+
+  handleCityBoxPress = (cityName: string) => {
+    if (!cityName) {
+      return;
+    }
+    this.setState(
+      {
+        selectRange: false,
+        wholeStateSelected: false,
+        selectedCity: cityName,
+        cityError: '',
+      },
+      () => {
+        this.getSearchShowAPI();
+      },
+    );
+  };
+
+  handleWholeStateBoxPress = () => {
+    this.setState(
+      {
+        selectRange: false,
+        wholeStateSelected: true,
+        selectedCity: '',
+        cityError: '',
+      },
+      () => {
+        this.getSearchShowAPI();
+      },
+    );
   };
 
   getCitiesListAPI(state: string): boolean {
@@ -898,7 +1091,48 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
 
   handleSearchText = (searchText: string) => {
     const cleanedText = searchText.replace('  ', ' ');
-    this.setState({ searchText: cleanedText });
+    this.setState({ searchText: cleanedText }, () => {
+      if (this.debouncedLiveSearch) {
+        this.debouncedLiveSearch();
+      }
+    });
+  };
+
+  runLiveSearch = async () => {
+    try {
+      if (this.isPeopleSearchTab()) {
+        const token = await getStorageData('authToken');
+        this.getSearchUserList(this.state.searchText, token);
+        return;
+      }
+      if (this.isAllSearchTab() && this.hasSearchQuery()) {
+        const token = await getStorageData('authToken');
+        this.getSearchUserList(this.state.searchText, token);
+        this.searchAllShows();
+        return;
+      }
+      if (this.isShowsSearchTab() && this.hasSearchQuery()) {
+        this.searchAllShows();
+        return;
+      }
+      if (this.isShowsSearchTab() || this.isAllSearchTab()) {
+        this.setState({ catalogShowResults: [], loadingCatalogShows: false });
+      }
+      if (this.state.selectedState && !this.state.selectRange) {
+        if ((this.state.searchText || '').trim()) {
+          this.getSearchShowAPI();
+        }
+        return;
+      }
+      this.isNearMePreviewInFlight = false;
+      this.loadNearMePreview();
+    } catch {
+      return;
+    }
+  };
+
+  clearSearchText = () => {
+    this.handleSearchText('');
   };
 
   handleWholeStateSelection = () => {
@@ -968,13 +1202,22 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
 
   handleMilesRange = (maxRng: number) => {
     if (maxRng.toString() !== this.state.maxMiles)
-      this.setState({
-        maxMiles: maxRng.toString(),
-      });
+      this.setState(
+        {
+          maxMiles: maxRng.toString(),
+        },
+        () => {
+          if (this.state.selectRange && this.debouncedLoadNearMePreview) {
+            this.debouncedLoadNearMePreview();
+          }
+        },
+      );
   };
 
   handleShowsNearMe = () => {
-    this.setState({ selectRange: true });
+    this.setState({ selectRange: true }, () => {
+      this.scheduleNearMePreview();
+    });
   };
 
   handleShowsByState = () => {
@@ -989,15 +1232,15 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
         this.getSearchUserList(this.state.searchText, token);
       } else {
         if (this.state.selectRange) {
-          const hasLocation = await this.ensureLocationForNearMeSearch();
-          if (!hasLocation) {
+          const location = await this.ensureLocationForNearMeSearch();
+          if (!location) {
             this.showAlert(
               'Location required',
               'Please enable location and try near me search again.',
             );
             return;
           }
-          this.getShowsNearMeAPI();
+          this.getShowsNearMeAPI(false, location);
         } else {
           this.getSearchShowAPI();
         }
@@ -1010,23 +1253,29 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
     }
   };
 
-  ensureLocationForNearMeSearch = async (): Promise<boolean> => {
+  ensureLocationForNearMeSearch = async (): Promise<{
+    latitude: number;
+    longitude: number;
+  } | null> => {
     const hasValidLocation = this.isValidCoordinatePair(
       this.state.latitude,
       this.state.longitude,
     );
 
     if (hasValidLocation) {
-      return true;
+      return {
+        latitude: this.state.latitude as number,
+        longitude: this.state.longitude as number,
+      };
     }
 
     if (this.isPlatformWeb()) {
-      return false;
+      return null;
     }
 
     const locationDisabled = await getStorageData('locationDisabled');
     if (locationDisabled === 'true') {
-      return false;
+      return null;
     }
 
     try {
@@ -1039,10 +1288,9 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
           permissionResult !== RESULTS.GRANTED &&
           permissionResult !== RESULTS.LIMITED
         ) {
-          return false;
+          return null;
         }
       } else if (Platform.OS === 'android') {
-        // Android is more stable with native PermissionsAndroid for this plugin.
         const hasFinePermission = await PermissionsAndroid.check(
           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
         );
@@ -1052,26 +1300,27 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
               PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
             );
         if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-          return false;
+          return null;
         }
       } else {
-        return false;
+        return null;
       }
 
       return await new Promise(resolve => {
         Geolocation.getCurrentPosition(
           ({ coords }) => {
-            this.setState(
-              {
-                latitude: coords.latitude,
-                longitude: coords.longitude,
-              },
-              () => resolve(true),
-            );
+            this.setState({
+              latitude: coords.latitude,
+              longitude: coords.longitude,
+            });
+            resolve({
+              latitude: coords.latitude,
+              longitude: coords.longitude,
+            });
           },
           () => {
             this.setState({ latitude: null, longitude: null });
-            resolve(false);
+            resolve(null);
           },
           {
             enableHighAccuracy: false,
@@ -1084,7 +1333,7 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
         );
       });
     } catch (error) {
-      return false;
+      return null;
     }
   };
 
@@ -1108,8 +1357,17 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
     return true;
   };
 
-  getShowsNearMeAPI = () => {
-    if (!this.isValidCoordinatePair(this.state.latitude, this.state.longitude)) {
+  getShowsNearMeAPI = (
+    isPreview = false,
+    coords?: { latitude: number; longitude: number },
+  ) => {
+    const latitude = coords?.latitude ?? this.state.latitude;
+    const longitude = coords?.longitude ?? this.state.longitude;
+    if (!this.isValidCoordinatePair(latitude, longitude)) {
+      if (isPreview) {
+        this.isNearMePreviewInFlight = false;
+        this.setState({ loadingNearMeShows: false });
+      }
       return;
     }
 
@@ -1123,18 +1381,16 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
     const q = (this.state.searchText ?? '').trim();
     const apiEndpoint =
       configJSON.searchByLatLong +
-      `${this.state.latitude}&long=${
-        this.state.longitude
-      }&min_range=0&max_range=${
+      `${latitude}&long=${longitude}&min_range=0&max_range=${
         this.state.maxMiles
       }&query=${encodeURIComponent(q)}`;
 
     console.log('[Search] Search API request payload', {
-      mode: 'shows_near_me',
+      mode: isPreview ? 'shows_near_me_preview' : 'shows_near_me',
       endpoint: configJSON.searchByLatLong,
       payload: {
-        lat: this.state.latitude,
-        long: this.state.longitude,
+        lat: latitude,
+        long: longitude,
         min_range: 0,
         max_range: this.state.maxMiles,
         query: q,
@@ -1142,7 +1398,11 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
       fullEndpoint: apiEndpoint,
     });
 
-    this.getSearchShowAPICallId = requestMessage.messageId;
+    if (isPreview) {
+      this.previewNearMeAPICallId = requestMessage.messageId;
+    } else {
+      this.getSearchShowAPICallId = requestMessage.messageId;
+    }
 
     requestMessage.addData(
       getName(MessageEnum.RestAPIResponceEndPointMessage),
@@ -1160,6 +1420,166 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
     );
 
     runEngine.sendMessage(requestMessage.id, requestMessage);
+  };
+
+  scheduleNearMePreview = () => {
+    if (this.nearMePreviewTimer) {
+      clearTimeout(this.nearMePreviewTimer);
+      this.nearMePreviewTimer = null;
+    }
+    const start = () => {
+      this.nearMePreviewTimer = setTimeout(() => {
+        this.loadNearMePreview();
+      }, 400);
+    };
+    if (Platform.OS === 'android') {
+      InteractionManager.runAfterInteractions(start);
+    } else {
+      start();
+    }
+  };
+
+  loadNearMePreview = async () => {
+    if (this.isNearMePreviewInFlight) {
+      return;
+    }
+    this.isNearMePreviewInFlight = true;
+    this.setState({
+      loadingNearMeShows:
+        !Array.isArray(this.state.nearMeShows) ||
+        this.state.nearMeShows.length === 0,
+    });
+    try {
+      const location = await this.ensureLocationForNearMeSearch();
+      if (!location) {
+        this.isNearMePreviewInFlight = false;
+        this.setState({ loadingNearMeShows: false });
+        return;
+      }
+      this.getShowsNearMeAPI(true, location);
+    } catch {
+      this.isNearMePreviewInFlight = false;
+      this.setState({ loadingNearMeShows: false });
+    }
+  };
+
+  parseNearMeShows = (responseJson: any) => {
+    if (!responseJson) {
+      return [];
+    }
+    let shows: any[] = [];
+    if (Array.isArray(responseJson)) {
+      shows = responseJson;
+    } else if (Array.isArray(responseJson.data)) {
+      shows = responseJson.data;
+    } else if (responseJson.data && typeof responseJson.data === 'object') {
+      shows = Object.values(responseJson.data);
+    }
+    const seen = new Set<string>();
+    return shows.filter(item => {
+      if (!item || typeof item !== 'object') {
+        return false;
+      }
+      const id = item.id ?? item.attributes?.id;
+      if (id == null) {
+        return true;
+      }
+      const key = String(id);
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
+  };
+
+  handleNearMePreviewApi = (responseJson: any) => {
+    this.isNearMePreviewInFlight = false;
+    if (!responseJson) {
+      this.setState({ loadingNearMeShows: false });
+      return;
+    }
+    const shows = this.parseNearMeShows(responseJson);
+    console.log('[Search] Near me preview response', { count: shows.length });
+    this.setState(
+      {
+        nearMeShows: shows,
+        loadingNearMeShows: false,
+      },
+      () => {
+        this.applyGenreArtworkFromShows(shows);
+      },
+    );
+  };
+
+  normalizeMediaUrl = (value: any): string => {
+    if (!value) {
+      return '';
+    }
+    if (typeof value === 'object') {
+      return this.normalizeMediaUrl(value.url || value.uri || value.image);
+    }
+    if (typeof value !== 'string') {
+      return '';
+    }
+    let trimmed = value.trim();
+    if (!trimmed || trimmed === 'null' || trimmed === 'undefined') {
+      return '';
+    }
+    if (trimmed.startsWith('//')) {
+      trimmed = `https:${trimmed}`;
+    } else if (trimmed.startsWith('/') || trimmed.startsWith('rails/')) {
+      const origin = String(searchApiBaseURL || '').replace(/\/$/, '');
+      trimmed = `${origin}/${trimmed.replace(/^\//, '')}`;
+    }
+    return trimmed.replace(/^(https?:\/\/[^/]+)\/\//, '$1/');
+  };
+
+  getNearMeShowImage = (item: any) => {
+    const attrs = item?.attributes || item || {};
+    return (
+      this.normalizeMediaUrl(attrs.profile_image) ||
+      this.normalizeMediaUrl(attrs.band_profile_image) ||
+      this.normalizeMediaUrl(
+        Array.isArray(attrs.images_and_videos)
+          ? attrs.images_and_videos[0]
+          : '',
+      )
+    );
+  };
+
+  formatNearMeWhen = (dateStr?: string, timeStr?: string) => {
+    if (!dateStr) {
+      return '';
+    }
+    const eventDate = new Date(dateStr);
+    if (Number.isNaN(eventDate.getTime())) {
+      return '';
+    }
+    const now = new Date();
+    const isSameDay =
+      eventDate.getUTCFullYear() === now.getUTCFullYear() &&
+      eventDate.getUTCMonth() === now.getUTCMonth() &&
+      eventDate.getUTCDate() === now.getUTCDate();
+    if (isSameDay) {
+      return 'Tonight';
+    }
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const weekday = weekdays[eventDate.getUTCDay()] || '';
+    return `${weekday}, ${this.formatMonth(dateStr)} ${this.formatDate(
+      dateStr,
+    )}`.trim();
+  };
+
+  handleNearMeShowPress = (item: any) => {
+    if (!item?.id) {
+      return;
+    }
+    const attrs = item.attributes || {};
+    this.handleNavigationSearch('AllEventDetailScreen', {
+      eventId: item.id,
+      eventState: attrs.state || item.state || '',
+    });
   };
 
   handleNavigationSearch = (screen: string, dataToPass: {}) => {
@@ -1801,11 +2221,17 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
       return;
     }
 
-    this.setState({
-      NoUserFound: false,
-      UserList: data,
-      LoadingUsers: false,
-    });
+    this.venueProfileInFlight = {};
+    this.setState(
+      {
+        NoUserFound: false,
+        UserList: data,
+        LoadingUsers: false,
+      },
+      () => {
+        this.enrichVenueSearchResults();
+      },
+    );
   };
 
   followAndUnfollowUserAPICall = async (
@@ -1933,6 +2359,173 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
     return name;
   };
 
+  formatAccountTypeLabel = (accountType: any) => {
+    if (typeof accountType !== 'string' || !accountType.trim()) {
+      return '';
+    }
+    return accountType.replace(/_/g, ' ').trim();
+  };
+
+  getUserAvatarUrl = (item: any) => {
+    const attrs = item?.attributes || item || {};
+    return (
+      this.normalizeMediaUrl(attrs.photo) ||
+      this.normalizeMediaUrl(attrs.profile_image_url) ||
+      this.normalizeMediaUrl(attrs.profile_image) ||
+      this.normalizeMediaUrl(attrs.band_profile_image) ||
+      this.normalizeMediaUrl(attrs.cover_photo) ||
+      this.normalizeMediaUrl(attrs.cover_image)
+    );
+  };
+
+  getGenreLabelFromValue = (value: any): string => {
+    if (!value) {
+      return '';
+    }
+    if (typeof value === 'string') {
+      return value.trim();
+    }
+    if (Array.isArray(value)) {
+      for (let index = 0; index < value.length; index += 1) {
+        const label = this.getGenreLabelFromValue(value[index]);
+        if (label) {
+          return label;
+        }
+      }
+      return '';
+    }
+    if (typeof value === 'object') {
+      return this.getGenreLabelFromValue(
+        value.name ||
+          value.title ||
+          value.genre ||
+          value.attributes?.name ||
+          value.sub_category?.name,
+      );
+    }
+    return '';
+  };
+
+  getUserGenreLabel = (attrs: any) => {
+    return (
+      this.getGenreLabelFromValue(attrs?.genre) ||
+      this.getGenreLabelFromValue(attrs?.user_sub_categories) ||
+      this.getGenreLabelFromValue(attrs?.sub_categories) ||
+      this.getGenreLabelFromValue(attrs?.categories)
+    );
+  };
+
+  indexUpcomingShow = (show: any) => {
+    const showId = String(show?.id ?? show?.attributes?.id ?? '');
+    if (showId && this.indexedUpcomingShowIds[showId]) {
+      return;
+    }
+    if (showId) {
+      this.indexedUpcomingShowIds[showId] = true;
+    }
+    const attrs = show?.attributes || show || {};
+    const names: string[] = [];
+    if (typeof attrs.band_name === 'string') {
+      names.push(attrs.band_name);
+    }
+    if (Array.isArray(attrs.line_ups)) {
+      attrs.line_ups.forEach((name: any) => {
+        if (typeof name === 'string') {
+          names.push(name);
+        }
+      });
+    }
+    const primaryGenre = this.getShowGenreNames(show)[0] || '';
+    names.forEach(name => {
+      const key = name.trim().toLowerCase();
+      if (key) {
+        this.upcomingShowsByName[key] =
+          (this.upcomingShowsByName[key] || 0) + 1;
+        if (primaryGenre && !this.genreByName[key]) {
+          this.genreByName[key] = primaryGenre;
+        }
+      }
+    });
+    this.indexVenueFromShow(show);
+  };
+
+  indexVenueFromShow = (show: any) => {
+    const attrs = show?.attributes || show || {};
+    const venueNames = [attrs.location, attrs.venue].filter(
+      (name: any) => typeof name === 'string' && name.trim(),
+    );
+    if (venueNames.length === 0) {
+      return;
+    }
+    const image = this.getNearMeShowImage(show);
+    const city =
+      (typeof attrs.city === 'string' && attrs.city.trim()) || '';
+    venueNames.forEach((name: string) => {
+      const key = name.trim().toLowerCase();
+      if (!key) {
+        return;
+      }
+      if (image && !this.venueArtworkByName[key]) {
+        this.venueArtworkByName[key] = image;
+      }
+      if (city && !this.venueCityByName[key]) {
+        this.venueCityByName[key] = city;
+      }
+    });
+  };
+
+  getUserSubtitle = (item: any) => {
+    const attrs = item?.attributes || {};
+    const displayName = this.getName(attrs.first_name, attrs.last_name)
+      .trim()
+      .toLowerCase();
+    const genre =
+      this.getUserGenreLabel(attrs) ||
+      (displayName && this.genreByName[displayName]) ||
+      '';
+    const typeLabel = this.formatAccountTypeLabel(attrs.account_type);
+    const genericTypes = [
+      'band',
+      'artist',
+      'venue',
+      'club',
+      'theater',
+      'museum',
+      'bar',
+      'gallery',
+      'casino',
+      'fan',
+      'user',
+    ];
+    const roleLabel =
+      typeLabel && !genericTypes.includes(typeLabel.toLowerCase())
+        ? typeLabel
+        : '';
+    const upcoming =
+      (displayName && this.upcomingShowsByName[displayName]) || 0;
+    const parts = [];
+    if (genre) {
+      parts.push(genre);
+    } else if (roleLabel) {
+      parts.push(roleLabel);
+    }
+    if (upcoming > 0) {
+      parts.push(`${upcoming} upcoming`);
+    }
+    return parts.join(' · ');
+  };
+
+  getPeopleSectionTitle = () => {
+    const filter = this.state.searchFilter;
+    if (filter === 'Bands') {
+      return 'BANDS & ARTISTS';
+    }
+    if (filter === 'Venues') {
+      return 'VENUES';
+    }
+    return 'PEOPLE';
+  };
+
   getUnreadNotificationsCount = async () => {
     let token = this.state.authToken;
     if (!token) {
@@ -2028,5 +2621,865 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
       newNotification: hasUnread && count > 0,
     });
   };
+
+  loadSearchTheme = async () => {
+    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
+    this.setState({ isDarkMode: savedTheme !== 'false' });
+    if (!this.profileThemeListener) {
+      this.profileThemeListener = DeviceEventEmitter.addListener(
+        PROFILE_THEME_CHANGED_EVENT,
+        (isDarkMode: boolean) => {
+          this.setState({ isDarkMode });
+        },
+      );
+    }
+  };
+
+  getSearchTheme = () => {
+    return this.state.isDarkMode ? redesignTheme : lightTheme;
+  };
+
+  isPeopleSearchTab = () => {
+    return (
+      this.state.SelectedTab === 'People' ||
+      this.state.searchFilter === 'People' ||
+      this.state.searchFilter === 'Bands' ||
+      this.state.searchFilter === 'Venues'
+    );
+  };
+
+  hasSearchQuery = () => {
+    return Boolean((this.state.searchText || '').trim());
+  };
+
+  isShowsSearchTab = () => {
+    return this.state.searchFilter === 'Shows';
+  };
+
+  isAllSearchTab = () => {
+    return this.state.searchFilter === 'All';
+  };
+
+  getBandAccountTypes = () => [
+    'Band',
+    'Artist',
+    'Record_Label',
+    'Promoter',
+    'Booking_Agent',
+    'Agency',
+    'Record_Store',
+  ];
+
+  getVenueAccountTypes = () => [
+    'Venue',
+    'Club',
+    'Theater',
+    'Museum',
+    'Bar',
+    'Gallery',
+    'Casino',
+  ];
+
+  matchesAccountType = (accountType: any, types: string[]) => {
+    if (typeof accountType !== 'string' || !accountType.trim()) {
+      return false;
+    }
+    return types.some(
+      typeName => typeName.toLowerCase() === accountType.toLowerCase(),
+    );
+  };
+
+  isBandAccountType = (accountType: any) =>
+    this.matchesAccountType(accountType, this.getBandAccountTypes());
+
+  isVenueAccountType = (accountType: any) =>
+    this.matchesAccountType(accountType, this.getVenueAccountTypes());
+
+  isPeopleAccountType = (accountType: any) =>
+    !this.isBandAccountType(accountType) &&
+    !this.isVenueAccountType(accountType);
+
+  getUsersForGroup = (group: 'bands' | 'venues' | 'people') => {
+    const list = Array.isArray(this.state.UserList) ? this.state.UserList : [];
+    return list.filter((item: any) => {
+      const accountType = item?.attributes?.account_type;
+      if (group === 'bands') {
+        return this.isBandAccountType(accountType);
+      }
+      if (group === 'venues') {
+        return this.isVenueAccountType(accountType);
+      }
+      return this.isPeopleAccountType(accountType);
+    });
+  };
+
+  formatCapacityLabel = (raw: any) => {
+    if (raw === null || raw === undefined || raw === '') {
+      return '';
+    }
+    const numeric = Number(raw);
+    if (!Number.isNaN(numeric) && numeric > 0) {
+      return `Cap. ${Math.round(numeric).toLocaleString('en-US')}`;
+    }
+    const text = String(raw).trim();
+    return text ? `Cap. ${text}` : '';
+  };
+
+  getUserCityStateLabel = (attrs: any) => {
+    const city =
+      (typeof attrs?.city === 'string' && attrs.city.trim()) ||
+      (typeof attrs?.location === 'string' && attrs.location.trim()) ||
+      '';
+    const state =
+      (typeof attrs?.state === 'string' && attrs.state.trim()) || '';
+    if (city && state) {
+      return `${city}, ${state}`;
+    }
+    return city || state;
+  };
+
+  getVenueDisplayName = (item: any) => {
+    const attrs = item?.attributes || {};
+    return this.getName(attrs.first_name, attrs.last_name).trim();
+  };
+
+  getVenueImageUrl = (item: any) => {
+    const fromProfile = this.getUserAvatarUrl(item);
+    if (fromProfile) {
+      return fromProfile;
+    }
+    const match = this.findCatalogVenueMatch(this.getVenueDisplayName(item));
+    return match?.image || '';
+  };
+
+  getVenueSubtitle = (item: any) => {
+    const attrs = item?.attributes || {};
+    const match = this.findCatalogVenueMatch(this.getVenueDisplayName(item));
+    const city =
+      (typeof attrs.city === 'string' && attrs.city.trim()) ||
+      (typeof attrs.location === 'string' && attrs.location.trim()) ||
+      match?.city ||
+      '';
+    const state =
+      (typeof attrs.state === 'string' && attrs.state.trim()) ||
+      match?.state ||
+      '';
+    let place = '';
+    if (city && state && city.toLowerCase() !== state.toLowerCase()) {
+      place = `${city}, ${state}`;
+    } else {
+      place = city || state;
+    }
+    if (!place && typeof attrs.address === 'string' && attrs.address.trim()) {
+      place = attrs.address.trim();
+    }
+    const capacity = this.formatCapacityLabel(
+      attrs.maximum_people_capacity ?? attrs.capacity ?? attrs.max_capacity,
+    );
+    return [place, capacity].filter(Boolean).join(' · ');
+  };
+
+  findCatalogVenueMatch = (venueName: string) => {
+    const needle = String(venueName || '').trim().toLowerCase();
+    if (!needle) {
+      return null;
+    }
+    if (this.venueArtworkByName[needle] || this.venueCityByName[needle]) {
+      return {
+        image: this.venueArtworkByName[needle] || '',
+        city: this.venueCityByName[needle] || '',
+        state: '',
+      };
+    }
+    const shows = Array.isArray(this.catalogShowsCache)
+      ? this.catalogShowsCache
+      : [];
+    for (let index = 0; index < shows.length; index += 1) {
+      const attrs = shows[index]?.attributes || shows[index] || {};
+      const location =
+        (typeof attrs.location === 'string' && attrs.location.trim()) ||
+        (typeof attrs.venue === 'string' && attrs.venue.trim()) ||
+        '';
+      if (!location) {
+        continue;
+      }
+      const key = location.toLowerCase();
+      if (key === needle || key.includes(needle) || needle.includes(key)) {
+        return {
+          image: this.getNearMeShowImage(shows[index]),
+          city:
+            (typeof attrs.city === 'string' && attrs.city.trim()) || '',
+          state:
+            (typeof attrs.state === 'string' && attrs.state.trim()) || '',
+        };
+      }
+    }
+    return null;
+  };
+
+  enrichVenueSearchResults = async () => {
+    if (
+      this.state.searchFilter !== 'Venues' &&
+      this.state.searchFilter !== 'All'
+    ) {
+      return;
+    }
+    const merged = this.mergeVenueDetailsFromCatalog(this.state.UserList);
+    if (merged !== this.state.UserList) {
+      this.setState({ UserList: merged });
+    }
+    let token = this.state.authToken;
+    if (!token) {
+      token = await getStorageData('authToken');
+    }
+    const list = merged;
+    if (!token) {
+      return;
+    }
+    list
+      .filter((venue: any) => this.isVenueAccountType(venue?.attributes?.account_type))
+      .slice(0, 20)
+      .forEach((venue: any) => {
+        const id = String(venue?.id || '');
+        if (!id || this.venueProfileInFlight[id]) {
+          return;
+        }
+        if (this.getVenueImageUrl(venue) && this.getVenueSubtitle(venue)) {
+          return;
+        }
+        this.fetchVenueProfileDetails(id, token);
+      });
+  };
+
+  mergeVenueDetailsFromCatalog = (list: any[]) => {
+    if (!Array.isArray(list) || list.length === 0) {
+      return list;
+    }
+    let changed = false;
+    const next = list.map((item: any) => {
+      if (!this.isVenueAccountType(item?.attributes?.account_type)) {
+        return item;
+      }
+      const match = this.findCatalogVenueMatch(this.getVenueDisplayName(item));
+      if (!match) {
+        return item;
+      }
+      const attrs = item.attributes || {};
+      const nextImage =
+        this.getUserAvatarUrl(item) || match.image || '';
+      const nextCity =
+        (typeof attrs.city === 'string' && attrs.city.trim()) ||
+        match.city ||
+        '';
+      const nextState =
+        (typeof attrs.state === 'string' && attrs.state.trim()) ||
+        match.state ||
+        '';
+      if (
+        nextImage === this.getUserAvatarUrl(item) &&
+        nextCity === (attrs.city || '') &&
+        nextState === (attrs.state || '')
+      ) {
+        return item;
+      }
+      changed = true;
+      return {
+        ...item,
+        attributes: {
+          ...attrs,
+          city: nextCity || attrs.city,
+          state: nextState || attrs.state,
+          photo: attrs.photo || nextImage,
+          profile_image: attrs.profile_image || nextImage,
+        },
+      };
+    });
+    return changed ? next : list;
+  };
+
+  fetchVenueProfileDetails = (accountId: string, token: string) => {
+    this.venueProfileInFlight[accountId] = true;
+    const requestMessage = new Message(
+      getName(MessageEnum.RestAPIRequestMessage),
+    );
+    this.venueProfileApiCallIds[requestMessage.messageId] = accountId;
+    requestMessage.addData(
+      getName(MessageEnum.RestAPIResponceEndPointMessage),
+      `${configJSON.showUserProfileEndPoint}${accountId}`,
+    );
+    requestMessage.addData(
+      getName(MessageEnum.RestAPIRequestHeaderMessage),
+      JSON.stringify({
+        'Content-Type': configJSON.searchApiContentType,
+        token,
+      }),
+    );
+    requestMessage.addData(
+      getName(MessageEnum.RestAPIRequestMethodMessage),
+      configJSON.httpGetMethod,
+    );
+    runEngine.sendMessage(requestMessage.id, requestMessage);
+  };
+
+  handleVenueProfileApi = (venueId: string, responseJson: any) => {
+    delete this.venueProfileInFlight[venueId];
+    const payload = responseJson?.data || responseJson;
+    const attrs = payload?.attributes || payload;
+    if (!attrs || typeof attrs !== 'object' || responseJson?.errors) {
+      return;
+    }
+    const list = Array.isArray(this.state.UserList) ? this.state.UserList : [];
+    const updated = list.map((item: any) => {
+      if (String(item?.id) !== String(venueId)) {
+        return item;
+      }
+      return {
+        ...item,
+        attributes: {
+          ...item.attributes,
+          city: item.attributes?.city || attrs.city || '',
+          state: item.attributes?.state || attrs.state || '',
+          address: item.attributes?.address || attrs.address || '',
+          location: item.attributes?.location || attrs.location || '',
+          photo: item.attributes?.photo || attrs.photo || '',
+          profile_image:
+            item.attributes?.profile_image || attrs.profile_image || '',
+          profile_image_url:
+            item.attributes?.profile_image_url ||
+            attrs.profile_image_url ||
+            '',
+          cover_photo: item.attributes?.cover_photo || attrs.cover_photo || '',
+          maximum_people_capacity:
+            item.attributes?.maximum_people_capacity ||
+            attrs.maximum_people_capacity ||
+            '',
+        },
+      };
+    });
+    this.setState({ UserList: updated });
+  };
+
+  getPeopleLocationLabel = (item: any) => {
+    const attrs = item?.attributes || {};
+    return this.getUserCityStateLabel(attrs);
+  };
+
+  getShowSearchHaystack = (show: any) => {
+    const attrs = show?.attributes || show || {};
+    const lineUps = Array.isArray(attrs.line_ups) ? attrs.line_ups : [];
+    const parts = [
+      attrs.event_title,
+      attrs.name,
+      attrs.band_name,
+      attrs.location,
+      attrs.city,
+      attrs.state,
+      attrs.venue,
+      ...lineUps,
+      ...this.getShowGenreNames(show),
+    ];
+    return parts
+      .filter(part => typeof part === 'string' && part.trim())
+      .join(' ')
+      .toLowerCase();
+  };
+
+  filterCatalogShows = (shows: any[], query: string) => {
+    const needle = (query || '').trim().toLowerCase();
+    if (!needle || !Array.isArray(shows)) {
+      return [];
+    }
+    return shows.filter(show => this.getShowSearchHaystack(show).includes(needle));
+  };
+
+  mergeCatalogShowsCache = (shows: any[]) => {
+    if (!Array.isArray(shows) || shows.length === 0) {
+      return;
+    }
+    const byId = new Map<string, any>();
+    this.catalogShowsCache.forEach(show => {
+      const id = String(show?.id ?? show?.attributes?.id ?? '');
+      if (id) {
+        byId.set(id, show);
+      }
+    });
+    shows.forEach(show => {
+      const id = String(show?.id ?? show?.attributes?.id ?? '');
+      if (id) {
+        byId.set(id, show);
+      }
+    });
+    this.catalogShowsCache = Array.from(byId.values());
+  };
+
+  applyCatalogShowResults = () => {
+    if (
+      !this.hasSearchQuery() ||
+      (!this.isShowsSearchTab() && !this.isAllSearchTab())
+    ) {
+      return;
+    }
+    const query = (this.state.searchText || '').trim();
+    this.setState({
+      catalogShowResults: this.filterCatalogShows(this.catalogShowsCache, query),
+      loadingCatalogShows: false,
+    });
+  };
+
+  searchAllShows = () => {
+    const query = (this.state.searchText || '').trim();
+    if (!query) {
+      this.setState({ catalogShowResults: [], loadingCatalogShows: false });
+      return;
+    }
+    if (this.catalogShowsCache.length > 0) {
+      this.setState({
+        catalogShowResults: this.filterCatalogShows(this.catalogShowsCache, query),
+        loadingCatalogShows: false,
+      });
+      return;
+    }
+    this.setState({ loadingCatalogShows: true, catalogShowResults: [] });
+    this.fetchAllShowsForSearch();
+  };
+
+  fetchAllShowsForSearch = () => {
+    const query = (this.state.searchText || '').trim();
+    const requestMessage = new Message(
+      getName(MessageEnum.RestAPIRequestMessage),
+    );
+    this.searchAllShowsAPICallId = requestMessage.messageId;
+    requestMessage.addData(
+      getName(MessageEnum.RestAPIResponceEndPointMessage),
+      query
+        ? `${configJSON.getAllShowEndPoint}?query=${encodeURIComponent(query)}`
+        : configJSON.getAllShowEndPoint,
+    );
+    requestMessage.addData(
+      getName(MessageEnum.RestAPIRequestHeaderMessage),
+      JSON.stringify({
+        'Content-Type': configJSON.searchApiContentType,
+      }),
+    );
+    requestMessage.addData(
+      getName(MessageEnum.RestAPIRequestMethodMessage),
+      configJSON.httpGetMethod,
+    );
+    runEngine.sendMessage(requestMessage.id, requestMessage);
+  };
+
+  handleSearchAllShowsApi = (responseJson: any) => {
+    const shows = this.flattenCatalogShows(responseJson);
+    this.mergeCatalogShowsCache(shows);
+    this.applyGenreArtworkFromShows(shows);
+    this.applyCatalogShowResults();
+  };
+
+  getShowTicketPriceLabel = (item: any) => {
+    const attrs = item?.attributes || item || {};
+    const raw =
+      attrs.ticket_price ?? attrs.price ?? attrs.cost ?? attrs.ticket_cost;
+    if (raw === null || raw === undefined || raw === '') {
+      return '';
+    }
+    const numeric = Number(raw);
+    if (!Number.isNaN(numeric)) {
+      return `$${Number.isInteger(numeric) ? numeric : numeric.toFixed(2)}`;
+    }
+    const text = String(raw).trim();
+    if (!text) {
+      return '';
+    }
+    return text.startsWith('$') ? text : `$${text}`;
+  };
+
+  getDisplayedUserList = () => {
+    const list = Array.isArray(this.state.UserList) ? this.state.UserList : [];
+    const filter = this.state.searchFilter;
+    if (filter !== 'Bands' && filter !== 'Venues') {
+      return list;
+    }
+
+    return list.filter((item: any) => {
+      const accountType = item?.attributes?.account_type;
+      if (typeof accountType !== 'string' || accountType === '') {
+        return filter !== 'Venues';
+      }
+      return filter === 'Bands'
+        ? this.isBandAccountType(accountType)
+        : this.isVenueAccountType(accountType);
+    });
+  };
+
+  normalizeBrowseItem = (item: any) => {
+    if (!item || typeof item !== 'object') {
+      return null;
+    }
+    const attributes =
+      item.attributes && typeof item.attributes === 'object'
+        ? item.attributes
+        : {};
+    const name =
+      (typeof attributes.name === 'string' && attributes.name.trim()) ||
+      (typeof item.name === 'string' && item.name.trim()) ||
+      '';
+    if (!name) {
+      return null;
+    }
+    const image = this.normalizeMediaUrl(
+      attributes.image ||
+        attributes.image_url ||
+        attributes.photo ||
+        attributes.photo_url ||
+        attributes.profile_image ||
+        item.image ||
+        item.image_url,
+    );
+    const id = item.id != null ? String(item.id) : name;
+    return { id, name, image: image || null };
+  };
+
+  getCategoriesListAPI = () => {
+    const requestMessage = new Message(
+      getName(MessageEnum.RestAPIRequestMessage),
+    );
+    this.getCategoriesAPICallId = requestMessage.messageId;
+    requestMessage.addData(
+      getName(MessageEnum.RestAPIResponceEndPointMessage),
+      configJSON.allCategoriesEndPoint,
+    );
+    requestMessage.addData(
+      getName(MessageEnum.RestAPIRequestHeaderMessage),
+      JSON.stringify({
+        'Content-Type': configJSON.searchApiContentType,
+      }),
+    );
+    requestMessage.addData(
+      getName(MessageEnum.RestAPIRequestMethodMessage),
+      configJSON.httpGetMethod,
+    );
+    runEngine.sendMessage(requestMessage.id, requestMessage);
+  };
+
+  getGenreListAPI = (categoryId: string) => {
+    if (!categoryId) {
+      return;
+    }
+    const requestMessage = new Message(
+      getName(MessageEnum.RestAPIRequestMessage),
+    );
+    this.getGenresAPICallId = requestMessage.messageId;
+    requestMessage.addData(
+      getName(MessageEnum.RestAPIResponceEndPointMessage),
+      configJSON.genreEndPoint + categoryId,
+    );
+    requestMessage.addData(
+      getName(MessageEnum.RestAPIRequestHeaderMessage),
+      JSON.stringify({
+        'Content-Type': configJSON.searchApiContentType,
+      }),
+    );
+    requestMessage.addData(
+      getName(MessageEnum.RestAPIRequestMethodMessage),
+      configJSON.httpGetMethod,
+    );
+    runEngine.sendMessage(requestMessage.id, requestMessage);
+  };
+
+  handleGetCategoriesApi = (responseJson: any) => {
+    const rawList = Array.isArray(responseJson?.data) ? responseJson.data : [];
+    const categories = rawList
+      .map((item: any) => this.normalizeBrowseItem(item))
+      .filter((item: any) => item != null);
+
+    const musicIds: string[] = [];
+    const otherIds: string[] = [];
+    rawList.forEach((item: any) => {
+      if (item?.id == null || String(item.id) === '0') {
+        return;
+      }
+      const name = String(
+        item?.attributes?.name || item?.name || '',
+      ).toLowerCase();
+      if (name.includes('music')) {
+        musicIds.push(String(item.id));
+      } else {
+        otherIds.push(String(item.id));
+      }
+    });
+    const pendingGenreCategoryIds = [...musicIds, ...otherIds];
+
+    this.setState({ categoriesList: categories, pendingGenreCategoryIds }, () => {
+      if (pendingGenreCategoryIds.length > 0) {
+        this.fetchNextGenreCategory();
+      } else {
+        this.setState({ genreList: categories });
+      }
+    });
+  };
+
+  fetchNextGenreCategory = () => {
+    const remaining = Array.isArray(this.state.pendingGenreCategoryIds)
+      ? [...this.state.pendingGenreCategoryIds]
+      : [];
+    const nextId = remaining.shift();
+    this.setState({ pendingGenreCategoryIds: remaining });
+    if (nextId) {
+      this.getGenreListAPI(nextId);
+    } else if (
+      !Array.isArray(this.state.genreList) ||
+      this.state.genreList.length === 0
+    ) {
+      this.setState(
+        {
+          genreList: Array.isArray(this.state.categoriesList)
+            ? this.state.categoriesList
+            : [],
+        },
+        () => {
+          this.mergeGenreArtworkIntoList();
+        },
+      );
+    } else {
+      this.mergeGenreArtworkIntoList();
+    }
+  };
+
+  handleGetGenresApi = (responseJson: any) => {
+    const rawList = Array.isArray(responseJson?.data) ? responseJson.data : [];
+    const incoming = rawList
+      .map((item: any) => this.normalizeBrowseItem(item))
+      .filter((item: any) => item != null);
+    const existing = Array.isArray(this.state.genreList)
+      ? this.state.genreList
+      : [];
+    const merged = [...existing];
+    incoming.forEach((genre: any) => {
+      const alreadyListed = merged.some(
+        (item: any) =>
+          String(item?.name || '').toLowerCase() ===
+          String(genre?.name || '').toLowerCase(),
+      );
+      if (!alreadyListed) {
+        merged.push(genre);
+      }
+    });
+
+    this.setState({ genreList: merged }, () => {
+      this.mergeGenreArtworkIntoList();
+      this.fetchNextGenreCategory();
+    });
+  };
+
+  flattenCatalogShows = (responseJson: any): any[] => {
+    const data = responseJson?.data ?? responseJson;
+    if (!data) {
+      return [];
+    }
+    if (Array.isArray(data)) {
+      return data.reduce((acc: any[], item: any) => {
+        if (Array.isArray(item)) {
+          return acc.concat(item);
+        }
+        if (item && typeof item === 'object' && !item.id && !item.attributes) {
+          Object.values(item).forEach((value: any) => {
+            if (Array.isArray(value)) {
+              acc.push(...value);
+            }
+          });
+          return acc;
+        }
+        acc.push(item);
+        return acc;
+      }, []);
+    }
+    if (typeof data === 'object') {
+      return Object.values(data).reduce((acc: any[], value: any) => {
+        if (Array.isArray(value)) {
+          return acc.concat(value);
+        }
+        return acc;
+      }, []);
+    }
+    return [];
+  };
+
+  getShowGenreNames = (show: any): string[] => {
+    const source = show?.attributes || show || {};
+    const genre = source.genre;
+    if (typeof genre === 'string' && genre.trim()) {
+      return [genre.trim()];
+    }
+    if (Array.isArray(genre)) {
+      return genre
+        .map((item: any) => {
+          if (typeof item === 'string') {
+            return item.trim();
+          }
+          return String(item?.name || item?.attributes?.name || '').trim();
+        })
+        .filter(Boolean);
+    }
+    return [];
+  };
+
+  findArtworkForGenre = (genreName: string) => {
+    const key = String(genreName || '').trim().toLowerCase();
+    if (!key) {
+      return '';
+    }
+    if (this.genreArtworkByName[key]) {
+      return this.genreArtworkByName[key];
+    }
+    const match = Object.keys(this.genreArtworkByName).find(
+      stored => key.includes(stored) || stored.includes(key),
+    );
+    return match ? this.genreArtworkByName[match] : '';
+  };
+
+  applyGenreArtworkFromShows = (shows: any[]) => {
+    if (!Array.isArray(shows) || shows.length === 0) {
+      this.mergeGenreArtworkIntoList();
+      return;
+    }
+    shows.forEach(show => {
+      this.indexUpcomingShow(show);
+      const image = this.getNearMeShowImage(show);
+      if (!image) {
+        return;
+      }
+      this.getShowGenreNames(show).forEach(name => {
+        const key = name.toLowerCase();
+        if (!this.genreArtworkByName[key]) {
+          this.genreArtworkByName[key] = image;
+        }
+      });
+    });
+    this.mergeGenreArtworkIntoList();
+  };
+
+  mergeGenreArtworkIntoList = () => {
+    const genres = Array.isArray(this.state.genreList)
+      ? this.state.genreList
+      : [];
+    if (genres.length === 0) {
+      return;
+    }
+    const updated = genres.map((genre: any) => {
+      const currentImage = this.normalizeMediaUrl(genre?.image);
+      if (currentImage) {
+        return currentImage === genre.image
+          ? genre
+          : { ...genre, image: currentImage };
+      }
+      const artwork = this.findArtworkForGenre(genre?.name);
+      return artwork ? { ...genre, image: artwork } : genre;
+    });
+    updated.sort((left: any, right: any) => {
+      const leftHasImage = left?.image ? 1 : 0;
+      const rightHasImage = right?.image ? 1 : 0;
+      return rightHasImage - leftHasImage;
+    });
+    this.setState({ genreList: updated });
+  };
+
+  getGenreArtworkFromShowsAPI = () => {
+    const requestMessage = new Message(
+      getName(MessageEnum.RestAPIRequestMessage),
+    );
+    this.getGenreArtworkAPICallId = requestMessage.messageId;
+    requestMessage.addData(
+      getName(MessageEnum.RestAPIResponceEndPointMessage),
+      configJSON.getAllShowEndPoint,
+    );
+    requestMessage.addData(
+      getName(MessageEnum.RestAPIRequestHeaderMessage),
+      JSON.stringify({
+        'Content-Type': configJSON.searchApiContentType,
+      }),
+    );
+    requestMessage.addData(
+      getName(MessageEnum.RestAPIRequestMethodMessage),
+      configJSON.httpGetMethod,
+    );
+    runEngine.sendMessage(requestMessage.id, requestMessage);
+  };
+
+  handleGenreArtworkFromShowsApi = (responseJson: any) => {
+    const shows = this.flattenCatalogShows(responseJson);
+    this.mergeCatalogShowsCache(shows);
+    this.applyGenreArtworkFromShows(shows);
+    this.applyCatalogShowResults();
+    if (
+      this.hasSearchQuery() &&
+      (this.state.searchFilter === 'Venues' || this.state.searchFilter === 'All')
+    ) {
+      this.enrichVenueSearchResults();
+    }
+  };
+
+  handleShowAllGenres = () => {
+    this.props.navigation.navigate('BrowseGenres', {
+      genres: this.state.genreList,
+      isDarkMode: this.state.isDarkMode,
+    });
+  };
+
+  getSelectedGenreParam = () => {
+    return (
+      this.props.route?.params?.selectedGenre ||
+      this.props.navigation.state?.params?.selectedGenre ||
+      this.props.navigation.getParam?.('selectedGenre') ||
+      ''
+    );
+  };
+
+  applyPendingGenreSearch = () => {
+    const genreName = this.getSelectedGenreParam();
+    if (!genreName) {
+      return false;
+    }
+    if (this.props.navigation.setParams) {
+      this.props.navigation.setParams({selectedGenre: null});
+    }
+    this.handleGenrePress(genreName);
+    return true;
+  };
+
+  handleGenrePress = (genreName: string) => {
+    if (!genreName) {
+      return;
+    }
+    this.setState(
+      {
+        searchText: genreName,
+        SelectedTab: 'Shows',
+        searchFilter: 'Shows',
+        selectRange: true,
+      },
+      () => {
+        this.runLiveSearch();
+      },
+    );
+  };
+
+  async componentWillUnmount() {
+    if (this.debouncedLoadNearMePreview?.cancel) {
+      this.debouncedLoadNearMePreview.cancel();
+    }
+    if (this.debouncedLiveSearch?.cancel) {
+      this.debouncedLiveSearch.cancel();
+    }
+    if (this.nearMePreviewTimer) {
+      clearTimeout(this.nearMePreviewTimer);
+      this.nearMePreviewTimer = null;
+    }
+    this.isNearMePreviewInFlight = false;
+    if (this.profileThemeListener) {
+      this.profileThemeListener.remove();
+      this.profileThemeListener = null;
+    }
+    await super.componentWillUnmount();
+  }
   // Customizable Area End
 }
