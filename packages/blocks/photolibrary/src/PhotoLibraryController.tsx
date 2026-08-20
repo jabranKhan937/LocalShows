@@ -51,6 +51,9 @@ interface S {
   showMenu: boolean;
   cancelPopup: boolean;
   showSuccessToast: boolean;
+  previewUserName: string;
+  previewProfileImage: string;
+  isPreviewStep: boolean;
   // Customizable Area End
 }
 
@@ -114,6 +117,12 @@ export default class PhotoLibraryController extends BlockComponent<
       showMenu: false,
       cancelPopup: false,
       showSuccessToast: false,
+      previewUserName: '',
+      previewProfileImage: '',
+      isPreviewStep: !(
+        props.route?.params?.eventId ||
+        props.navigation?.state?.params?.eventId
+      ),
       // Customizable Area End
     };
     runEngine.attachBuildingBlock(this as IBlock, this.subScribedMessages);
@@ -245,6 +254,7 @@ export default class PhotoLibraryController extends BlockComponent<
     if (this.isPlatformWeb()) this.getPhotoLibrary(this.state.token);
     // console.log('PhotoLibrary - Calling getImageSelectionData');
     this.getImageSelectionData();
+    this.loadPreviewUser();
 
     // Add navigation listener to handle params when screen comes into focus
     if (!this.isPlatformWeb()) {
@@ -424,6 +434,24 @@ export default class PhotoLibraryController extends BlockComponent<
     }
   };
 
+  loadPreviewUser = async () => {
+    try {
+      const previewUserName = (await getStorageData('user_name')) || '';
+      const previewProfileImage = (await getStorageData('profile_image')) || '';
+      this.setState({ previewUserName, previewProfileImage });
+    } catch (error) {
+      console.log('PhotoLibrary - loadPreviewUser error:', error);
+    }
+  };
+
+  handleBackFromPreview = () => {
+    if (this.state.pictureId) {
+      this.setState({ isPreviewStep: false });
+      return;
+    }
+    this.props.navigation.goBack();
+  };
+
   getImageSelectionData = () => {
     // console.log('PhotoLibrary - getImageSelectionData called - START');
     // console.log('PhotoLibrary - this.props.route:', this.props.route);
@@ -438,6 +466,7 @@ export default class PhotoLibraryController extends BlockComponent<
     const eventId = params?.eventId;
     const pictures = params?.event_image;
     const isPictureExplicit = params?.isPictureExplicit;
+    const description = params?.description;
 
     // console.log('PhotoLibrary - Route params:', routeParams);
     // console.log('PhotoLibrary - Navigation params:', navParams);
@@ -450,7 +479,7 @@ export default class PhotoLibraryController extends BlockComponent<
 
     if (eventId) {
       // console.log('PhotoLibrary - Setting pictureId and getting picture details');
-      this.setState({ pictureId: eventId }, () => {
+      this.setState({ pictureId: eventId, isPreviewStep: false }, () => {
         this.getPictureDetails();
       });
     } else if (pictures) {
@@ -461,6 +490,9 @@ export default class PhotoLibraryController extends BlockComponent<
           pictures,
           isPictureExplicit:
             isPictureExplicit !== undefined ? isPictureExplicit : false,
+          description:
+            description !== undefined ? description : this.state.description,
+          isPreviewStep: !eventId,
         },
         () => {
           // console.log('PhotoLibrary - State updated, pictures in state:', this.state.pictures);

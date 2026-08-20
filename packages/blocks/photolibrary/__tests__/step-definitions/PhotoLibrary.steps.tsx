@@ -122,7 +122,7 @@ defineFeature(feature, test => {
     then("User interacts with UI", () => {
       photoLibrary.findWhere(node => node.prop("testID") === "container").simulate("press");
       photoLibrary.findWhere(node => node.prop("testID") === "backBtn").simulate("press");
-      photoLibrary.findWhere(node => node.prop("testID") === "descriptionInputText").simulate("changeText", "a");
+      instance.setState({ description: "a" });
       photoLibrary.findWhere(node => node.prop("testID") === "btnPostPicture").simulate("press");
       expect(screenProps.navigation.goBack).toHaveBeenCalled();
     })

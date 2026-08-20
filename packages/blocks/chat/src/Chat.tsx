@@ -6,7 +6,6 @@ import {
   Text,
   TouchableOpacity,
   View,
-  SafeAreaView,
   StatusBar,
   Image,
   TextInput,
@@ -17,190 +16,233 @@ import {
   Modal,
   Platform,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { SwipeListView } from "react-native-swipe-list-view";
 import Icon from "react-native-vector-icons/Feather";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
-import { IChatItem } from "./ChatController";
-import FastImage from "../../../components/src/SafeFastImage"
+import FastImage from "../../../components/src/SafeFastImage";
+import { lightTheme, redesignTheme } from "../../utilities/src/Colors";
+import { getStorageData } from "../../../framework/src/Utilities";
 // Customizable Area End
 
 import ChatController from "./ChatController";
-import { colors } from "../../utilities/src/Colors";
-import { leftArrow } from "../../events/src/assets";
-import { userProfile } from "../../navigationmenu/src/assets";
-import { archiveIcon, cameraIcon, deleteIcon } from "./assets";
-import { getStorageData, removeStorageData, setStorageData } from "../../../framework/src/Utilities";
+
+type ChatTheme = typeof redesignTheme;
 
 export default class Chat extends ChatController {
   // Customizable Area Start
+  get styles() {
+    return this.state.isDarkMode ? darkChatStyles : lightChatStyles;
+  }
+
+  renderUserAvatar = (imageUri?: string | null, size?: number) => {
+    const theme = this.getChatTheme();
+    const photoUri = typeof imageUri === "string" ? imageUri.trim() : "";
+    const avatarSize = size || 48;
+    if (photoUri) {
+      return (
+        <FastImage
+          source={{
+            uri: photoUri,
+            priority: FastImage.priority.high,
+          }}
+          resizeMode={FastImage.resizeMode.cover}
+          style={[
+            this.styles.userAvatar,
+            { height: avatarSize, width: avatarSize, borderRadius: avatarSize / 2 },
+          ]}
+        />
+      );
+    }
+    return (
+      <View
+        style={[
+          this.styles.userAvatarPlaceholder,
+          { height: avatarSize, width: avatarSize, borderRadius: avatarSize / 2 },
+        ]}
+      >
+        <Icon name="user" size={Math.round(avatarSize * 0.42)} color={theme.muted} />
+      </View>
+    );
+  };
 
   renderArchivedText = () => {
+    const theme = this.getChatTheme();
     return (
       <>
         {!this.state.archiveSelected &&
           this.state.archiveList.length !== 0 && (
             <TouchableOpacity
               testID="archivedTxt"
-              style={[styles.conversationItem, { flex: undefined, minHeight: 60, flexDirection: "row", alignItems: "center", justifyContent: "center", borderBottomWidth: 1 }]}
+              style={this.styles.archivedRow}
               onPress={() => this.setState({ archiveSelected: true })}
             >
-              <View
-                style={{ flex: 0.1, alignItems: "center", marginRight: 10 }}
-              >
-                <Icon name="archive" size={25} color={"#7676FF"} />
+              <View style={this.styles.archivedIconWrap}>
+                <Icon name="archive" size={18} color={theme.primary} />
               </View>
-              <Text
-                style={[
-                  styles.name,
-                  { flex: 0.9, textAlignVertical: "center" },
-                ]}
-              >
-                Archived
-              </Text>
+              <Text style={this.styles.archivedLabel}>Archived</Text>
+              <Icon name="chevron-right" size={18} color={theme.muted} />
             </TouchableOpacity>
           )}
       </>
     );
   };
 
-  renderLastMessage = (message:any) => {
-    if (message.eventable && message.message_type === 'event') {
-     return <View style={{
-      flexDirection:'row',
-      alignItems:'center'
-     }}>
-      <FastImage source={{uri:message.eventable.image}} resizeMode="contain" style={{height:21,width:16,borderRadius:2}} />
-      <Text style={{
-        paddingLeft:8,
-      }}>{message.show_title + " " + message.eventable.date?.substring(0, 4)}</Text>
-     </View>
+  renderLastMessage = (message: any) => {
+    if (message.eventable && message.message_type === "event") {
+      return (
+        <View style={this.styles.lastMessageRow}>
+          <FastImage
+            source={{ uri: message.eventable.image }}
+            resizeMode="contain"
+            style={this.styles.lastMessageThumb}
+          />
+          <Text style={this.styles.mostRecentText} numberOfLines={1}>
+            {message.show_title + " " + message.eventable.date?.substring(0, 4)}
+          </Text>
+        </View>
+      );
     }
-    if (message.message_type === 'image') {
-     return <View style={{
-      flexDirection:'row',
-      alignItems:'center',
-     }}>
-      <FastImage source={{uri:message.attachments}} style={{height:21,width:16,borderRadius:2}} />
-      <Text style={{
-        paddingLeft:8,
-      }}>Photo</Text>
-     </View>
+    if (message.message_type === "image") {
+      return (
+        <View style={this.styles.lastMessageRow}>
+          <FastImage
+            source={{ uri: message.attachments }}
+            style={this.styles.lastMessageThumb}
+          />
+          <Text style={this.styles.mostRecentText} numberOfLines={1}>
+            Photo
+          </Text>
+        </View>
+      );
     }
-    return <Text style={styles.mostRecentText}>{message.message}</Text>
-  }
+    return (
+      <Text style={this.styles.mostRecentText} numberOfLines={1}>
+        {message.message}
+      </Text>
+    );
+  };
   renderBlockModal = () => {
     return (
-     <Modal data-testID='Press'
+      <Modal
+        data-testID="Press"
         animationType="none"
         transparent={true}
-        visible={this.state.showBlockList}>
-        <TouchableOpacity testID="modalClose" onPress={() => this.setState({ showBlockList: false })} style={styles.overlay}>
-          <View style={[styles.centeredView1, styles.commentsParentView1]}>
-            <View style={[styles.modalViewCon, styles.commentsView1]}>
-              <TouchableOpacity testID="blockBtn" activeOpacity={0.7} onPress={() => this.addBlockeduserCall()}>
-                <Text style={styles.blockTest}>Block</Text>
+        visible={this.state.showBlockList}
+      >
+        <TouchableOpacity
+          testID="modalClose"
+          onPress={() => this.setState({ showBlockList: false })}
+          style={this.styles.overlay}
+        >
+          <View style={[this.styles.centeredView1, this.styles.commentsParentView1]}>
+            <View style={[this.styles.modalViewCon, this.styles.commentsView1]}>
+              <TouchableOpacity
+                testID="blockBtn"
+                activeOpacity={0.7}
+                onPress={() => this.addBlockeduserCall()}
+              >
+                <Text style={this.styles.blockTest}>Block</Text>
               </TouchableOpacity>
             </View>
           </View>
         </TouchableOpacity>
       </Modal>
-    )
-  }
-  dotBtn=(id:string)=>{
-    return(
-      <TouchableOpacity testID="dotBtn" activeOpacity={0.7}onPress={()=>this.dotBtnPress(id)}>
-          <MaterialCommunityIcons 
-              size={20}
-              name={"dots-vertical"}
-              color={"#334155"}
-            />
-          </TouchableOpacity>
-    )
-  }
+    );
+  };
+  dotBtn = (id: string) => {
+    const theme = this.getChatTheme();
+    return (
+      <TouchableOpacity
+        testID="dotBtn"
+        activeOpacity={0.7}
+        onPress={() => this.dotBtnPress(id)}
+      >
+        <MaterialCommunityIcons
+          size={20}
+          name={"dots-vertical"}
+          color={theme.muted}
+        />
+      </TouchableOpacity>
+    );
+  };
   renderConversationItem = ({ item }: { item: any }) => {
     return (
-      <View style={styles.chatItemContainer}>
-        <View
-            style={styles.conversationItem}
-        >
+      <View style={this.styles.chatItemContainer}>
+        <View style={this.styles.conversationItem}>
           <TouchableOpacity
-          testID="ChatListUserProfileNav"
-          onPress={() => {
-            this.NavToUserProfile(item.user_id,item.account_type)
-          }}
-           style={styles.userAvatarContainer}>
-            <FastImage
-              source={item.profile_image?.trim() ?
-                {
-                  uri: item.profile_image,
-                  priority: FastImage.priority.high
-                } :
-                userProfile
-              }
-              resizeMode={FastImage.resizeMode.cover}
-              style={styles.userAvatar}
-            />
+            testID="ChatListUserProfileNav"
+            onPress={() => {
+              this.NavToUserProfile(item.user_id, item.account_type);
+            }}
+            style={this.styles.userAvatarContainer}
+          >
+            {this.renderUserAvatar(item.profile_image)}
           </TouchableOpacity>
-         <TouchableOpacity
-          testID="chatItem"
-          onPress={() => {
-            this.setState({ profileImage: item.profile_image, userName: item.user_name, chatId: `${item.id}`, userId:item.user_id, userAccountType:item.account_type })
-            this.navigateToChatView(`${item.id}`);
-            
-          }}
-          style={{
-          flex:1,
-          flexDirection:"row",
-          alignItems:"center",justifyContent:"space-between"
-         }}>
-         <View style={styles.conversationItemContent}>
-            <Text style={styles.name}>{`${item.user_name}`}</Text>
-            <View>
-              {this.renderLastMessage(item.lastMessage)}
+          <TouchableOpacity
+            testID="chatItem"
+            onPress={() => {
+              this.setState({
+                profileImage: item.profile_image,
+                userName: item.user_name,
+                chatId: `${item.id}`,
+                userId: item.user_id,
+                userAccountType: item.account_type,
+              });
+              this.navigateToChatView(`${item.id}`);
+            }}
+            style={this.styles.conversationPressArea}
+          >
+            <View style={this.styles.conversationItemContent}>
+              <Text style={this.styles.name}>{`${item.user_name}`}</Text>
+              <View>{this.renderLastMessage(item.lastMessage)}</View>
             </View>
-          </View>
-          <View style={styles.rightContainer}>
-            {item.online &&
-              <View style={styles.activeMarker} />
-            }
-            {item.unreadCount > 0 &&
-              <View style={styles.unreadMessageCountContainer}>
-                <Text style={styles.unreadMessageCount}>{item.unreadCount}</Text>
-              </View>
-            }
-          </View>
-         </TouchableOpacity>
+            <View style={this.styles.rightContainer}>
+              {item.online && <View style={this.styles.activeMarker} />}
+              {item.unreadCount > 0 && (
+                <View style={this.styles.unreadMessageCountContainer}>
+                  <Text style={this.styles.unreadMessageCount}>
+                    {item.unreadCount}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
         </View>
-           {this.dotBtn(item.user_id)}
+        {this.dotBtn(item.user_id)}
       </View>
     );
   };
 
   renderHiddenItem = (data: any, rowMap: any) => (
-    <View style={styles.hiddenItemContainer}>
+    <View style={this.styles.hiddenItemContainer}>
       <TouchableOpacity
         testID="archiveChat"
-        style={[styles.hiddenItemButton, styles.archiveBtn]}
+        style={[this.styles.hiddenItemButton, this.styles.archiveBtn]}
         onPress={() => {
-          this.archiveChat(data.item.id, this.state.archiveSelected ? "unarchived" : 'archived');
+          this.archiveChat(
+            data.item.id,
+            this.state.archiveSelected ? "unarchived" : "archived",
+          );
         }}
       >
-        <Image source={archiveIcon} style={{ height: 25, width: 25 }} />
+        <Icon name="archive" size={22} color="#FFFFFF" />
       </TouchableOpacity>
       <TouchableOpacity
         testID="deleteChat"
-        style={[styles.hiddenItemButton, styles.deleteBtn]}
+        style={[this.styles.hiddenItemButton, this.styles.deleteBtn]}
         onPress={() => {
           this.deleteChat(data.item.id);
         }}
       >
-        <Image source={deleteIcon} style={{ height: 25, width: 25 }} />
+        <Icon name="trash-2" size={22} color="#FFFFFF" />
       </TouchableOpacity>
     </View>
   );
 
   renderCameraGalleryPopup = () => {
+    const theme = this.getChatTheme();
     return (
       <Modal
         animationType="slide"
@@ -208,151 +250,197 @@ export default class Chat extends ChatController {
         visible={this.state.showCameraGalleryPopup}
         statusBarTranslucent={true}
       >
-        <View style={[styles.centerView, { padding: 10, }]}>
-          <View style={{ borderRadius: 10, backgroundColor: '#EDEDFF', alignItems: 'center' }}>
-            <Text testID="cameraOption" style={{ fontSize: 14, fontWeight: '400', color: '#4949EE', marginVertical: 15, }} onPress={this.handleCamera}>Take photo</Text>
-            <View style={styles.divider} />
-            <Text testID="galleryOption" style={{ fontSize: 14, fontWeight: '400', color: '#4949EE', marginVertical: 15, }} onPress={this.handleGallery}>Choose photo</Text>
+        <View style={this.styles.photoSheetOverlay}>
+          <View style={this.styles.photoSheetWrap}>
+            <View style={this.styles.galleryOptions}>
+              <View style={this.styles.photoSheetHandle} />
+              <Text style={this.styles.photoSheetTitle}>Add photo</Text>
+              <TouchableOpacity
+                testID="cameraOption"
+                style={this.styles.photoSheetRow}
+                onPress={this.handleCamera}
+                activeOpacity={0.8}
+              >
+                <Icon name="camera" size={18} color={theme.foreground} />
+                <Text style={this.styles.takeChoosePhoto}>Take photo</Text>
+              </TouchableOpacity>
+              <View style={this.styles.photoSheetDivider} />
+              <TouchableOpacity
+                testID="galleryOption"
+                style={this.styles.photoSheetRow}
+                onPress={this.handleGallery}
+                activeOpacity={0.8}
+              >
+                <Icon name="image" size={18} color={theme.foreground} />
+                <Text style={this.styles.takeChoosePhoto}>Choose photo</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity
+              testID="cancelOption"
+              style={this.styles.cancelPhotoOption}
+              onPress={this.handleCancelPopup}
+              activeOpacity={0.8}
+            >
+              <Text style={this.styles.cancelPhotoText}>Cancel</Text>
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity testID="cancelOption" style={{ borderRadius: 10, backgroundColor: '#EDEDFF', marginTop: 15, alignItems: 'center', }} onPress={this.handleCancelPopup}>
-            <Text style={{ fontSize: 14, fontWeight: '700', color: '#4949EE', marginVertical: 20, }}>Cancel</Text>
-          </TouchableOpacity>
         </View>
       </Modal>
-    )
-  }
+    );
+  };
 
-  renderChat = ({item}:any) => {
+  renderChat = ({ item }: any) => {
     return (
       <>
-        {
-          item.attributes.message_type === 'text' || item.attributes.message_type === 'image' ? <>{this.renderMessage(item)}</> :
-            <>{this.renderEvent(item)}</>
-        }
+        {item.attributes.message_type === "text" ||
+        item.attributes.message_type === "image" ? (
+          <>{this.renderMessage(item)}</>
+        ) : (
+          <>{this.renderEvent(item)}</>
+        )}
       </>
     );
   };
 
   renderMessage = (item: any) => {
+    const theme = this.getChatTheme();
     return (
       <View
         testID="testView"
         style={[
-          item.attributes.message_type === 'text' ? styles.message : styles.messageImg,
-          item.attributes.from_other_party ? {} : styles.fromOtherParty,
+          item.attributes.message_type === "text"
+            ? this.styles.message
+            : this.styles.messageImg,
+          item.attributes.from_other_party ? {} : this.styles.fromOtherParty,
         ]}
       >
-        {item.attributes.message_type === 'text' ? (
-          <Text style={styles.messageText}>{item.attributes.message}</Text>
-        ) : 
-        (
+        {item.attributes.message_type === "text" ? (
+          <Text style={this.styles.messageText}>{item.attributes.message}</Text>
+        ) : (
           <View>
-          <FastImage
-            source={{ uri: item.attributes.attachments }}
-            resizeMode={FastImage.resizeMode.contain}
-            style={{ height: 100, width: 150 }} />
-             <Text style={styles.messageText}>{item.attributes.message}</Text>
-            </View>
+            <FastImage
+              source={{ uri: item.attributes.attachments }}
+              resizeMode={FastImage.resizeMode.contain}
+              style={{ height: 100, width: 150 }}
+            />
+            <Text style={this.styles.messageText}>{item.attributes.message}</Text>
+          </View>
         )}
-        {!item.attributes.from_other_party &&
-          <View style={styles.readMarkContainer}>
+        {!item.attributes.from_other_party && (
+          <View style={this.styles.readMarkContainer}>
             <MaterialCommunityIcons
               size={14}
               name={item.attributes.is_mark_read ? "check-all" : "check"}
-              color={item.attributes.is_mark_read ? "#4949EE" : "#334155"}
+              color={item.attributes.is_mark_read ? theme.primary : theme.muted}
             />
           </View>
-        }
+        )}
       </View>
-    )
-  }
-
+    );
+  };
 
   renderEvent = (item: any) => {
-    const {attributes} = item
+    const { attributes } = item;
+    const theme = this.getChatTheme();
     return (
       <View
         style={[
-          styles.message,
-          attributes.from_other_party ? {} : styles.fromOtherParty,
-          { borderBottomLeftRadius: 10, borderBottomRightRadius: 10, borderStartColor: '#4949EE',borderLeftWidth:7, padding: 10,overflow:"scroll", maxWidth: '100%' }
+          this.styles.message,
+          attributes.from_other_party ? {} : this.styles.fromOtherParty,
+          this.styles.eventMessage,
         ]}
       >
-        
-          {attributes.eventable && ( 
-          <View style={{ flexDirection: 'row', marginRight: 20, }}>
-              <View style={{ borderRadius: 10, height: 100, width: 75, marginRight: 10 }}>
+        {attributes.eventable && (
+          <View style={{ flexDirection: "row", marginRight: 20 }}>
+            <View style={this.styles.eventThumbWrap}>
               <FastImage
                 source={{
                   uri: attributes.eventable.image,
-                  priority: FastImage.priority.high
+                  priority: FastImage.priority.high,
                 }}
-                style={{ borderRadius: 10, height: '100%', width: '100%' }}
+                style={{ borderRadius: 10, height: "100%", width: "100%" }}
                 resizeMode={FastImage.resizeMode.contain}
               />
             </View>
             <View>
-              <Text style={[styles.messageText, { color: '#334155', fontSize: 16, fontWeight: '700', }]}>{attributes.eventable.title ?? attributes.eventable.description}</Text>
+              <Text style={this.styles.eventTitle}>
+                {attributes.eventable.title ?? attributes.eventable.description}
+              </Text>
               {attributes.eventable.date && (
-              <View style={{ flexDirection: 'row', marginTop: 5, }}>
-                <Image source={require('../../../mobile/assets/images/image_calendar.png')} style={{ height: 20, width: 20, resizeMode: 'contain' }} />
-                <Text style={[styles.messageText, { marginLeft: 5, textAlignVertical: 'center', color: '#334155', fontSize: 12, fontWeight: '400', }]}>{this.getDateFormatted(attributes.eventable.date)}</Text>
-              </View>
+                <View style={this.styles.eventMetaRow}>
+                  <Icon name="calendar" size={14} color={theme.primary} />
+                  <Text style={this.styles.eventMetaText}>
+                    {this.getDateFormatted(attributes.eventable.date)}
+                  </Text>
+                </View>
               )}
               {attributes.eventable.time && (
-              <View style={{ flexDirection: 'row', marginTop: 5, }}>
-                <Image source={require('../../../mobile/assets/images/time.png')} style={{ height: 20, width: 20, resizeMode: 'contain' }} />
-                <Text style={[styles.messageText, { marginLeft: 5, textAlignVertical: 'center', color: '#334155', fontSize: 12, fontWeight: '400', }]}>{`${new Date(attributes.eventable.time).getHours()}h${new Date(attributes.eventable.time).getMinutes()}m`}</Text>
-              </View>
+                <View style={this.styles.eventMetaRow}>
+                  <Icon name="clock" size={14} color={theme.primary} />
+                  <Text style={this.styles.eventMetaText}>
+                    {`${new Date(attributes.eventable.time).getHours()}h${new Date(
+                      attributes.eventable.time,
+                    ).getMinutes()}m`}
+                  </Text>
+                </View>
               )}
               {attributes.eventable.location && (
-              <View style={{ flexDirection: 'row', marginTop: 5, }}>
-                <Image source={require('../../../mobile/assets/images/location_on.png')} style={{ height: 20, width: 20, resizeMode: 'contain' }} />
-                <Text style={[styles.messageText, { marginLeft: 5, textAlignVertical: 'center', color: '#334155', fontSize: 12, fontWeight: '400', }]}>{attributes.eventable.location}</Text>
-              </View>
+                <View style={this.styles.eventMetaRow}>
+                  <Icon name="map-pin" size={14} color={theme.primary} />
+                  <Text style={this.styles.eventMetaText}>
+                    {attributes.eventable.location}
+                  </Text>
+                </View>
               )}
             </View>
           </View>
         )}
-          {!item.attributes.from_other_party &&
-            <View style={styles.readMarkContainer}>
-              <MaterialCommunityIcons
-                size={14}
-                name={item.attributes.is_mark_read ? "check-all" : "check"}
-                color={item.attributes.is_mark_read ? "#4949EE" : "#334155"}
-              />
-            </View>
-          }
+        {!item.attributes.from_other_party && (
+          <View style={this.styles.readMarkContainer}>
+            <MaterialCommunityIcons
+              size={14}
+              name={item.attributes.is_mark_read ? "check-all" : "check"}
+              color={item.attributes.is_mark_read ? theme.primary : theme.muted}
+            />
+          </View>
+        )}
       </View>
     );
-  }
+  };
+
+  renderListHeader = () => {
+    const theme = this.getChatTheme();
+    return (
+      <View style={this.styles.header}>
+        <TouchableOpacity
+          testID="navigationBackButton"
+          style={this.styles.headerCircleBtn}
+          onPress={() => {
+            if (this.state.archiveSelected) {
+              this.setState({ archiveSelected: false });
+            } else this.props.navigation.goBack();
+          }}
+          activeOpacity={0.8}
+        >
+          <Icon name="arrow-left" size={18} color={theme.foreground} />
+        </TouchableOpacity>
+        <Text style={this.styles.headerText}>
+          {this.state.archiveSelected ? "Archived" : "Chat"}
+        </Text>
+        <View style={this.styles.headerSideSpacer} />
+      </View>
+    );
+  };
 
   renderChatList = () => {
     const renderingList = this.state.archiveSelected
       ? this.state.archiveList
       : this.state.chatList;
+    const theme = this.getChatTheme();
     return (
       <>
-        <View style={styles.header}>
-        <Text style={[styles.text, styles.headerText]}>
-            {this.state.archiveSelected ? "Archived" : "Chat"}
-          </Text>
-          <TouchableOpacity
-            testID="navigationBackButton"
-            style={styles.backButtonContainer}
-            onPress={() => {
-              if (this.state.archiveSelected){
-                this.setState({ archiveSelected: false });
-              }
-              else this.props.navigation.goBack();
-            }}
-          >
-            <Image source={leftArrow} style={styles.backButtonIcon} />
-          </TouchableOpacity>
-         
-          <View style={{ width: 20, marginRight: 16 }} />
-        </View>
-        <View style={styles.conversationsContainer}>
+        {this.renderListHeader()}
+        <View style={this.styles.conversationsContainer}>
           {this.renderArchivedText()}
           <SwipeListView
             testID="swipeListView"
@@ -365,64 +453,73 @@ export default class Chat extends ChatController {
             disableRightSwipe
           />
         </View>
-        {renderingList.length === 0 &&
-          <View style={styles.noChatsContainer}>
-            <Icon name="message-square" size={60} color="#0F172A" />
-            <Text style={styles.chatsHeadingText}>No chats yet</Text>
+        {renderingList.length === 0 && (
+          <View style={this.styles.noChatsContainer}>
+            <View style={this.styles.emptyIconWrap}>
+              <Icon name="message-square" size={36} color={theme.primary} />
+            </View>
+            <Text style={this.styles.chatsHeadingText}>No chats yet</Text>
           </View>
-        }
+        )}
       </>
-    )
-  }
-  renderChatInputType = (selectedPic:string) => {
-    return selectedPic !== '' ? <View style={{
-      width:110
-    }} >
-      <Image style={{
-        width:100,
-        height:100
-      }} resizeMode="cover" source={{uri:selectedPic}} />
-      <TouchableOpacity
-       testID="cancelSendImage"
-      onPress={() => {
-        this.setState({selectedPic:''})
-      }}
-       style={{
-        position:'absolute',
-        backgroundColor:'#3333CC',
-        borderRadius:99,
-        padding:3,
-        right:0,
-        top:-10
-      }}>
-      <MaterialCommunityIcons name="close" size={20} color="#fff" />
-      </TouchableOpacity>
+    );
+  };
+  renderChatInputType = (selectedPic: string) => {
+    const theme = this.getChatTheme();
+    return selectedPic !== "" ? (
+      <View style={{ width: 110 }}>
+        <Image
+          style={{
+            width: 100,
+            height: 100,
+            borderRadius: 12,
+          }}
+          resizeMode="cover"
+          source={{ uri: selectedPic }}
+        />
+        <TouchableOpacity
+          testID="cancelSendImage"
+          onPress={() => {
+            this.setState({ selectedPic: "" });
+          }}
+          style={this.styles.cancelSendImageBtn}
+        >
+          <MaterialCommunityIcons name="close" size={16} color="#fff" />
+        </TouchableOpacity>
 
-
+        <TextInput
+          testID="txtMsg"
+          style={this.styles.msgInput}
+          placeholder="Type your message"
+          placeholderTextColor={theme.muted}
+          value={this.state.textMessage}
+          multiline={true}
+          onChangeText={(text) =>
+            this.setState({ textMessage: text.replace("  ", " ").trimStart() })
+          }
+        />
+      </View>
+    ) : (
       <TextInput
-     testID="txtMsg"
-      style={styles.msgInput}
-      placeholder="Type your message"
-      value={this.state.textMessage}
-      multiline={true}
-      onChangeText={(text) => this.setState({ textMessage: text.replace("  ", " ").trimStart() })}
-    />
-    </View> : <TextInput
-      testID="txtMsgInput"
-      style={styles.msgInput}
-      placeholder="Type your message"
-      value={this.state.textMessage}
-      multiline={true}
-      onChangeText={(text) => this.setState({ textMessage: text.replace("  ", " ").trimStart() })}
-    />
-  }
+        testID="txtMsgInput"
+        style={this.styles.msgInput}
+        placeholder="Type your message"
+        placeholderTextColor={theme.muted}
+        value={this.state.textMessage}
+        multiline={true}
+        onChangeText={(text) =>
+          this.setState({ textMessage: text.replace("  ", " ").trimStart() })
+        }
+      />
+    );
+  };
   loadStoredChatData = async () => {
     try {
       const storedUserName = await getStorageData("chat_user_name");
       const storedProfileImage = await getStorageData("profile_image");
-      
+
       console.log("Loading from storage:", { storedUserName, storedProfileImage });
-      
+
       if (storedUserName) {
         this.setState({ userName: storedUserName });
       }
@@ -437,51 +534,48 @@ export default class Chat extends ChatController {
   renderChatDetail = () => {
     // Load stored data when chat detail is rendered
     this.loadStoredChatData();
-    
+
     console.log("Chat detail render - Current state:", {
       userName: this.state.userName,
-      profileImage: this.state.profileImage
+      profileImage: this.state.profileImage,
     });
-    
+
+    const theme = this.getChatTheme();
+    const canSend =
+      this.state.selectedPic === ""
+        ? this.state.sending || !this.state.textMessage.trim()
+        : this.state.sending;
+
     return (
       <View style={{ flex: 1 }}>
-        <View style={styles.header}>
+        <View style={this.styles.header}>
           <TouchableOpacity
             testID="navigationBackButton"
-            style={styles.backButtonView}
+            style={this.styles.headerCircleBtn}
             onPress={this.onPressBackFromDetails}
+            activeOpacity={0.8}
           >
-            <MaterialIcons 
-              name="arrow-back" 
-              size={24} 
-              color="#000" 
-            />
+            <Icon name="arrow-left" size={18} color={theme.foreground} />
           </TouchableOpacity>
-          <View style={styles.userInfo}>
+          <View style={this.styles.userInfo}>
             <TouchableOpacity
-            testID="ChatDetailsUserProfileNav"
-            onPress={()=>{this.NavToUserProfile(this.state.userId, this.state.userAccountType)}}
+              testID="ChatDetailsUserProfileNav"
+              onPress={() => {
+                this.NavToUserProfile(this.state.userId, this.state.userAccountType);
+              }}
             >
-            <FastImage
-              source={this.state.profileImage ?
-                {
-                  uri: this.state.profileImage,
-                  priority: FastImage.priority.high
-                } :
-                userProfile
-              }
-              resizeMode={FastImage.resizeMode.cover}
-              style={styles.userAvatar} />
+              {this.renderUserAvatar(this.state.profileImage, 40)}
             </TouchableOpacity>
-            <View style={styles.userInfoContainer}>
-              <Text style={styles.name}>{this.state.userName}</Text>
-              {/* <Text style={styles.userStatusText}></Text> */}
+            <View style={this.styles.userInfoContainer}>
+              <Text style={this.styles.name} numberOfLines={1}>
+                {this.state.userName}
+              </Text>
             </View>
           </View>
-          <View style={{ width: 20, marginRight: 16 }} />
+          <View style={this.styles.headerSideSpacer} />
         </View>
-        <View style={styles.conversationParentView}>
-          <View style={styles.conversationView}>
+        <View style={this.styles.conversationParentView}>
+          <View style={this.styles.conversationView}>
             <FlatList
               data={this.state.chatHistory}
               renderItem={this.renderChat}
@@ -490,336 +584,544 @@ export default class Chat extends ChatController {
             />
           </View>
         </View>
-        <View testID="msgInputContainer" style={styles.msgInputContainer}>
+        <View testID="msgInputContainer" style={this.styles.msgInputContainer}>
           {this.renderChatInputType(this.state.selectedPic)}
-          <View style={styles.actionButtons}>
+          <View style={this.styles.actionButtons}>
             <TouchableOpacity
               testID="btnShowPicSelector"
-              style={[styles.cameraButton, { opacity: this.state.sending ? 0.5 : 1 }]}
+              style={[
+                this.styles.cameraButton,
+                { opacity: this.state.sending ? 0.5 : 1 },
+              ]}
               onPress={this.handleSelectPic}
               disabled={this.state.sending}
             >
-              <Image resizeMode="contain" source={cameraIcon} style={{ height: 25, width: 25 }} />
+              <Icon name="camera" size={20} color={theme.muted} />
             </TouchableOpacity>
             <TouchableOpacity
               testID="btnSend"
-              style={[styles.sendButton, { opacity: this.state.sending ? 0.5 : 1 }]}
+              style={[this.styles.sendButton, { opacity: this.state.sending ? 0.5 : 1 }]}
               onPress={this.handleSendMessage}
-              disabled={this.state.selectedPic === '' ? this.state.sending || !this.state.textMessage.trim() : this.state.sending}
+              disabled={canSend}
             >
-              <MaterialIcons name="send" size={25} color="#64748B" />
+              <MaterialIcons
+                name="send"
+                size={22}
+                color={canSend ? theme.muted : theme.primary}
+              />
             </TouchableOpacity>
           </View>
         </View>
       </View>
-    )
-  }
+    );
+  };
   // Customizable Area End
 
   render() {
     // Customizable Area Start
-    // Merge Engine - render - Start
+    const theme = this.getChatTheme();
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={this.styles.container} edges={["top"]}>
         <StatusBar
-          barStyle="dark-content"
-          backgroundColor={colors(false).background}
+          barStyle={this.state.isDarkMode ? "light-content" : "dark-content"}
+          backgroundColor={theme.background}
         />
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? "padding" : undefined}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 45 : 0}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 45 : 0}
           style={{ flex: 1 }}
         >
           {this.state.showDetails ? this.renderChatDetail() : this.renderChatList()}
-          {this.state.isLoading &&
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size={'large'} color="#4949EE" />
+          {this.state.isLoading && (
+            <View style={this.styles.loadingContainer}>
+              <ActivityIndicator size={"large"} color={theme.primary} />
             </View>
-          }
+          )}
         </KeyboardAvoidingView>
         {this.renderCameraGalleryPopup()}
         {this.renderBlockModal()}
       </SafeAreaView>
     );
-    // Merge Engine - render - End
     // Customizable Area End
   }
 }
 
 // Customizable Area Start
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors(false).background,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 7,
-    
-  },
-  backButtonContainer: {
-    marginLeft:16,
-    width: 20,
-  },
-  backButtonIcon: {
-    width: 12,
-    left: 0,
-    resizeMode: "contain",
-  },
-  headerText: {
-    fontWeight: "700",
-    fontSize: 24,
-    position:'absolute',
-    width:'100%',
-    textAlign:'center',
-    alignSelf:'center',
-  },
-  text: {
-    fontFamily: "OpenSans",
-    color: colors(false).text,
-  },
-  hamburgerButton: {
-   
-  },
-  hamburgerIcon: {
-    width: 25,
-    height: 16,
-    resizeMode: "contain",
-    marginRight: 5,
-  },
-  conversationsContainer: {
-    paddingHorizontal: 16,
-  },
-  conversationItem: {
-    flexDirection: "row",
-    paddingVertical: 10,
-    alignItems: "center",
-    flex: 1,
-  },
-  userAvatarContainer: {
-    width: 50,
-    marginRight: 10
-  },
-  userAvatar: {
-    height: 48,
-    width: 48,
-    borderRadius: 25,
-  },
-  conversationItemContent: {},
-  name: {
-    textAlignVertical: "center",
-    fontWeight: "bold",
-    fontSize: 17,
-  },
-  mostRecentText: {},
-  hiddenItemContainer: {
-    alignItems: "center",
-    flex: 1,
-    flexDirection: "row",
-    justifyContent: "flex-end",
-
-  },
-  hiddenItemButton: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  archiveBtn: {
-    borderWidth: 1,
-    borderColor: '#3333CC',
-    width: 70,
-    height: '100%'
-  },
-  deleteBtn: {
-    backgroundColor: "#DC2626",
-    width: 70,
-    height: '100%'
-  },
-  chatItemContainer: {
-    alignItems: "center",
-    backgroundColor: "#FFF",
-    width: "100%",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingRight: 5,
-    borderBottomWidth: 2,
-    borderBottomColor: '#E2E8F0'
-  },
-  backButtonView: {
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  backButton: {
-    width: 20,
-    height: 20,
-    resizeMode: "contain",
-  },
-  conversationParentView: {
-    flex: 1,
-    backgroundColor: "#F1F5F9",
-  },
-  conversationView: {
-    paddingHorizontal: 16,
-  },
-  message: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    padding: 10,
-    alignSelf: "flex-start",
-    maxWidth: "80%",
-    borderRadius: 10,
-    backgroundColor: "#E2E8F0",
-    marginVertical: 8,
-    borderBottomLeftRadius: 0,
-  },
-  fromOtherParty: {
-    alignSelf: "flex-end",
-    backgroundColor: "#EDEDFF",
-    borderBottomLeftRadius: 10,
-    borderBottomRightRadius: 0,
-  },
-  userInfo: {
-    flex: 1,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 10,
-  },
-  userInfoContainer: {
-    flex: 1,
-    alignSelf: "center",
-    marginLeft: 10,
-  },
-  messageText: {},
-  msgInputContainer: {
-    position: "relative",
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-  },
-  msgInput: {
-    minHeight: 40,
-    fontSize: 16,
-    width: Dimensions.get("window").width - 100
-  },
-  actionButtons: {
-    top: 0,
-    bottom: 0,
-    right: 10,
-    position: "absolute",
-    alignSelf: "center",
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  sendButton: {},
-  cameraButton:{
-    marginRight:10
-  },
-  userStatusText: {},
-  readMarkContainer: {
-    marginLeft: 5,
-    alignSelf: "flex-end",
-  },
-  unreadMessageCountContainer: {
-    height: 20,
-    width: 20,
-    borderRadius: 10,
-    backgroundColor: "#4949EE",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  unreadMessageCount: {
-    color: "#ffffff",
-    fontWeight: "bold",
-  },
-  loadingContainer: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#ffffffdd',
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  noChatsContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 16,
-  },
-  chatsHeadingText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  rightContainer: {
-    position: "absolute",
-    right: 5,
-    height: "100%",
-    alignSelf: "center",
-    justifyContent: "space-evenly",
-    alignItems: "center",
-  },
-  activeMarker: {
-    width: 10,
-    aspectRatio: 1,
-    borderRadius: 5,
-    backgroundColor: "#34D399"
-  },
-  centerView: {
-    flex: 1,
-    justifyContent: "flex-end",
-    backgroundColor: "#33415580",
-  },
-  divider: {
-    backgroundColor: '#E2E8F0',
-    height: 1,
-  },
-  messageImg: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    padding: 10,
-    alignSelf: "flex-start",
-    maxWidth: "80%",
-    borderRadius: 10,
-    backgroundColor: "#E2E8F0",
-    marginVertical: 8,
-    borderBottomLeftRadius: 0,
-  },
-  centeredView1: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  modalViewCon: {
-    height: '10%',
-    justifyContent: 'space-between',
-    backgroundColor: 'white',
-    borderTopEndRadius: 20,
-    padding: 35,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
+const createChatStyles = (theme: ChatTheme) => {
+  const isLightTheme = theme.background === lightTheme.background;
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      width: "100%",
+      maxWidth: 650,
+      alignSelf: "center",
+      backgroundColor: theme.background,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  commentsParentView1: {
-    backgroundColor: '#33415580',
-  },
-  commentsView1: {
-    height: '15%',
-    padding: 20,
-    justifyContent: 'flex-start',
-  },
-  blockTest:{
-    color:"red" ,fontFamily: "OpenSans",fontWeight: "bold",fontSize: 18,textAlign:"center", marginTop:20
-  },
-  overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)'
-  }
-});
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: 16,
+      height: 56,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.border,
+      backgroundColor: theme.background,
+    },
+    headerCircleBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: theme.input,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    headerSideSpacer: {
+      width: 36,
+      height: 36,
+    },
+    headerText: {
+      fontWeight: "900",
+      fontSize: 18,
+      letterSpacing: 0.6,
+      color: theme.foreground,
+      textTransform: "uppercase",
+    },
+    conversationsContainer: {
+      paddingHorizontal: 16,
+      paddingTop: 12,
+    },
+    archivedRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: theme.card,
+      borderRadius: 14,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      paddingVertical: 12,
+      paddingHorizontal: 14,
+      marginBottom: 12,
+    },
+    archivedIconWrap: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: theme.primarySoft,
+      alignItems: "center",
+      justifyContent: "center",
+      marginRight: 12,
+    },
+    archivedLabel: {
+      flex: 1,
+      fontWeight: "700",
+      fontSize: 16,
+      color: theme.foreground,
+    },
+    conversationItem: {
+      flexDirection: "row",
+      paddingVertical: 4,
+      alignItems: "center",
+      flex: 1,
+    },
+    conversationPressArea: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    userAvatarContainer: {
+      width: 50,
+      marginRight: 10,
+    },
+    userAvatar: {
+      height: 48,
+      width: 48,
+      borderRadius: 24,
+      borderWidth: 2,
+      borderColor: theme.primary,
+    },
+    userAvatarPlaceholder: {
+      height: 48,
+      width: 48,
+      borderRadius: 24,
+      borderWidth: 2,
+      borderColor: theme.primary,
+      backgroundColor: isLightTheme ? theme.input : theme.card,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    conversationItemContent: {
+      flex: 1,
+      paddingRight: 36,
+    },
+    name: {
+      textAlignVertical: "center",
+      fontWeight: "700",
+      fontSize: 16,
+      color: theme.foreground,
+    },
+    mostRecentText: {
+      color: theme.muted,
+      fontSize: 13,
+      marginTop: 2,
+    },
+    lastMessageRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginTop: 2,
+    },
+    lastMessageThumb: {
+      height: 21,
+      width: 16,
+      borderRadius: 2,
+    },
+    hiddenItemContainer: {
+      alignItems: "center",
+      flex: 1,
+      flexDirection: "row",
+      justifyContent: "flex-end",
+      marginBottom: 12,
+      borderRadius: 16,
+      overflow: "hidden",
+    },
+    hiddenItemButton: {
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    archiveBtn: {
+      backgroundColor: theme.primary,
+      width: 70,
+      height: "100%",
+    },
+    deleteBtn: {
+      backgroundColor: "#DC2626",
+      width: 70,
+      height: "100%",
+    },
+    chatItemContainer: {
+      alignItems: "center",
+      backgroundColor: theme.card,
+      width: "100%",
+      flexDirection: "row",
+      justifyContent: "space-between",
+      paddingRight: 10,
+      paddingLeft: 10,
+      paddingVertical: 8,
+      marginBottom: 12,
+      borderRadius: 16,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+    },
+    conversationParentView: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    conversationView: {
+      paddingHorizontal: 16,
+    },
+    message: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      padding: 12,
+      alignSelf: "flex-start",
+      maxWidth: "80%",
+      borderRadius: 16,
+      backgroundColor: theme.input,
+      marginVertical: 8,
+      borderBottomLeftRadius: 4,
+    },
+    fromOtherParty: {
+      alignSelf: "flex-end",
+      backgroundColor: theme.primarySoft,
+      borderBottomLeftRadius: 16,
+      borderBottomRightRadius: 4,
+    },
+    eventMessage: {
+      borderBottomLeftRadius: 10,
+      borderBottomRightRadius: 10,
+      borderStartColor: theme.primary,
+      borderLeftWidth: 7,
+      padding: 10,
+      overflow: "scroll",
+      maxWidth: "100%",
+    },
+    eventThumbWrap: {
+      borderRadius: 10,
+      height: 100,
+      width: 75,
+      marginRight: 10,
+      overflow: "hidden",
+      backgroundColor: theme.input,
+    },
+    eventTitle: {
+      color: theme.foreground,
+      fontSize: 16,
+      fontWeight: "700",
+    },
+    eventMetaRow: {
+      flexDirection: "row",
+      marginTop: 5,
+      alignItems: "center",
+    },
+    eventMetaText: {
+      marginLeft: 5,
+      textAlignVertical: "center",
+      color: theme.muted,
+      fontSize: 12,
+      fontWeight: "400",
+    },
+    userInfo: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: 6,
+      paddingHorizontal: 10,
+    },
+    userInfoContainer: {
+      flex: 1,
+      alignSelf: "center",
+      marginLeft: 10,
+    },
+    messageText: {
+      color: theme.foreground,
+      fontSize: 15,
+      lineHeight: 22,
+    },
+    msgInputContainer: {
+      position: "relative",
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      backgroundColor: theme.card,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.border,
+    },
+    msgInput: {
+      minHeight: 44,
+      fontSize: 16,
+      width: Dimensions.get("window").width - 100,
+      color: theme.foreground,
+      backgroundColor: theme.input,
+      borderRadius: 16,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+    },
+    actionButtons: {
+      top: 0,
+      bottom: 0,
+      right: 10,
+      position: "absolute",
+      alignSelf: "center",
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    sendButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    cameraButton: {
+      marginRight: 6,
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    cancelSendImageBtn: {
+      position: "absolute",
+      backgroundColor: theme.primary,
+      borderRadius: 99,
+      padding: 3,
+      right: 0,
+      top: -10,
+    },
+    readMarkContainer: {
+      marginLeft: 5,
+      alignSelf: "flex-end",
+    },
+    unreadMessageCountContainer: {
+      minWidth: 20,
+      height: 20,
+      borderRadius: 10,
+      backgroundColor: theme.primary,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingHorizontal: 5,
+    },
+    unreadMessageCount: {
+      color: "#ffffff",
+      fontWeight: "700",
+      fontSize: 11,
+    },
+    loadingContainer: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: isLightTheme
+        ? "rgba(255, 255, 255, 0.72)"
+        : "rgba(8, 8, 15, 0.72)",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    noChatsContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingVertical: 16,
+    },
+    emptyIconWrap: {
+      width: 84,
+      height: 84,
+      borderRadius: 42,
+      backgroundColor: theme.primarySoft,
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: 16,
+    },
+    chatsHeadingText: {
+      fontSize: 22,
+      fontWeight: "800",
+      color: theme.foreground,
+    },
+    rightContainer: {
+      position: "absolute",
+      right: 5,
+      height: "100%",
+      alignSelf: "center",
+      justifyContent: "space-evenly",
+      alignItems: "center",
+    },
+    activeMarker: {
+      width: 10,
+      aspectRatio: 1,
+      borderRadius: 5,
+      backgroundColor: "#34D399",
+    },
+    photoSheetOverlay: {
+      flex: 1,
+      justifyContent: "flex-end",
+      backgroundColor: "rgba(8, 8, 15, 0.72)",
+    },
+    photoSheetWrap: {
+      paddingHorizontal: 16,
+      paddingBottom: 36,
+    },
+    galleryOptions: {
+      borderRadius: 16,
+      backgroundColor: theme.card,
+      alignItems: "stretch",
+      overflow: "hidden",
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    photoSheetHandle: {
+      alignSelf: "center",
+      width: 36,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: theme.border,
+      marginTop: 10,
+      marginBottom: 8,
+    },
+    photoSheetTitle: {
+      fontSize: 13,
+      fontWeight: "600",
+      color: theme.muted,
+      textAlign: "center",
+      marginBottom: 6,
+    },
+    photoSheetRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: 16,
+      paddingHorizontal: 20,
+    },
+    photoSheetDivider: {
+      backgroundColor: theme.border,
+      height: 1,
+      marginHorizontal: 16,
+    },
+    takeChoosePhoto: {
+      fontSize: 16,
+      fontWeight: "600",
+      color: theme.foreground,
+      marginLeft: 10,
+    },
+    cancelPhotoOption: {
+      borderRadius: 16,
+      backgroundColor: theme.card,
+      marginTop: 10,
+      alignItems: "center",
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    cancelPhotoText: {
+      fontSize: 16,
+      fontWeight: "700",
+      color: theme.primary,
+      marginVertical: 16,
+    },
+    messageImg: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      padding: 10,
+      alignSelf: "flex-start",
+      maxWidth: "80%",
+      borderRadius: 16,
+      backgroundColor: theme.input,
+      marginVertical: 8,
+      borderBottomLeftRadius: 4,
+    },
+    centeredView1: {
+      flex: 1,
+      justifyContent: "flex-end",
+    },
+    modalViewCon: {
+      height: "10%",
+      justifyContent: "space-between",
+      backgroundColor: theme.card,
+      borderTopEndRadius: 20,
+      padding: 35,
+      shadowColor: "#000",
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+      elevation: 5,
+    },
+    commentsParentView1: {
+      backgroundColor: "rgba(8, 8, 15, 0.72)",
+    },
+    commentsView1: {
+      height: "15%",
+      padding: 20,
+      justifyContent: "flex-start",
+    },
+    blockTest: {
+      color: "#DC2626",
+      fontFamily: "OpenSans",
+      fontWeight: "bold",
+      fontSize: 18,
+      textAlign: "center",
+      marginTop: 20,
+    },
+    overlay: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
+    },
+  });
+};
+
+const darkChatStyles = createChatStyles(redesignTheme);
+const lightChatStyles = createChatStyles(lightTheme);
 // Customizable Area End

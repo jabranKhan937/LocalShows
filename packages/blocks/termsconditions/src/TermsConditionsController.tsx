@@ -8,7 +8,13 @@ import { runEngine } from "../../../framework/src/RunEngine";
 
 // Customizable Area Start
 import { getStorageData, setStorageData } from "../../../framework/src/Utilities";
-import { Dimensions } from "react-native";
+import { DeviceEventEmitter, Dimensions } from "react-native";
+import {
+  lightTheme,
+  redesignTheme,
+  PROFILE_THEME_CHANGED_EVENT,
+  PROFILE_THEME_STORAGE_KEY,
+} from "../../utilities/src/Colors";
 // Customizable Area End
 
 export const configJSON = require("./config");
@@ -41,6 +47,7 @@ interface S {
   tAndCAPIData: string;
   WebViewHeight:number,
   isChecked:boolean
+  isDarkMode: boolean
   // Customizable Area End
 }
 
@@ -62,6 +69,7 @@ export default class TermsConditionsController extends BlockComponent<
   setAcceptanceOfTermsCondsId: string = "";
   getTAndCAPICallID: any;
   acceptTAndCAPICallID:any
+  profileThemeListener: { remove: () => void } | null = null;
   // Customizable Area End
 
   constructor(props: Props) {
@@ -88,7 +96,8 @@ export default class TermsConditionsController extends BlockComponent<
       isLoading: false,
       tAndCAPIData: "",
       WebViewHeight:Dimensions.get('screen').height,
-      isChecked:false
+      isChecked:false,
+      isDarkMode: true,
       // Customizable Area End
     };
     runEngine.attachBuildingBlock(this as IBlock, this.subScribedMessages);
@@ -100,9 +109,35 @@ export default class TermsConditionsController extends BlockComponent<
   // Customizable Area Start
 
   async componentDidMount() {
+    this.loadTermsTheme();
     if (!this.isPlatformWeb())
       this.getTAndCApi()
   }
+
+  async componentWillUnmount() {
+    if (this.profileThemeListener) {
+      this.profileThemeListener.remove();
+      this.profileThemeListener = null;
+    }
+    await super.componentWillUnmount();
+  }
+
+  loadTermsTheme = async () => {
+    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
+    this.setState({ isDarkMode: savedTheme !== "false" });
+    if (!this.profileThemeListener) {
+      this.profileThemeListener = DeviceEventEmitter.addListener(
+        PROFILE_THEME_CHANGED_EVENT,
+        (isDarkMode: boolean) => {
+          this.setState({ isDarkMode });
+        },
+      );
+    }
+  };
+
+  getTermsTheme = () => {
+    return this.state.isDarkMode ? redesignTheme : lightTheme;
+  };
 
   navigateToTermsCondsDetail = (termsCondsId: string) => {
     const message = new Message(getName(MessageEnum.NavigationMessage));

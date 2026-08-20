@@ -6,29 +6,23 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Platform,
-  Image,
   TouchableWithoutFeedback,
-  SafeAreaView,
+  StatusBar,
   Modal,
   ActivityIndicator,
+  Platform,
 } from "react-native";
-
-// Merge Engine - import assets - Start
-// Merge Engine - import assets - End
-
-// Merge Engine - Artboard Dimension  - Start
-// Merge Engine - Artboard Dimension  - End
-
-import { colors } from "../../utilities/src/Colors";
-import { leftArrow } from "../../email-account-registration/src/assets";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/Feather";
+import { lightTheme, redesignTheme } from "../../utilities/src/Colors";
 // Customizable Area End
 
 import Settings2Controller, {
   Props,
   configJSON,
 } from "./Settings2Controller";
+
+type SettingsTheme = typeof redesignTheme;
 
 export default class Settings2 extends Settings2Controller {
   constructor(props: Props) {
@@ -38,305 +32,409 @@ export default class Settings2 extends Settings2Controller {
   }
 
   // Customizable Area Start
-  renderHeader = () => {
-    return (
-      <View style={styles.header}>
-        <TouchableOpacity
-          testID="navigationBackButton"
-          style={styles.backNavButton}
-          onPress={() => {
-            this.props.navigation.goBack();
-          }} >
-          <Image source={leftArrow} style={styles.backNavIcon} />
-        </TouchableOpacity>
-        <Text testID="pageTitle" style={styles.headerTitle}>
-          {configJSON.pageTitle}
-        </Text>
-        <View style={styles.backNavButton} />
-      </View>
-    )
+  get styles() {
+    return this.state.isDarkMode ? darkSettingsStyles : lightSettingsStyles;
   }
 
+  renderHeader = () => {
+    const theme = this.getSettingsTheme();
+    return (
+      <View style={this.styles.header}>
+        <TouchableOpacity
+          testID="navigationBackButton"
+          style={this.styles.headerCircleBtn}
+          onPress={() => {
+            this.props.navigation.goBack();
+          }}
+          activeOpacity={0.8}
+        >
+          <Icon name="arrow-left" size={18} color={theme.foreground} />
+        </TouchableOpacity>
+        <Text testID="pageTitle" style={this.styles.headerTitle}>
+          {configJSON.pageTitle}
+        </Text>
+        <View style={this.styles.headerSideSpacer} />
+      </View>
+    );
+  };
+
+  renderToggle = (enabled: boolean) => {
+    return (
+      <View
+        style={[
+          this.styles.switchContainer,
+          enabled ? this.styles.switchOn : this.styles.switchOff,
+        ]}
+      >
+        <View
+          style={[
+            this.styles.switchButton,
+            { alignSelf: enabled ? "flex-end" : "flex-start" },
+          ]}
+        />
+      </View>
+    );
+  };
+
   renderPrivateAccount = () => {
+    if (this.state.currentUserRole !== "fan") {
+      return <></>;
+    }
     return (
       <>
-        {this.state.currentUserRole === 'fan' &&
-          <>
-            <View style={styles.divider} />
-            <View
-              style={styles.rowView}>
-              <Text style={styles.text}>{configJSON.privateAccount}</Text>
-              <TouchableWithoutFeedback
-                testID="privateAccount"
-                onPress={() => {
-                  this.putPrivateAccountAPI()
-                }}>
-                <View style={[styles.switchContainer, { backgroundColor: this.state.isPrivateAccount ? '#4949EE' : '#94A3B8' }]}>
-                  <View style={[styles.switchButton, { alignSelf: this.state.isPrivateAccount ? 'flex-end' : 'flex-start' }]} />
-                </View>
-              </TouchableWithoutFeedback>
-            </View>
-          </>
-        }</>
-    )
-  }
+        <View style={this.styles.rowDivider} />
+        <View style={this.styles.rowView}>
+          <Text style={this.styles.text}>{configJSON.privateAccount}</Text>
+          <TouchableWithoutFeedback
+            testID="privateAccount"
+            onPress={() => {
+              this.putPrivateAccountAPI();
+            }}
+          >
+            {this.renderToggle(this.state.isPrivateAccount)}
+          </TouchableWithoutFeedback>
+        </View>
+      </>
+    );
+  };
 
   renderPushNotification = () => {
     return (
-      <View style={styles.rowView}>
-        <Text style={styles.text}>{configJSON.pushNotifications}</Text>
+      <View style={this.styles.rowView}>
+        <Text style={this.styles.text}>{configJSON.pushNotifications}</Text>
         <TouchableWithoutFeedback
           testID="pushNotifications"
           onPress={() => {
-            this.setState({ isPushNotificationEnabled: !this.state.isPushNotificationEnabled }, () => {
-              this.handlePushNotification()
-            })
-          }}>
-          <View style={[styles.switchContainer, { backgroundColor: this.state.isPushNotificationEnabled ? '#4949EE' : '#94A3B8' }]}>
-            <View style={[styles.switchButton, { alignSelf: this.state.isPushNotificationEnabled ? 'flex-end' : 'flex-start' }]} />
-          </View>
+            this.setState(
+              {
+                isPushNotificationEnabled: !this.state.isPushNotificationEnabled,
+              },
+              () => {
+                this.handlePushNotification();
+              },
+            );
+          }}
+        >
+          {this.renderToggle(this.state.isPushNotificationEnabled)}
         </TouchableWithoutFeedback>
       </View>
-    )
-  }
+    );
+  };
 
   renderDeleteAccountModal = () => {
+    const theme = this.getSettingsTheme();
     return (
       <Modal
         animationType="slide"
         transparent={true}
-        visible={this.state.isDeleteAccountConfirmationModal}>
-        <View style={styles.modalParentView}>
-          <View style={styles.modalContainerView}>
+        visible={this.state.isDeleteAccountConfirmationModal}
+      >
+        <View style={this.styles.modalParentView}>
+          <View style={this.styles.modalContainerView}>
             <TouchableOpacity
               testID="crossBtn"
-              style={styles.disablePopupIconContainer}
-              onPress={() => this.setState({ isDeleteAccountConfirmationModal: false })} >
-              <Icon name="x" color="#0F172A" size={25} />
+              style={this.styles.disablePopupIconContainer}
+              onPress={() =>
+                this.setState({ isDeleteAccountConfirmationModal: false })
+              }
+            >
+              <Icon name="x" color={theme.foreground} size={22} />
             </TouchableOpacity>
-            <Text style={styles.txtDeleteHeading}>{configJSON.accountDeletionPopupHeading}</Text>
-            <Text style={styles.txtDelete}>{configJSON.accountDeletionPopupMessage}</Text>
+            <Text style={this.styles.txtDeleteHeading}>
+              {configJSON.accountDeletionPopupHeading}
+            </Text>
+            <Text style={this.styles.txtDelete}>
+              {configJSON.accountDeletionPopupMessage}
+            </Text>
             <TouchableOpacity
               testID="noBtn"
-              style={[
-                styles.deleteBtnContainer,
-                styles.keepBtnContainer,
-              ]}
-              onPress={() => this.setState({ isDeleteAccountConfirmationModal: false })} >
-              <Text
-                style={[
-                  styles.txtDeleteBtn,
-                  styles.txtKeepBtn,
-                ]} >{configJSON.noButton}</Text>
+              style={[this.styles.deleteBtnContainer, this.styles.keepBtnContainer]}
+              onPress={() =>
+                this.setState({ isDeleteAccountConfirmationModal: false })
+              }
+              activeOpacity={0.85}
+            >
+              <Text style={[this.styles.txtDeleteBtn, this.styles.txtKeepBtn]}>
+                {configJSON.noButton}
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               testID="yesBtn"
-              style={styles.deleteBtnContainer}
-              onPress={() => this.deleteAccountAPI()} >
-              <Text style={styles.txtDeleteBtn}>{configJSON.yesButton}</Text>
+              style={this.styles.deleteBtnContainer}
+              onPress={() => this.deleteAccountAPI()}
+              activeOpacity={0.85}
+            >
+              <Text style={this.styles.txtDeleteBtn}>{configJSON.yesButton}</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
-    )
-  }
+    );
+  };
   // Customizable Area End
 
   render() {
     // Customizable Area Start
-    // Merge Engine - render - Start
+    const theme = this.getSettingsTheme();
     return (
       <TouchableWithoutFeedback
         testID="containerTouchable"
         onPress={() => {
           this.hideKeyboard();
-        }} >
-        <SafeAreaView style={styles.container}>
+        }}
+      >
+        <SafeAreaView style={this.styles.container} edges={["top"]}>
+          <StatusBar
+            barStyle={this.state.isDarkMode ? "light-content" : "dark-content"}
+            backgroundColor={theme.background}
+          />
           {this.renderHeader()}
-          {this.state.isLoading ?
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size={'large'} color="black" />
-          </View>
-          :
-          <>
-          <View style={styles.bodyContainer}>
-          <TouchableOpacity
-            testID="personalInformation"
-            style={styles.rowView}
-            onPress={() => this.handleProfileNavigation()}>
-            <Text style={styles.text}>{configJSON.personalInformation}</Text>
-            <Image source={leftArrow} style={[styles.backNavIcon, styles.forwardArrow]} />
-          </TouchableOpacity>
-          {this.renderPrivateAccount()}
-          <View style={styles.divider} />
-          {this.renderPushNotification()}
-          <View style={styles.divider} />
-          <Text style={[styles.text, { fontWeight: '700', marginVertical: 20, marginTop: 25, }]}>{configJSON.security}</Text>
-          <View style={styles.divider} />
-          <TouchableOpacity
-            testID="changePassword"
-            style={styles.rowView}
-            onPress={this.handleChangePasswordNavigation}>
-            <Text style={styles.text}>{configJSON.changePassword}</Text>
-            <Image source={leftArrow} style={[styles.backNavIcon, styles.forwardArrow]} />
-          </TouchableOpacity>
-          <View style={styles.divider} />
-        </View>
-        <TouchableOpacity
-          testID="deleteMyAccount"
-          style={{ position: 'absolute', bottom: 0, padding: 30, }}
-          onPress={() => { this.setState({ isDeleteAccountConfirmationModal: true }) }} >
-          <Text style={{ color: '#F87171', fontSize: 14, fontWeight: '400' }}>Delete my account</Text>
-        </TouchableOpacity>
-        {this.renderDeleteAccountModal()}
-          </>
-          }
+          {this.state.isLoading ? (
+            <View style={this.styles.loadingContainer}>
+              <ActivityIndicator size={"large"} color={theme.primary} />
+            </View>
+          ) : (
+            <>
+              <View style={this.styles.bodyContainer}>
+                <View style={this.styles.settingsCard}>
+                  <TouchableOpacity
+                    testID="personalInformation"
+                    style={this.styles.rowView}
+                    onPress={() => this.handleProfileNavigation()}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={this.styles.text}>
+                      {configJSON.personalInformation}
+                    </Text>
+                    <Icon name="chevron-right" size={18} color={theme.muted} />
+                  </TouchableOpacity>
+                  {this.renderPrivateAccount()}
+                  <View style={this.styles.rowDivider} />
+                  {this.renderPushNotification()}
+                </View>
+
+                <Text style={this.styles.sectionTitle}>{configJSON.security}</Text>
+                <View style={this.styles.settingsCard}>
+                  <TouchableOpacity
+                    testID="changePassword"
+                    style={this.styles.rowView}
+                    onPress={this.handleChangePasswordNavigation}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={this.styles.text}>
+                      {configJSON.changePassword}
+                    </Text>
+                    <Icon name="chevron-right" size={18} color={theme.muted} />
+                  </TouchableOpacity>
+                </View>
+                <TouchableOpacity
+                  testID="deleteMyAccount"
+                  style={this.styles.deleteAccountBtn}
+                  onPress={() => {
+                    this.setState({ isDeleteAccountConfirmationModal: true });
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Icon name="trash-2" size={16} color="#FFFFFF" />
+                  <Text style={this.styles.deleteAccountText}>
+                    Delete my account
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              {this.renderDeleteAccountModal()}
+            </>
+          )}
         </SafeAreaView>
       </TouchableWithoutFeedback>
     );
-    // Merge Engine - render - End
     // Customizable Area End
   }
 }
 
 // Customizable Area Start
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    marginLeft: "auto",
-    marginRight: "auto",
-    width: Platform.OS === "web" ? "75%" : "100%",
-    maxWidth: 650,
-    backgroundColor: "#ffffffff",
-    paddingHorizontal:16,
-    paddingBottom:16,
-    paddingTop:5
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 30,
-  },
-  backNavButton: {
-    alignSelf: "center",
-    width: 20,
-
-  },
-  backNavIcon: {
-    width: 12,
-    left: 0,
-    resizeMode: "contain",
-  },
-  headerTitle: {
-    fontWeight: "700",
-    fontSize: 24,
-    color: colors(false).text,
-   
-  },
-  hamburgerIcon: {
-    width: 25,
-    height: 16,
-    resizeMode: "contain",
-    marginRight: 5,
-  },
-  bodyContainer: {
-    marginHorizontal: 10,
-  },
-  rowView: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginVertical: 15,
-  },
-  text: {
-    fontWeight: "400",
-    fontSize: 16,
-    color: colors(false).text,
-    lineHeight: 22,
-  },
-  forwardArrow: {
-    width: 7,
-    marginRight: 10,
-    tintColor: '#4949EE',
-    transform: [{ rotate: '180deg' }],
-  },
-  divider: {
-    backgroundColor: '#E2E8F0',
-    height: 1,
-  },
-  switchContainer: {
-    width: 45,
-    height: 25,
-    borderRadius: 25,
-  },
-  switchButton: {
-    width: 23,
-    height: 23,
-    borderRadius: 23,
-    backgroundColor: 'white',
-    marginTop: 1,
-    marginHorizontal: 1,
-  },
-  modalParentView: {
-    flex: 1,
-    backgroundColor: "#33415580",
-    justifyContent: "flex-end",
-  },
-  modalContainerView: {
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 100,
-    justifyContent: "space-between",
-    backgroundColor: "white",
-    borderTopEndRadius: 20,
-    padding: 35,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
+const createSettingsStyles = (theme: SettingsTheme) => {
+  const isLightTheme = theme.background === lightTheme.background;
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      width: Platform.OS === "web" ? "75%" : "100%",
+      maxWidth: 650,
+      alignSelf: "center",
+      backgroundColor: theme.background,
     },
-  },
-  txtDeleteHeading: {
-    marginBottom: 10,
-    marginTop: 25,
-    color: "#0F172A",
-    fontWeight: "700",
-    fontSize: 26,
-    lineHeight: 28,
-  },
-  txtDelete: {
-    fontSize: 18,
-  },
-  deleteBtnContainer: {
-    padding: 15,
-    borderRadius: 10,
-    marginTop: 15,
-    backgroundColor: "#3333CC",
-    width: "100%",
-  },
-  txtDeleteBtn: {
-    color: colors(false).white,
-    fontWeight: "700",
-    fontSize: 18,
-    alignSelf: "center",
-  },
-  keepBtnContainer: {
-    backgroundColor: "transparent",
-  },
-  txtKeepBtn: {
-    color: "#3333CC",
-  },
-  disablePopupIconContainer: {
-    position: "absolute",
-    right: 20,
-    top: 20,
-  },
-  loadingContainer: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#ffffffdd',
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: 16,
+      height: 56,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.border,
+      backgroundColor: theme.background,
+    },
+    headerCircleBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: theme.input,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    headerSideSpacer: {
+      width: 36,
+      height: 36,
+    },
+    headerTitle: {
+      fontWeight: "900",
+      fontSize: 18,
+      letterSpacing: 0.6,
+      color: theme.foreground,
+      textTransform: "uppercase",
+    },
+    bodyContainer: {
+      paddingHorizontal: 16,
+      paddingTop: 16,
+    },
+    settingsCard: {
+      backgroundColor: theme.card,
+      borderRadius: 16,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      paddingHorizontal: 16,
+      paddingVertical: 4,
+    },
+    rowView: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      minHeight: 52,
+    },
+    rowDivider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: theme.divider,
+    },
+    text: {
+      fontWeight: "500",
+      fontSize: 16,
+      color: theme.foreground,
+      lineHeight: 22,
+      flex: 1,
+      paddingRight: 12,
+    },
+    sectionTitle: {
+      fontWeight: "800",
+      fontSize: 13,
+      letterSpacing: 0.8,
+      color: theme.muted,
+      textTransform: "uppercase",
+      marginTop: 24,
+      marginBottom: 10,
+      marginLeft: 4,
+    },
+    switchContainer: {
+      width: 48,
+      height: 28,
+      borderRadius: 14,
+      justifyContent: "center",
+    },
+    switchOn: {
+      backgroundColor: theme.primary,
+    },
+    switchOff: {
+      backgroundColor: isLightTheme ? "#D4D4D8" : theme.input,
+    },
+    switchButton: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      backgroundColor: "#FFFFFF",
+      marginHorizontal: 2,
+    },
+    deleteAccountBtn: {
+      marginTop: 16,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: theme.primary,
+      borderRadius: 14,
+      paddingVertical: 16,
+      paddingHorizontal: 18,
+    },
+    deleteAccountText: {
+      color: "#FFFFFF",
+      fontSize: 16,
+      fontWeight: "700",
+      marginLeft: 8,
+    },
+    modalParentView: {
+      flex: 1,
+      backgroundColor: "rgba(8, 8, 15, 0.72)",
+      justifyContent: "flex-end",
+    },
+    modalContainerView: {
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+      elevation: 100,
+      justifyContent: "space-between",
+      backgroundColor: theme.card,
+      borderTopEndRadius: 20,
+      padding: 35,
+      shadowColor: "#000",
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+    },
+    txtDeleteHeading: {
+      marginBottom: 10,
+      marginTop: 25,
+      color: theme.foreground,
+      fontWeight: "700",
+      fontSize: 26,
+      lineHeight: 28,
+    },
+    txtDelete: {
+      fontSize: 16,
+      lineHeight: 24,
+      color: theme.muted,
+    },
+    deleteBtnContainer: {
+      padding: 15,
+      borderRadius: 12,
+      marginTop: 15,
+      backgroundColor: theme.primary,
+      width: "100%",
+    },
+    txtDeleteBtn: {
+      color: "#FFFFFF",
+      fontWeight: "700",
+      fontSize: 18,
+      alignSelf: "center",
+    },
+    keepBtnContainer: {
+      backgroundColor: "transparent",
+    },
+    txtKeepBtn: {
+      color: theme.primary,
+    },
+    disablePopupIconContainer: {
+      position: "absolute",
+      right: 20,
+      top: 20,
+    },
+    loadingContainer: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: isLightTheme
+        ? "rgba(255, 255, 255, 0.72)"
+        : "rgba(8, 8, 15, 0.72)",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+  });
+};
+
+const darkSettingsStyles = createSettingsStyles(redesignTheme);
+const lightSettingsStyles = createSettingsStyles(lightTheme);
 // Customizable Area End

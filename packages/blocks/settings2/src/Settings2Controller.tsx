@@ -10,6 +10,13 @@ import { runEngine } from "../../../framework/src/RunEngine";
 import { imgPasswordInVisible, imgPasswordVisible } from "./assets";
 import { getStorageData, isEmpty, removeStorageData, setStorageData } from "../../../framework/src/Utilities";
 import { StackActions } from '@react-navigation/native';
+import { DeviceEventEmitter } from "react-native";
+import {
+  lightTheme,
+  redesignTheme,
+  PROFILE_THEME_CHANGED_EVENT,
+  PROFILE_THEME_STORAGE_KEY,
+} from "../../utilities/src/Colors";
 
 // Customizable Area End
 
@@ -42,6 +49,7 @@ interface S {
   showNewPassword: boolean;
   showConfirmNewPassword: boolean;
   currentUserRole: string;
+  isDarkMode: boolean;
   // Customizable Area End
 }
 
@@ -62,6 +70,7 @@ export default class Settings2Controller extends BlockComponent<
   putDeleteAccountAPICallID: any;
   updatePasswordAPICallID: any;
   updateProfilePatchAPICallID: any
+  profileThemeListener: { remove: () => void } | null = null;
   // Customizable Area End
 
   constructor(props: Props) {
@@ -96,6 +105,7 @@ export default class Settings2Controller extends BlockComponent<
       showNewPassword: false,
       showConfirmNewPassword: false,
       currentUserRole: "fan",
+      isDarkMode: true,
       // Customizable Area End
     };
     runEngine.attachBuildingBlock(this as IBlock, this.subScribedMessages);
@@ -183,7 +193,33 @@ export default class Settings2Controller extends BlockComponent<
   // Customizable Area Start
   async componentDidMount() {
     this.getAuthToken();
+    this.loadSettingsTheme();
   }
+
+  async componentWillUnmount() {
+    if (this.profileThemeListener) {
+      this.profileThemeListener.remove();
+      this.profileThemeListener = null;
+    }
+    await super.componentWillUnmount();
+  }
+
+  loadSettingsTheme = async () => {
+    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
+    this.setState({ isDarkMode: savedTheme !== "false" });
+    if (!this.profileThemeListener) {
+      this.profileThemeListener = DeviceEventEmitter.addListener(
+        PROFILE_THEME_CHANGED_EVENT,
+        (isDarkMode: boolean) => {
+          this.setState({ isDarkMode });
+        },
+      );
+    }
+  };
+
+  getSettingsTheme = () => {
+    return this.state.isDarkMode ? redesignTheme : lightTheme;
+  };
 
   getAuthToken = async () => {
     const authToken = await getStorageData('authToken');

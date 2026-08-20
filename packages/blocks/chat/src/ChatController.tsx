@@ -9,7 +9,13 @@ import { runEngine } from "../../../framework/src/RunEngine";
 // Customizable Area Start
 import { customAlert, getStorageData, removeStorageData, setStorageData } from "../../../framework/src/Utilities";
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
-import { PermissionsAndroid, Platform } from "react-native";
+import { DeviceEventEmitter, PermissionsAndroid, Platform } from "react-native";
+import {
+  lightTheme,
+  redesignTheme,
+  PROFILE_THEME_CHANGED_EVENT,
+  PROFILE_THEME_STORAGE_KEY,
+} from "../../utilities/src/Colors";
 export const baseURL = require("../../../framework/src/config.js").baseURL;
 // Customizable Area End
 
@@ -151,6 +157,7 @@ interface S {
   blockUserId:string
   userId:string,
   userAccountType:string
+  isDarkMode: boolean;
 
 
   // Customizable Area End
@@ -173,6 +180,7 @@ export default class ChatController extends BlockComponent<Props, S, SS> {
   chatWebSocket: any = undefined;
   deleteChatApiCallId: string = "";
     addBlockeduserApiCallId: any;
+  profileThemeListener: { remove: () => void } | null = null;
   private pendingApiRequests: Record<string, { name: string; url: string; method: string; payload?: any }> = {};
   // Customizable Area End
 
@@ -213,7 +221,8 @@ export default class ChatController extends BlockComponent<Props, S, SS> {
       showBlockList:false,
       blockUserId:'',
       userId:'',
-      userAccountType:''
+      userAccountType:'',
+      isDarkMode: true,
 
       // Customizable Area End
     };
@@ -288,6 +297,7 @@ export default class ChatController extends BlockComponent<Props, S, SS> {
     console.log('ChatController: componentDidMount called');
     this.getToken();
     this.loadStoredChatData();
+    this.loadChatTheme();
     
     this.props.navigation.addListener("willFocus", () => {
       console.log('ChatController: willFocus listener triggered');
@@ -315,11 +325,31 @@ export default class ChatController extends BlockComponent<Props, S, SS> {
   };
 
   async componentWillUnmount() {
+    if (this.profileThemeListener) {
+      this.profileThemeListener.remove();
+      this.profileThemeListener = null;
+    }
     super.componentWillUnmount();
     this.chatWebSocket.close();
     this.updateOnlineStatus(false);
-  
   }
+
+  loadChatTheme = async () => {
+    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
+    this.setState({ isDarkMode: savedTheme !== "false" });
+    if (!this.profileThemeListener) {
+      this.profileThemeListener = DeviceEventEmitter.addListener(
+        PROFILE_THEME_CHANGED_EVENT,
+        (isDarkMode: boolean) => {
+          this.setState({ isDarkMode });
+        },
+      );
+    }
+  };
+
+  getChatTheme = () => {
+    return this.state.isDarkMode ? redesignTheme : lightTheme;
+  };
 
  
 

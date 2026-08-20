@@ -3,17 +3,18 @@ import React from "react";
 // Customizable Area Start
 import {
   StyleSheet,
-  SafeAreaView,
   View,
   ScrollView,
   Text,
   TouchableOpacity,
-  Image,
   Linking,
+  StatusBar,
+  Platform,
 } from "react-native";
-import { colors } from "../../utilities/src/Colors";
-import { leftArrow } from "../../email-account-registration/src/assets";
-import { WebView } from 'react-native-webview';
+import { SafeAreaView } from "react-native-safe-area-context";
+import Icon from "react-native-vector-icons/Feather";
+import { lightTheme, redesignTheme } from "../../utilities/src/Colors";
+import { WebView } from "react-native-webview";
 // Customizable Area End
 
 import TermsConditionsController, {
@@ -21,6 +22,8 @@ import TermsConditionsController, {
   configJSON,
   ITermsConds,
 } from "./TermsConditionsController";
+
+type TermsTheme = typeof redesignTheme;
 
 export default class TermsConditions extends TermsConditionsController {
   constructor(props: Props) {
@@ -30,143 +33,209 @@ export default class TermsConditions extends TermsConditionsController {
   }
 
   // Customizable Area Start
+  get styles() {
+    return this.state.isDarkMode ? darkTermsStyles : lightTermsStyles;
+  }
+
+  getThemedTermsHtml = () => {
+    const theme = this.getTermsTheme();
+    const htmlBody = this.state.tAndCAPIData || "";
+    return `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        background-color: ${theme.card} !important;
+        color: ${theme.foreground} !important;
+        font-family: -apple-system, BlinkMacSystemFont, "OpenSans", "Segoe UI", sans-serif;
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        padding: 4px 2px 8px;
+      }
+      * {
+        color: ${theme.foreground} !important;
+        background-color: transparent !important;
+      }
+      p {
+        margin: 0 0 18px;
+      }
+      p:last-child {
+        margin-bottom: 0;
+      }
+      h1, h2, h3, h4, h5, h6, strong, b {
+        color: ${theme.foreground} !important;
+        font-weight: 800;
+      }
+      em, i {
+        font-style: italic;
+      }
+      u {
+        text-decoration: underline;
+      }
+      a, a * {
+        color: ${theme.primary} !important;
+        text-decoration: underline;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>${htmlBody}</body>
+</html>`;
+  };
+
   renderHeader = () => {
+    const theme = this.getTermsTheme();
     return (
-      <View style={styles.header}>
+      <View style={this.styles.header}>
         <TouchableOpacity
           testID="navigationBackButton"
-          style={styles.backNavButton}
+          style={this.styles.headerCircleBtn}
           onPress={() => {
             this.props.navigation.goBack();
           }}
+          activeOpacity={0.8}
         >
-          <Image source={leftArrow} style={styles.backNavIcon} />
+          <Icon name="arrow-left" size={18} color={theme.foreground} />
         </TouchableOpacity>
-        <Text testID="testLabel" style={[styles.text, styles.headerTitle]}>
+        <Text testID="testLabel" style={this.styles.headerTitle}>
           Terms & Conditions
         </Text>
-        <View style={styles.backNavButton} />
+        <View style={this.styles.headerSideSpacer} />
       </View>
-    )
-  }
+    );
+  };
 
   renderAgreement = () => {
+    const theme = this.getTermsTheme();
     return (
-      <View style={styles.agreementContainer}>
+      <View style={this.styles.agreementContainer}>
         <TouchableOpacity
-          style={styles.checkbox}
+          style={this.styles.checkbox}
           testID="btnAcceptTerms"
-          onPress={() =>
-            this.handleSetAcceptanceOfTermsCondsAPIResponse()
-          }
+          onPress={() => this.handleSetAcceptanceOfTermsCondsAPIResponse()}
+          activeOpacity={0.8}
         >
           {this.state.isChecked && (
-            <View style={styles.checked} />
+            <Icon name="check" size={14} color={theme.primary} />
           )}
         </TouchableOpacity>
-        <Text style={[styles.text, styles.agreementText]}>
+        <Text style={this.styles.agreementText}>
           I have read and agree to these Terms and Conditions.
         </Text>
       </View>
-    )
-  }
+    );
+  };
 
   renderCancel = () => {
     return (
       <TouchableOpacity
         testID="btnCancel"
-        style={styles.cancelButton}
+        style={this.styles.cancelButton}
         onPress={() => this.props.navigation.goBack()}
+        activeOpacity={0.8}
       >
-        <Text
-          style={[
-            styles.text,
-            styles.textAgreeButton,
-            styles.textCancelButton,
-          ]}
-        >
-          Cancel
-        </Text>
+        <Text style={this.styles.textCancelButton}>Cancel</Text>
       </TouchableOpacity>
-    )
-  }
+    );
+  };
 
   renderAgree = () => {
     return (
       <TouchableOpacity
         testID="btnAgree"
         style={[
-          styles.agreeButton,
+          this.styles.agreeButton,
           { opacity: this.state.isChecked ? 1 : 0.5 },
         ]}
         disabled={!this.state.isChecked}
         onPress={this.handleAccept}
+        activeOpacity={0.8}
       >
-        <Text style={[styles.text, styles.textAgreeButton]}>Agree</Text>
+        <Text style={this.styles.textAgreeButton}>Agree</Text>
       </TouchableOpacity>
-    )
-  }
-
-  
+    );
+  };
 
   renderTncContent = () => {
-    return  <WebView
-       originWhitelist={['*']}
-       source={{ html: this.state.tAndCAPIData }}
-       javaScriptEnabled={true}
-       showsVerticalScrollIndicator={false}
-       style={{
-         height:this.state.WebViewHeight,
-       }}
-       onMessage={event => {
-         this.setState({WebViewHeight:parseInt(event.nativeEvent.data)})
-       }}        
-       scalesPageToFit={false}  
-       scrollEnabled={false}
-       limitsNavigationsToAppBoundDomains={true}
-       automaticallyAdjustContentInsets={false}
-       onShouldStartLoadWithRequest={(request) => {
-        if (request.url.startsWith('http')) {
-          Linking.openURL(request.url);
-          return false; 
-        }
-        return true; 
-      }}
-
-       injectedJavaScript={`
+    return (
+      <WebView
+        originWhitelist={["*"]}
+        source={{ html: this.getThemedTermsHtml() }}
+        javaScriptEnabled={true}
+        showsVerticalScrollIndicator={false}
+        style={[
+          this.styles.webView,
+          {
+            height: this.state.WebViewHeight,
+          },
+        ]}
+        onMessage={(event) => {
+          this.setState({ WebViewHeight: parseInt(event.nativeEvent.data) });
+        }}
+        scalesPageToFit={false}
+        scrollEnabled={false}
+        limitsNavigationsToAppBoundDomains={true}
+        automaticallyAdjustContentInsets={false}
+        onShouldStartLoadWithRequest={(request) => {
+          if (request.url.startsWith("http")) {
+            Linking.openURL(request.url);
+            return false;
+          }
+          return true;
+        }}
+        injectedJavaScript={`
        setTimeout(function() {
          window.ReactNativeWebView.postMessage(
            Math.max(document.body.scrollHeight, document.body.offsetHeight, document.documentElement.scrollHeight, document.documentElement.offsetHeight)
          );
        }, 500);
      `}
-       domStorageEnabled={true}
-       useWebKit={true}
-   
-     />
+        domStorageEnabled={true}
+        useWebKit={true}
+      />
+    );
+  };
 
-
-  }
-  
   // Customizable Area End
 
   render() {
     // Customizable Area Start
+    const theme = this.getTermsTheme();
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={this.styles.container} edges={["top"]}>
+        <StatusBar
+          barStyle={this.state.isDarkMode ? "light-content" : "dark-content"}
+          backgroundColor={theme.background}
+        />
         {this.renderHeader()}
-        <ScrollView showsVerticalScrollIndicator={false}>
-        {this.renderTncContent()}
-        {this.state.isTermsCondsAccepted === 'false' && (
-          <View style={{
-            paddingBottom:16,
-            paddingHorizontal:16,
-          }}>
-         {this.renderAgreement()}
-         {this.renderCancel()}
-         {this.renderAgree()}
-         </View>
-        )}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          style={this.styles.scroll}
+          contentContainerStyle={this.styles.scrollContent}
+        >
+          <View style={this.styles.contentCard}>
+            <View style={this.styles.brandRow}>
+              <View style={this.styles.brandMark}>
+                <Icon name="file-text" size={14} color="#FFFFFF" />
+              </View>
+              <Text style={this.styles.brandLabel}>Local Shows</Text>
+            </View>
+            {this.renderTncContent()}
+          </View>
+          {this.state.isTermsCondsAccepted === "false" && (
+            <View style={this.styles.actionsCard}>
+              {this.renderAgreement()}
+              {this.renderCancel()}
+              {this.renderAgree()}
+            </View>
+          )}
         </ScrollView>
       </SafeAreaView>
     );
@@ -175,98 +244,160 @@ export default class TermsConditions extends TermsConditionsController {
 }
 
 // Customizable Area Start
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors(false).white,
-  },
-  contentContainer: {
-    paddingTop:5,
-    flex: 1,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-    paddingHorizontal:16,
-  },
-  backNavButton: {
-    alignSelf: "center",
-    width: 20,
+const createTermsStyles = (theme: TermsTheme) => {
+  const isLightTheme = theme.background === lightTheme.background;
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      width: "100%",
+      maxWidth: 650,
+      alignSelf: "center",
+      backgroundColor: theme.background,
+    },
+    scroll: {
+      flex: 1,
+    },
+    scrollContent: {
+      paddingHorizontal: 16,
+      paddingTop: 16,
+      paddingBottom: 32,
+    },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: 16,
+      height: 56,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.border,
+      backgroundColor: theme.background,
+    },
+    headerCircleBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: theme.input,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    headerSideSpacer: {
+      width: 36,
+      height: 36,
+    },
+    headerTitle: {
+      fontWeight: "900",
+      fontSize: 18,
+      letterSpacing: 0.6,
+      color: theme.foreground,
+      textTransform: "uppercase",
+    },
+    contentCard: {
+      backgroundColor: theme.card,
+      borderRadius: 16,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      paddingHorizontal: 16,
+      paddingTop: 16,
+      paddingBottom: 8,
+      ...Platform.select({
+        ios: {
+          shadowColor: isLightTheme ? "#000000" : "#FFFFFF",
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: isLightTheme ? 0.08 : 0.06,
+          shadowRadius: 12,
+        },
+        android: {
+          elevation: isLightTheme ? 3 : 2,
+        },
+      }),
+    },
+    brandRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 16,
+    },
+    brandMark: {
+      width: 28,
+      height: 28,
+      borderRadius: 8,
+      backgroundColor: theme.primary,
+      alignItems: "center",
+      justifyContent: "center",
+      marginRight: 8,
+    },
+    brandLabel: {
+      fontWeight: "900",
+      fontSize: 16,
+      letterSpacing: 0.4,
+      color: theme.foreground,
+      textTransform: "uppercase",
+    },
+    webView: {
+      width: "100%",
+      backgroundColor: "transparent",
+    },
+    actionsCard: {
+      marginTop: 16,
+      backgroundColor: theme.card,
+      borderRadius: 16,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      padding: 16,
+    },
+    agreementContainer: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+    },
+    checkbox: {
+      height: 22,
+      width: 22,
+      borderWidth: 1,
+      borderRadius: 6,
+      borderColor: theme.border,
+      backgroundColor: theme.input,
+      marginRight: 10,
+      marginTop: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    agreementText: {
+      flex: 1,
+      color: theme.foreground,
+      fontSize: 14,
+      lineHeight: 22,
+      fontWeight: "500",
+    },
+    agreeButton: {
+      backgroundColor: theme.primary,
+      width: "100%",
+      paddingVertical: 14,
+      borderRadius: 14,
+      marginTop: 10,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    textAgreeButton: {
+      color: "#FFFFFF",
+      fontWeight: "800",
+      fontSize: 16,
+      letterSpacing: 0.3,
+    },
+    cancelButton: {
+      backgroundColor: "transparent",
+      marginVertical: 10,
+      paddingVertical: 8,
+      alignItems: "center",
+    },
+    textCancelButton: {
+      color: theme.primary,
+      fontWeight: "700",
+      fontSize: 16,
+    },
+  });
+};
 
-  },
-  backNavIcon: {
-    width: 12,
-    left: 0,
-    resizeMode: "contain",
-  },
-  headerTitle: {
-    fontWeight: "700",
-    fontSize: 24,
-  },
-  hamburgerIcon: {
-    width: 25,
-    height: 16,
-    resizeMode: "contain",
-  },
-  text: {
-    color: colors(false).text,
-    fontSize: 16,
-  },
-  enumeration: {
-    width: "5%",
-    marginLeft: "1%",
-  },
-  termsContent: {
-    width: "94%",
-  },
-  termsContainer: {
-    flexDirection: "row",
-    marginTop: 10,
-  },
-  agreementContainer: {
-    flexDirection: "row",
-  },
-  checkbox: {
-    height: 20,
-    width: 20,
-    borderWidth: 1,
-    borderRadius: 5,
-    borderColor: colors(false).text,
-    marginRight: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  checked: {
-    height: 12,
-    width: 12,
-    backgroundColor: "#3333CC",
-    borderRadius: 2.5,
-  },
-  agreementText: {
-    width: "90%",
-    marginLeft: 5,
-  },
-  agreeButton: {
-    backgroundColor: "#3333CC",
-    width: "100%",
-    padding: 10,
-    borderRadius: 10,
-    marginTop: 10,
-  },
-  textAgreeButton: {
-    color: colors(false).white,
-    fontWeight: "700",
-    fontSize: 18,
-    alignSelf: "center",
-  },
-  cancelButton: {
-    backgroundColor: colors(false).white,
-    marginVertical:7
-  },
-  textCancelButton: {
-    color: "#3333CC",
-  },
-});
+const darkTermsStyles = createTermsStyles(redesignTheme);
+const lightTermsStyles = createTermsStyles(lightTheme);
 // Customizable Area End

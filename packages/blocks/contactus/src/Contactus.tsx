@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   View,
-  SafeAreaView,
   Image,
   StatusBar,
   TextInput,
@@ -16,128 +15,146 @@ import {
   KeyboardAvoidingView,
   ActivityIndicator,
 } from "react-native";
-
+import { SafeAreaView } from "react-native-safe-area-context";
+import Icon from "react-native-vector-icons/Feather";
+import { Picker } from "@react-native-picker/picker";
+import { lightTheme, redesignTheme } from "../../utilities/src/Colors";
+import { usFlag } from "../../email-account-registration/src/assets";
 import ContactusController, { configJSON } from "./ContactusController";
 
-import { colors } from "../../utilities/src/Colors";
-import { leftArrow, usFlag } from "../../email-account-registration/src/assets";
-import { Picker } from '@react-native-picker/picker';
+type ContactTheme = typeof redesignTheme;
 // Customizable Area End
 
 export default class Contactus extends ContactusController {
   // Customizable Area Start
+  get styles() {
+    return this.state.isDarkMode ? darkContactStyles : lightContactStyles;
+  }
+
   renderHeader = () => {
+    const theme = this.getContactTheme();
     return (
-      <View style={styles.header}>
+      <View style={this.styles.header}>
         <TouchableOpacity
           testID="navigationBackButton"
-          style={styles.backNavButton}
+          style={this.styles.headerCircleBtn}
           onPress={() => {
             this.props.navigation.goBack();
           }}
+          activeOpacity={0.8}
         >
-          <Image source={leftArrow} style={styles.backNavIcon} />
+          <Icon name="arrow-left" size={18} color={theme.foreground} />
         </TouchableOpacity>
-        <Text testID="testLabel" style={[styles.text, styles.headerTitle]}>
+        <Text testID="testLabel" style={this.styles.headerTitle}>
           Contact us
         </Text>
-        <View style={styles.backNavButton} />
+        <View style={this.styles.headerSideSpacer} />
       </View>
-    )
-  }
+    );
+  };
 
   renderSubheading = () => {
     return (
-      <Text style={[styles.text, {
-        lineHeight: 22,
-      }]}>
-        {configJSON.disclaimer}
-      </Text>
-    )
-  }
+      <Text style={this.styles.subheading}>{configJSON.disclaimer}</Text>
+    );
+  };
 
   renderName = () => {
+    const theme = this.getContactTheme();
     return (
       <>
-        <Text style={[styles.textInputLabel]}>{configJSON.name}</Text>
+        <Text style={this.styles.textInputLabel}>{configJSON.name}</Text>
         <TextInput
           testID="txtInputName"
           placeholder="Enter your name"
-          placeholderTextColor="#CBD5E1"
-          style={styles.textInput}
+          placeholderTextColor={theme.muted}
+          style={this.styles.textInput}
           value={this.state.name}
           onChangeText={this.handleName}
         />
       </>
-    )
-  }
+    );
+  };
 
   renderPhoneNumber = () => {
     return (
       <>
-        <Text style={[styles.textInputLabel]}>{configJSON.cellphone}</Text>
-        {
-        this.state.countryCodeFetched &&
-          (
-            Platform.OS === "ios" ?
-
-              <View>
-                <TextInput
-                  testID="txtInputCellPhone"
-                  placeholder="Enter your cell phone"
-                  placeholderTextColor="#CBD5E1"
-                  style={[styles.textInput, styles.textInputPhone]}
-                  keyboardType="numeric"
-                  value={this.state.phoneNumber}
-                  returnKeyType="next"
-                  onChangeText={this.handlePhoneNumber}
-                  maxLength={10}
-                />
-                {this.renderCountryCodeiOSPicker()}
-              </View>
-              :
-              this.renderCountryCodeAndroidPicker()
-          )
-        }
+        <Text style={this.styles.textInputLabel}>{configJSON.cellphone}</Text>
+        {this.state.countryCodeFetched &&
+          (Platform.OS === "ios" ? (
+            <View>
+              <TextInput
+                testID="txtInputCellPhone"
+                placeholder="Enter your cell phone"
+                placeholderTextColor={this.getContactTheme().muted}
+                style={[this.styles.textInput, this.styles.textInputPhone]}
+                keyboardType="numeric"
+                value={this.state.phoneNumber}
+                returnKeyType="next"
+                onChangeText={this.handlePhoneNumber}
+                maxLength={10}
+              />
+              {this.renderCountryCodeiOSPicker()}
+            </View>
+          ) : (
+            this.renderCountryCodeAndroidPicker()
+          ))}
       </>
-    )
-  }
+    );
+  };
+
+  renderCountryCodePickerContent = () => {
+    const theme = this.getContactTheme();
+    const hasFlag =
+      this.state.selectedCountryCode &&
+      Object.keys(this.state.selectedCountryCode).length > 0;
+    const code =
+      this.state.selectedCountryCode &&
+      Object.keys(this.state.selectedCountryCode).length > 0
+        ? `+${this.state.selectedCountryCode.attributes.country_code}`
+        : "";
+    return (
+      <>
+        <Image
+          source={
+            hasFlag
+              ? { uri: this.state.selectedCountryCode.attributes.map_url }
+              : usFlag
+          }
+          style={this.styles.usFlagImg}
+        />
+        <Icon
+          name="chevron-down"
+          size={14}
+          color={theme.muted}
+          style={this.styles.countryCodeChevron}
+        />
+        <Text style={this.styles.textCountryCode}>{code}</Text>
+      </>
+    );
+  };
 
   renderCountryCodeiOSPicker = () => {
-    const hasFlag = this.state.selectedCountryCode && Object.keys(this.state.selectedCountryCode).length > 0
-    const code = this.state.selectedCountryCode && Object.keys(this.state.selectedCountryCode).length > 0 ? `+${this.state.selectedCountryCode.attributes.country_code}` : ""
     return (
       <TouchableOpacity
         testID="btnCountryCodeSelect"
-        style={styles.countryCodeContainer}
+        style={this.styles.countryCodeContainer}
         onPress={this.showCountryCodeModal}
       >
-        <Image source={hasFlag ? { uri: this.state.selectedCountryCode.attributes.map_url } : usFlag} style={styles.usFlagImg} />
-        <Image
-          source={leftArrow}
-          style={[styles.downArrow, {
-            position: "relative",
-            right: 0,
-            marginLeft: 10,
-            backgroundColor: 'transparent',
-          }]} />
-        <Text
-          style={[styles.text, styles.textCountryCode]}
-        >{code}</Text>
+        {this.renderCountryCodePickerContent()}
       </TouchableOpacity>
-    )
-  }
+    );
+  };
 
   renderCountryCodeAndroidPicker = () => {
-    const hasFlag = this.state.selectedCountryCode && Object.keys(this.state.selectedCountryCode).length > 0
-    const code = this.state.selectedCountryCode && Object.keys(this.state.selectedCountryCode).length > 0 ? `+${this.state.selectedCountryCode.attributes.country_code}` : ""
+    const theme = this.getContactTheme();
     return (
       <View>
         <TextInput
           testID="txtInputCellPhone"
           placeholder="Enter your cell phone"
-          placeholderTextColor="#CBD5E1"
-          style={[styles.textInput, styles.textInputPhone]}
+          placeholderTextColor={theme.muted}
+          style={[this.styles.textInput, this.styles.textInputPhone]}
           keyboardType="numeric"
           value={this.state.phoneNumber}
           returnKeyType="next"
@@ -146,87 +163,80 @@ export default class Contactus extends ContactusController {
         />
         <TouchableOpacity
           testID="btnCountryCodeSelectAndroid"
-          style={styles.countryCodeContainer}
-          onPress={() => { this.setState({ countryCodeClickedAndroid: true }) }}
+          style={this.styles.countryCodeContainer}
+          onPress={() => {
+            this.setState({ countryCodeClickedAndroid: true });
+          }}
         >
-          <Image source={hasFlag ? { uri: this.state.selectedCountryCode.attributes.map_url } : usFlag} style={styles.usFlagImg} />
-          <Image
-            source={leftArrow}
-            style={[styles.downArrow, {
-              position: "relative",
-              right: 0,
-              marginLeft: 10,
-              backgroundColor: 'transparent',
-            }]} />
-          <Text
-            style={[styles.text, styles.textCountryCode]}>{code}</Text>
+          {this.renderCountryCodePickerContent()}
         </TouchableOpacity>
       </View>
-    )
-  }
+    );
+  };
 
   renderEmail = () => {
+    const theme = this.getContactTheme();
     return (
       <>
-        <Text style={[styles.textInputLabel]}>{configJSON.email}</Text>
+        <Text style={this.styles.textInputLabel}>{configJSON.email}</Text>
         <TextInput
           testID="txtInputEmail"
           placeholder="Enter your email address"
-          placeholderTextColor="#CBD5E1"
-          style={styles.textInput}
+          placeholderTextColor={theme.muted}
+          style={this.styles.textInput}
           value={this.state.email}
           keyboardType="email-address"
           onChangeText={this.handleEmail}
         />
       </>
-    )
-  }
+    );
+  };
 
   renderSubject = () => {
+    const theme = this.getContactTheme();
     return (
       <>
-        <Text style={[styles.textInputLabel]}>{configJSON.subject}</Text>
+        <Text style={this.styles.textInputLabel}>{configJSON.subject}</Text>
         <TextInput
           testID="txtInputSubject"
           placeholder="What would you like to talk about?"
-          placeholderTextColor="#CBD5E1"
-          style={styles.textInput}
+          placeholderTextColor={theme.muted}
+          style={this.styles.textInput}
           value={this.state.subject}
           onChangeText={this.handleSubject}
         />
       </>
-    )
-  }
+    );
+  };
 
   renderMessage = () => {
+    const theme = this.getContactTheme();
     return (
       <>
-        <Text style={[styles.textInputLabel]}>{configJSON.message}</Text>
+        <Text style={this.styles.textInputLabel}>{configJSON.message}</Text>
         <TextInput
           multiline
           textAlignVertical="top"
           testID="txtInputMessage"
           placeholder="Any details you would like to share?"
-          placeholderTextColor="#CBD5E1"
-          style={[styles.textInput, { lineHeight: 22, minHeight: 75, }]}
+          placeholderTextColor={theme.muted}
+          style={[this.styles.textInput, this.styles.messageInput]}
           value={this.state.description}
           onChangeText={this.handleMessage}
         />
       </>
-    )
-  }
+    );
+  };
 
   renderError = (errorType: string) => {
     return (
       <>
         {errorType !== "" && (
-          <Text style={styles.errorText}>
-            {errorType}
-          </Text>
+          <Text style={this.styles.errorText}>{errorType}</Text>
         )}
       </>
-    )
-  }
+    );
+  };
 
   renderCountryModal = () => {
     return (
@@ -235,28 +245,25 @@ export default class Contactus extends ContactusController {
         transparent={true}
         visible={this.state.modalVisible}
       >
-        <View style={styles.centeredModalView}>
-          <View style={styles.viewModal}>
-            <Text style={styles.txtOutsideUS}>
-              Are you outside the US?
-            </Text>
-            <Text style={[styles.text, styles.txtOnlySupportUS]}>
+        <View style={this.styles.centeredModalView}>
+          <View style={this.styles.viewModal}>
+            <Text style={this.styles.txtOutsideUS}>Are you outside the US?</Text>
+            <Text style={this.styles.txtOnlySupportUS}>
               We only support the United States right now.
             </Text>
             <TouchableOpacity
               testID="btnAccept"
-              style={styles.continueButton}
+              style={this.styles.continueButton}
               onPress={this.hideModalVisibility}
+              activeOpacity={0.85}
             >
-              <Text style={[styles.text, styles.textContinueButton]}>
-                Accept
-              </Text>
+              <Text style={this.styles.textContinueButton}>Accept</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
-    )
-  }
+    );
+  };
 
   renderCountryCodeModal = () => {
     return (
@@ -265,100 +272,124 @@ export default class Contactus extends ContactusController {
         transparent={true}
         visible={this.state.countryCodeClicked}
       >
-        <TouchableWithoutFeedback testID="hideCountryCode" onPress={this.hideCountryCode}>
-          <View style={styles.centeredModalView} >
+        <TouchableWithoutFeedback
+          testID="hideCountryCode"
+          onPress={this.hideCountryCode}
+        >
+          <View style={this.styles.centeredModalView}>
             <TouchableWithoutFeedback>
-              <View style={[styles.viewModal, { borderTopStartRadius: 20, padding: 15 }]}>
+              <View style={[this.styles.viewModal, this.styles.pickerModal]}>
                 <Picker
                   testID="countryCodePickerModal"
                   selectedValue={this.state.selectedCountryCode}
                   onValueChange={this.handleCountryCodeValueiOS}
                 >
-                  {this.state.countryCodesList?.map(
-                    (item: any) => (
-                      <Picker.Item key={item.id}
-                        label={`${item.attributes.name} (+${item.attributes.country_code})`}
-                        value={item} />
-                    )
-                  )}
+                  {this.state.countryCodesList?.map((item: any) => (
+                    <Picker.Item
+                      key={item.id}
+                      label={`${item.attributes.name} (+${item.attributes.country_code})`}
+                      value={item}
+                    />
+                  ))}
                 </Picker>
               </View>
             </TouchableWithoutFeedback>
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-    )
-  }
+    );
+  };
+
+  renderAndroidCountryCodeModal = () => {
+    const theme = this.getContactTheme();
+    return (
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={this.state.countryCodeClickedAndroid}
+      >
+        <View style={this.styles.androidPickerOverlay}>
+          <View style={this.styles.androidPickerCard}>
+            <ScrollView>
+              {this.state.countryCodesList.map((item: any) => (
+                <TouchableOpacity
+                  testID="countryCode"
+                  key={item.attributes.country_code}
+                  style={this.styles.androidPickerRow}
+                  onPress={() => this.handleCountryCodeValueAndroid(item)}
+                >
+                  <Text style={{ color: theme.foreground }}>
+                    {`${item.attributes.name} (+${item.attributes.country_code})`}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
 
   render() {
+    const theme = this.getContactTheme();
     return (
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={{ flex: 1, backgroundColor: theme.background }}
         keyboardVerticalOffset={Platform.OS === "ios" ? 10 : undefined}
-        behavior={this.isPlatformiOS() ? "padding" : undefined}>
-        <SafeAreaView style={styles.container}>
-          <ScrollView>
+        behavior={this.isPlatformiOS() ? "padding" : undefined}
+      >
+        <SafeAreaView style={this.styles.container} edges={["top"]}>
+          <StatusBar
+            animated={true}
+            hidden={false}
+            barStyle={this.state.isDarkMode ? "light-content" : "dark-content"}
+            backgroundColor={theme.background}
+          />
+          {this.renderHeader()}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={this.styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+          >
             <View>
-              <StatusBar
-                animated={true}
-                hidden={false}
-                backgroundColor="#EDEDFF"
-              />
-              <View>
-                <View style={styles.pageBG}>
-                  {this.renderHeader()}
-                  {this.renderSubheading()}
-                </View>
-                {
-                  !this.state.countryCodeFetched ?
-                    <View style={styles.loadingContainer1}>
-                      <ActivityIndicator size={'large'} color="black" />
-                    </View>
-                    :
-                    <View style={{ margin: 20, paddingBottom: 20 }}>
-                      {this.renderName()}
-                      {this.renderError(this.state.nameError)}
-
-                      {this.renderPhoneNumber()}
-                      {this.renderError(this.state.phoneError)}
-
-                      {this.renderEmail()}
-                      {this.renderError(this.state.emailError)}
-
-                      {this.renderSubject()}
-                      {this.renderError(this.state.subjectError)}
-
-                      {this.renderMessage()}
-                      {this.renderError(this.state.messageError)}
-
-                      <TouchableOpacity
-                        testID="sendMessageBtn"
-                        style={styles.button}
-                        onPress={this.postContactAPI} >
-                        <Text style={{ fontWeight: '700', fontSize: 16, color: "white" }}>Send message</Text>
-                      </TouchableOpacity>
-                    </View>
-                }
+              <View style={this.styles.introCard}>
+                {this.renderSubheading()}
               </View>
+              {!this.state.countryCodeFetched ? (
+                <View style={this.styles.loadingContainer1}>
+                  <ActivityIndicator size={"large"} color={theme.primary} />
+                </View>
+              ) : (
+                <View style={this.styles.formWrap}>
+                  {this.renderName()}
+                  {this.renderError(this.state.nameError)}
+
+                  {this.renderPhoneNumber()}
+                  {this.renderError(this.state.phoneError)}
+
+                  {this.renderEmail()}
+                  {this.renderError(this.state.emailError)}
+
+                  {this.renderSubject()}
+                  {this.renderError(this.state.subjectError)}
+
+                  {this.renderMessage()}
+                  {this.renderError(this.state.messageError)}
+
+                  <TouchableOpacity
+                    testID="sendMessageBtn"
+                    style={this.styles.button}
+                    onPress={this.postContactAPI}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={this.styles.sendButtonText}>Send message</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
             {this.renderCountryModal()}
             {this.renderCountryCodeModal()}
-            <Modal
-              animationType="slide"
-              transparent={true}
-              visible={this.state.countryCodeClickedAndroid}>
-              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#00000080' }}>
-                <View style={{ width: '90%', maxHeight: '95%', backgroundColor: '#FFFFFF', padding: 10, }}>
-                  <ScrollView>
-                    {this.state.countryCodesList.map((item: any) => (
-                      <TouchableOpacity testID="countryCode" key={item.attributes.country_code} style={{ marginVertical: 15, }} onPress={() => this.handleCountryCodeValueAndroid(item)}>
-                        <Text style={{ color: 'black', }}>{`${item.attributes.name} (+${item.attributes.country_code})`}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </View>
-              </View>
-            </Modal>
+            {this.renderAndroidCountryCodeModal()}
           </ScrollView>
         </SafeAreaView>
       </KeyboardAvoidingView>
@@ -368,162 +399,213 @@ export default class Contactus extends ContactusController {
 }
 
 // Customizable Area Start
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    marginLeft: "auto",
-    marginRight: "auto",
-    width: '100%',
-    backgroundColor: "#ffffffff",
-  },
-  pageBG: {
-    backgroundColor: '#EDEDFF',
-    borderBottomEndRadius: 32,
-    paddingHorizontal: 16,
-    paddingBottom: 16
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-
-  },
-  backNavButton: {
-    width: 20,
-  },
-  backNavIcon: {
-    width: 12,
-    left: 0,
-    resizeMode: "contain",
-  },
-  headerTitle: {
-    fontWeight: "700",
-    fontSize: 24,
-  },
-  hamburgerIcon: {
-    width: 25,
-    height: 16,
-    resizeMode: "contain",
-    marginRight: 5,
-  },
-  text: {
-    color: colors(false).text,
-
-  },
-  textInputLabel: {
-    fontWeight: "700",
-    fontSize: 14,
-    color: '#334155',
-    marginTop: 20,
-    marginBottom: 10,
-  },
-  textInput: {
-    width: "100%",
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 0.5,
-    borderColor: "#C5C5FF",
-    color: colors(false).text,
-    height: 50,
-  },
-  button: {
-    borderRadius: 10,
-    alignItems: 'center',
-    padding: 10,
-    backgroundColor: '#4949EE',
-    width: '100%',
-    marginTop: 40,
-  },
-  errorText: {
-    fontFamily: "OpenSans",
-    alignSelf: "flex-start",
-    color: 'red',
-    fontSize: 13,
-    paddingTop: 2,
-  },
-  countryCodeContainer: {
-    position: "absolute",
-    left: 10,
-    top: 5,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  usFlagImg: {
-    height: 25,
-    width: 25,
-    resizeMode: "contain",
-  },
-  countryCodeArrow: {
-    position: "relative",
-    right: 0,
-    marginLeft: 10,
-    backgroundColor: 'transparent',
-  },
-  textCountryCode: {
-    alignSelf: "center",
-    marginLeft: 10,
-  },
-  downArrow: {
-    position: "absolute",
-    right: 15,
-    marginRight: 5,
-    width: 8,
-    backgroundColor: 'white',
-    transform: [{ rotate: "-90deg" }],
-    resizeMode: "contain",
-  },
-  centeredModalView: {
-    flex: 1,
-    justifyContent: "flex-end",
-    backgroundColor: "#33415580",
-  },
-  viewModal: {
-    height: "30%",
-    justifyContent: "space-between",
-    backgroundColor: "white",
-    borderTopEndRadius: 20,
-    padding: 35,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
+const createContactStyles = (theme: ContactTheme) => {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      width: "100%",
+      maxWidth: 650,
+      alignSelf: "center",
+      backgroundColor: theme.background,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 100,
-  },
-  txtOutsideUS: {
-    fontWeight: "700",
-    fontSize: 26,
-    lineHeight: 28,
-    marginVertical: 10,
-    color: "#0F172A",
-  },
-  txtOnlySupportUS: {
-    fontSize: 18,
-  },
-  continueButton: {
-    backgroundColor: "#3333CC",
-    width: "100%",
-    padding: 15,
-    borderRadius: 10,
-    marginTop: 25,
-  },
-  textContinueButton: {
-    color: colors(false).white,
-    fontWeight: "700",
-    fontSize: 18,
-    alignSelf: "center",
-  },
-  textInputPhone: {
-    paddingLeft: 110,
-  },
-  loadingContainer1: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#ffffffdd',
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
+    scrollContent: {
+      paddingBottom: 32,
+    },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: 16,
+      height: 56,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.border,
+      backgroundColor: theme.background,
+    },
+    headerCircleBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: theme.input,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    headerSideSpacer: {
+      width: 36,
+      height: 36,
+    },
+    headerTitle: {
+      fontWeight: "900",
+      fontSize: 18,
+      letterSpacing: 0.6,
+      color: theme.foreground,
+      textTransform: "uppercase",
+    },
+    introCard: {
+      marginHorizontal: 16,
+      marginTop: 16,
+      marginBottom: 4,
+      padding: 16,
+      borderRadius: 16,
+      backgroundColor: theme.card,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+    },
+    subheading: {
+      lineHeight: 22,
+      fontSize: 14,
+      color: theme.muted,
+    },
+    formWrap: {
+      marginHorizontal: 16,
+      paddingBottom: 20,
+    },
+    textInputLabel: {
+      fontWeight: "700",
+      fontSize: 14,
+      color: theme.foreground,
+      marginTop: 18,
+      marginBottom: 8,
+    },
+    textInput: {
+      width: "100%",
+      paddingHorizontal: 14,
+      borderRadius: 14,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      backgroundColor: theme.input,
+      color: theme.foreground,
+      height: 50,
+      fontSize: 16,
+    },
+    messageInput: {
+      lineHeight: 22,
+      minHeight: 110,
+      height: 110,
+      paddingTop: 12,
+    },
+    button: {
+      borderRadius: 14,
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 16,
+      backgroundColor: theme.primary,
+      width: "100%",
+      marginTop: 28,
+    },
+    sendButtonText: {
+      fontWeight: "700",
+      fontSize: 16,
+      color: "#FFFFFF",
+    },
+    errorText: {
+      fontFamily: "OpenSans",
+      alignSelf: "flex-start",
+      color: "#DC2626",
+      fontSize: 13,
+      paddingTop: 4,
+    },
+    countryCodeContainer: {
+      position: "absolute",
+      left: 10,
+      top: 5,
+      height: 40,
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    usFlagImg: {
+      height: 22,
+      width: 22,
+      resizeMode: "contain",
+      borderRadius: 11,
+    },
+    countryCodeChevron: {
+      marginLeft: 6,
+    },
+    textCountryCode: {
+      alignSelf: "center",
+      marginLeft: 8,
+      color: theme.foreground,
+      fontWeight: "600",
+    },
+    centeredModalView: {
+      flex: 1,
+      justifyContent: "flex-end",
+      backgroundColor: "rgba(8, 8, 15, 0.72)",
+    },
+    viewModal: {
+      height: "30%",
+      justifyContent: "space-between",
+      backgroundColor: theme.card,
+      borderTopEndRadius: 20,
+      padding: 35,
+      shadowColor: "#000",
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+      elevation: 100,
+    },
+    pickerModal: {
+      borderTopStartRadius: 20,
+      padding: 15,
+    },
+    txtOutsideUS: {
+      fontWeight: "700",
+      fontSize: 26,
+      lineHeight: 28,
+      marginVertical: 10,
+      color: theme.foreground,
+    },
+    txtOnlySupportUS: {
+      fontSize: 18,
+      color: theme.muted,
+    },
+    continueButton: {
+      backgroundColor: theme.primary,
+      width: "100%",
+      padding: 15,
+      borderRadius: 12,
+      marginTop: 25,
+    },
+    textContinueButton: {
+      color: "#FFFFFF",
+      fontWeight: "700",
+      fontSize: 18,
+      alignSelf: "center",
+    },
+    textInputPhone: {
+      paddingLeft: 110,
+    },
+    loadingContainer1: {
+      minHeight: 180,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    androidPickerOverlay: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: "rgba(8, 8, 15, 0.72)",
+    },
+    androidPickerCard: {
+      width: "90%",
+      maxHeight: "95%",
+      backgroundColor: theme.card,
+      padding: 10,
+      borderRadius: 16,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+    },
+    androidPickerRow: {
+      marginVertical: 15,
+    },
+  });
+};
+
+const darkContactStyles = createContactStyles(redesignTheme);
+const lightContactStyles = createContactStyles(lightTheme);
 // Customizable Area End

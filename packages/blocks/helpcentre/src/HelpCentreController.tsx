@@ -8,6 +8,14 @@ import MessageEnum, {
 import { runEngine } from "../../../framework/src/RunEngine";
 
 // Customizable Area Start
+import { DeviceEventEmitter } from "react-native";
+import { getStorageData } from "../../../framework/src/Utilities";
+import {
+  lightTheme,
+  redesignTheme,
+  PROFILE_THEME_CHANGED_EVENT,
+  PROFILE_THEME_STORAGE_KEY,
+} from "../../utilities/src/Colors";
 
 interface IFAQList {
   id: number
@@ -41,6 +49,7 @@ interface S {
   filteredFAQList: IFAQList[];
   aboutUs: string;
   aboutUsImage: string;
+  isDarkMode: boolean;
   // Customizable Area End
 }
 
@@ -56,6 +65,7 @@ export default class HelpCentreController extends BlockComponent<
   getHelpCentreApiCallId: any
   getFAQApiCallId: any
   getAboutUsApiCallId: any
+  profileThemeListener: { remove: () => void } | null = null;
   constructor(props: Props) {
     super(props);
     this.receive = this.receive.bind(this);
@@ -75,7 +85,8 @@ export default class HelpCentreController extends BlockComponent<
       searchInput: "",
       filteredFAQList: [],
       aboutUs: "",
-      aboutUsImage:""
+      aboutUsImage:"",
+      isDarkMode: true,
     };
     // Customizable Area End
     runEngine.attachBuildingBlock(this as IBlock, this.subScribedMessages);
@@ -91,6 +102,15 @@ export default class HelpCentreController extends BlockComponent<
     }
     this.getFAQListAPI()
     this.getAboutUs();
+    this.loadHelpCentreTheme();
+  }
+
+  async componentWillUnmount() {
+    if (this.profileThemeListener) {
+      this.profileThemeListener.remove();
+      this.profileThemeListener = null;
+    }
+    await super.componentWillUnmount();
   }
 
   getToken = () => {
@@ -111,6 +131,23 @@ export default class HelpCentreController extends BlockComponent<
   }
 
   // Customizable Area Start
+  loadHelpCentreTheme = async () => {
+    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
+    this.setState({ isDarkMode: savedTheme !== "false" });
+    if (!this.profileThemeListener) {
+      this.profileThemeListener = DeviceEventEmitter.addListener(
+        PROFILE_THEME_CHANGED_EVENT,
+        (isDarkMode: boolean) => {
+          this.setState({ isDarkMode });
+        },
+      );
+    }
+  };
+
+  getHelpCentreTheme = () => {
+    return this.state.isDarkMode ? redesignTheme : lightTheme;
+  };
+
   handleSessionResponse(message: Message) {
     if (getName(MessageEnum.SessionResponseMessage) === message.id) {
       let token = message.getData(getName(MessageEnum.SessionResponseToken));

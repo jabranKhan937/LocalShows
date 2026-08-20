@@ -4,6 +4,18 @@ import Adapter from 'enzyme-adapter-react-16';
 
 configure({ adapter: new Adapter() });
 
+jest.mock('react-native-safe-area-context', () => {
+    const React = require('react');
+    const { View } = require('react-native');
+    return {
+        SafeAreaView: ({ children, ...props }) =>
+            React.createElement(View, props, children),
+        useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+    };
+});
+
+jest.mock('react-native-vector-icons/Feather', () => 'Icon');
+
 jest.mock('react-native/Libraries/Utilities/Platform', () => ({
     OS: 'macos',
     select: () => null

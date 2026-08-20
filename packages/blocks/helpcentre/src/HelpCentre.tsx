@@ -2,32 +2,27 @@ import React from "react";
 
 import {
   StyleSheet,
-  Dimensions,
   // Customizable Area Start
   Text,
-  Image,
   TouchableOpacity,
   View,
   ScrollView,
   TouchableWithoutFeedback,
   StatusBar,
   TextInput,
-  SafeAreaView,
   // Customizable Area End
 } from "react-native";
-
-const Height = Dimensions.get("window").height;
 
 import HelpCentreController, { Props } from "./HelpCentreController";
 
 import { FlatList } from "react-native-gesture-handler";
-import { triangle } from "./assets";
 
 // Customizable Area Start
+import { SafeAreaView } from "react-native-safe-area-context";
+import Icon from "react-native-vector-icons/Feather";
+import { lightTheme, redesignTheme } from "../../utilities/src/Colors";
 
-import { colors } from "../../utilities/src/Colors";
-import { leftArrow } from "../../email-account-registration/src/assets";
-
+type HelpTheme = typeof redesignTheme;
 // Customizable Area End
 
 export default class HelpCentre extends HelpCentreController {
@@ -38,168 +33,265 @@ export default class HelpCentre extends HelpCentreController {
   }
 
   // Customizable Area Start
+  get styles() {
+    return this.state.isDarkMode ? darkHelpStyles : lightHelpStyles;
+  }
+
   renderHeader = () => {
+    const theme = this.getHelpCentreTheme();
     return (
-      <View style={styles.headerContainer}>
+      <View style={this.styles.headerContainer}>
         <TouchableOpacity
           testID="navigateBack"
-          style={styles.backButton}
+          style={this.styles.headerCircleBtn}
           onPress={() => {
             this.props.navigation.goBack();
-          }} >
-          <Image source={leftArrow} style={styles.backIcon} />
+          }}
+          activeOpacity={0.8}
+        >
+          <Icon name="arrow-left" size={18} color={theme.foreground} />
         </TouchableOpacity>
-        <Text style={[styles.text, styles.headerTitleText]}>
-          Help Center
-        </Text>
-        <View style={styles.backButton} />
+        <Text style={this.styles.headerTitleText}>Help Center</Text>
+        <View style={this.styles.headerSideSpacer} />
       </View>
-    )
-  }
+    );
+  };
 
   renderSearch = () => {
+    const theme = this.getHelpCentreTheme();
     return (
-      <View style={styles.inputContainer}>
-        <Image source={require('../../../mobile/assets/images/image_search.png')} style={{ height: 20, width: 20, resizeMode: 'contain' }} />
+      <View style={this.styles.inputContainer}>
+        <Icon name="search" size={16} color={theme.muted} />
         <TextInput
           testID="searchInputText"
-          style={styles.input}
-          placeholderTextColor="#334166"
+          style={this.styles.input}
+          placeholderTextColor={theme.muted}
           placeholder="Search"
           value={this.state.searchInput}
-          onChangeText={text => this.filterFAQData(text.replace("  ", " ").trimStart())} />
+          onChangeText={text =>
+            this.filterFAQData(text.replace("  ", " ").trimStart())
+          }
+        />
       </View>
-    )
-  }
+    );
+  };
 
   renderItem = (item: any, index: number) => {
+    const theme = this.getHelpCentreTheme();
     return (
-      <View style={{ marginHorizontal: 25, marginVertical: 6 }}>
+      <View style={this.styles.faqCard}>
         <TouchableOpacity
           testID="questionClick"
-          style={{ flexDirection: 'row', }}
-          onPress={() => { this.showHideAnswers(index) }}>
-          <Text style={{ fontSize: 14, fontWeight: '700', lineHeight: 22, color: '#334155', flex: 0.9, }}>{item.question}</Text>
-          <Image style={{ height: 15, width: 15, resizeMode: "contain", marginTop: 5, flex: 0.1, transform: [{ rotate: '-90deg' }] }} source={leftArrow} />
+          style={this.styles.faqQuestionRow}
+          onPress={() => {
+            this.showHideAnswers(index);
+          }}
+          activeOpacity={0.8}
+        >
+          <Text style={this.styles.faqQuestion}>{item.question}</Text>
+          <Icon
+            name="chevron-down"
+            size={18}
+            color={theme.muted}
+            style={{ transform: [{ rotate: item.isOpen ? "180deg" : "0deg" }] }}
+          />
         </TouchableOpacity>
-        {item.isOpen && <Text style={{ fontSize: 14, fontWeight: '400', lineHeight: 22, color: '#334155', marginVertical: 10, }}>{item.answer}</Text>}
+        {item.isOpen && <Text style={this.styles.faqAnswer}>{item.answer}</Text>}
       </View>
-    )
-  }
+    );
+  };
 
   renderListEmptyComponent = () => {
     return (
-      <View style={{ justifyContent: 'center', alignItems: 'center', backgroundColor: 'white', paddingTop: 50 }}>
-        <Text style={{ fontSize: 14, fontWeight: '400', color: "#334155" }}>{"No record(s) found"}</Text>
+      <View style={this.styles.emptyView}>
+        <Text style={this.styles.emptyText}>{"No record(s) found"}</Text>
       </View>
-    )
-  }
+    );
+  };
   // Customizable Area End
 
   render() {
+    const theme = this.getHelpCentreTheme();
     return (
       //Merge Engine DefaultContainer
-      <ScrollView keyboardShouldPersistTaps="always" style={styles.container}>
-        <TouchableWithoutFeedback
-          onPress={() => {
-            this.hideKeyboard();
-          }}
+      <SafeAreaView style={this.styles.container} edges={["top"]}>
+        <StatusBar
+          animated={true}
+          hidden={false}
+          barStyle={this.state.isDarkMode ? "light-content" : "dark-content"}
+          backgroundColor={theme.background}
+        />
+        {this.renderHeader()}
+        <ScrollView
+          keyboardShouldPersistTaps="always"
+          style={this.styles.scroll}
+          contentContainerStyle={this.styles.scrollContent}
         >
-          {/* Customizable Area Start */}
-          {/* Merge Engine UI Engine Code */}
-          <SafeAreaView style={{ backgroundColor: "#EDEDFF" }}>
-            <StatusBar
-              animated={true}
-              hidden={false}
-              backgroundColor="#EDEDFF"
-            />
+          <TouchableWithoutFeedback
+            onPress={() => {
+              this.hideKeyboard();
+            }}
+          >
+            {/* Customizable Area Start */}
             <View>
-              <View style={styles.pageBackground}>
-                {this.renderHeader()}
+              <View style={this.styles.introCard}>
                 {this.renderSearch()}
-                <Text style={[styles.text, {
-                  lineHeight: 22,
-                }]}>The Local Shows Help Center is your go-to resource for all your app-related queries. Find answers to frequently asked questions, troubleshooting guides, and contact support for personalized assistance.</Text>
+                <Text style={this.styles.introText}>
+                  The Local Shows Help Center is your go-to resource for all your
+                  app-related queries. Find answers to frequently asked questions,
+                  troubleshooting guides, and contact support for personalized
+                  assistance.
+                </Text>
               </View>
               <FlatList
                 testID="faqsList"
-                data={this.state.searchInput === "" ? this.state.faqList : this.state.filteredFAQList}
-                contentContainerStyle={{ backgroundColor: 'white' }}
+                data={
+                  this.state.searchInput === ""
+                    ? this.state.faqList
+                    : this.state.filteredFAQList
+                }
+                contentContainerStyle={this.styles.faqListContent}
                 renderItem={({ item, index }: any) => this.renderItem(item, index)}
                 ListEmptyComponent={this.renderListEmptyComponent}
                 keyExtractor={(item: any) => item.id}
+                scrollEnabled={false}
               />
             </View>
-          </SafeAreaView>
-          {/* Merge Engine UI Engine Code */}
-          {/* Customizable Area End */}
-        </TouchableWithoutFeedback>
-      </ScrollView>
+            {/* Customizable Area End */}
+          </TouchableWithoutFeedback>
+        </ScrollView>
+      </SafeAreaView>
       //Merge Engine End DefaultContainer
     );
   }
 }
 
 // Customizable Area Start
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFF",
-    height: "100%"
-  },
-  pageBackground: {
-    backgroundColor: '#EDEDFF',
-    borderBottomEndRadius: 32,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    paddingTop: 5
-  },
-  headerContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
+const createHelpStyles = (theme: HelpTheme) => {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      width: "100%",
+      maxWidth: 650,
+      alignSelf: "center",
+      backgroundColor: theme.background,
+    },
+    scroll: {
+      flex: 1,
+    },
+    scrollContent: {
+      paddingBottom: 32,
+    },
+    headerContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: 16,
+      height: 56,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.border,
+      backgroundColor: theme.background,
+    },
+    headerCircleBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: theme.input,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    headerSideSpacer: {
+      width: 36,
+      height: 36,
+    },
+    headerTitleText: {
+      fontWeight: "900",
+      fontSize: 18,
+      letterSpacing: 0.6,
+      color: theme.foreground,
+      textTransform: "uppercase",
+    },
+    introCard: {
+      marginHorizontal: 16,
+      marginTop: 16,
+      padding: 14,
+      borderRadius: 16,
+      backgroundColor: theme.card,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+    },
+    inputContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      borderRadius: 14,
+      paddingVertical: 2,
+      paddingHorizontal: 12,
+      backgroundColor: theme.input,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+    },
+    input: {
+      flex: 1,
+      height: 44,
+      fontSize: 16,
+      marginLeft: 10,
+      color: theme.foreground,
+    },
+    introText: {
+      color: theme.muted,
+      fontSize: 14,
+      fontWeight: "400",
+      lineHeight: 22,
+      marginTop: 14,
+    },
+    faqListContent: {
+      paddingHorizontal: 16,
+      paddingTop: 12,
+      paddingBottom: 8,
+    },
+    faqCard: {
+      backgroundColor: theme.card,
+      borderRadius: 16,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      marginBottom: 10,
+    },
+    faqQuestionRow: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+    },
+    faqQuestion: {
+      fontSize: 15,
+      fontWeight: "700",
+      lineHeight: 22,
+      color: theme.foreground,
+      flex: 1,
+      paddingRight: 10,
+    },
+    faqAnswer: {
+      fontSize: 14,
+      fontWeight: "400",
+      lineHeight: 22,
+      color: theme.muted,
+      marginTop: 10,
+    },
+    emptyView: {
+      justifyContent: "center",
+      alignItems: "center",
+      paddingTop: 48,
+    },
+    emptyText: {
+      fontSize: 14,
+      fontWeight: "400",
+      color: theme.muted,
+    },
+  });
+};
 
-  },
-  backButton: {
-    width: 20,
-  },
-  backIcon: {
-    width: 12,
-    left: 0,
-    resizeMode: "contain",
-  },
-  headerTitleText: {
-    fontWeight: "700",
-    fontSize: 24,
-  },
-  hamburgerIconButton: {
-    width: 25,
-    height: 16,
-    resizeMode: "contain",
-
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 15,
-    paddingVertical: 2,
-    paddingHorizontal: 8,
-    margin: 10,
-    backgroundColor: '#F8FAFC',
-  },
-  input: {
-    flex: 1,
-    height: 47,
-    fontSize: 18,
-    marginLeft: 10,
-    color: '#334166',
-  },
-  text: {
-    color: colors(false).text,
-    fontSize: 14,
-    fontWeight: '400',
-    marginHorizontal: 10,
-  },
-});
+const darkHelpStyles = createHelpStyles(redesignTheme);
+const lightHelpStyles = createHelpStyles(lightTheme);
 // Customizable Area End

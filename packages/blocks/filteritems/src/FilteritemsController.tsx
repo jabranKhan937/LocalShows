@@ -8,8 +8,16 @@ import { runEngine } from "../../../framework/src/RunEngine";
 import { getStorageData } from "../../../framework/src/Utilities";
 import { CommonActions } from "@react-navigation/native";
 import moment from "moment";
+import { DeviceEventEmitter } from "react-native";
 
 // Customizable Area Start
+import {
+  lightTheme,
+  redesignTheme,
+  PROFILE_THEME_CHANGED_EVENT,
+  PROFILE_THEME_STORAGE_KEY,
+} from "../../utilities/src/Colors";
+
 type FilterTypes = "0" | "1" | "2";
 // Customizable Area End
 
@@ -47,6 +55,7 @@ interface S {
   activeOptionsMenuId: string | null;
   unreadNotificationCount: number;
   newNotification: boolean;
+  isDarkMode: boolean;
   // Customizable Area End
 }
 
@@ -62,6 +71,7 @@ export default class FilteritemsController extends BlockComponent<
   getCalendarEventsApiCallId: any;
   deleteCalendarEventApiCallId: any;
   checkUnreadNotificationsApiCallId: any;
+  profileThemeListener: { remove: () => void } | null = null;
 
   constructor(props: Props) {
     super(props);
@@ -94,6 +104,7 @@ export default class FilteritemsController extends BlockComponent<
       activeOptionsMenuId: null,
       unreadNotificationCount: 0,
       newNotification: false,
+      isDarkMode: true,
     };
     // Customizable Area End
     runEngine.attachBuildingBlock(this as IBlock, this.subScribedMessages);
@@ -140,6 +151,7 @@ export default class FilteritemsController extends BlockComponent<
       }, 100);
     });
     this.getToken();
+    this.loadCalendarTheme();
     // Call notification count API on mount
     setTimeout(() => {
       this.getUnreadNotificationsCount();
@@ -169,9 +181,30 @@ export default class FilteritemsController extends BlockComponent<
   // Customizable Area Start
 
   async componentWillUnmount() {
+    if (this.profileThemeListener) {
+      this.profileThemeListener.remove();
+      this.profileThemeListener = null;
+    }
     super.componentWillUnmount();
     this.props.navigation.removeListner();
   }
+
+  loadCalendarTheme = async () => {
+    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
+    this.setState({ isDarkMode: savedTheme !== "false" });
+    if (!this.profileThemeListener) {
+      this.profileThemeListener = DeviceEventEmitter.addListener(
+        PROFILE_THEME_CHANGED_EVENT,
+        (isDarkMode: boolean) => {
+          this.setState({ isDarkMode });
+        },
+      );
+    }
+  };
+
+  getCalendarTheme = () => {
+    return this.state.isDarkMode ? redesignTheme : lightTheme;
+  };
 
   showDateSelector = () => {
     this.setState({
@@ -321,7 +354,7 @@ export default class FilteritemsController extends BlockComponent<
 
   dynamicBg = (selected: FilterTypes) => {
     if (selected === this.state.selectedFilter) {
-      return "#c5c5ff";
+      return this.getCalendarTheme().primarySoft;
     }
     return "transparent";
   };

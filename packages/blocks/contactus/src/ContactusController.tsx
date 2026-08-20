@@ -8,6 +8,13 @@ import { runEngine } from "../../../framework/src/RunEngine";
 
 // Customizable Area Start
 import { getStorageData, isEmpty } from "../../../framework/src/Utilities";
+import { DeviceEventEmitter } from "react-native";
+import {
+  lightTheme,
+  redesignTheme,
+  PROFILE_THEME_CHANGED_EVENT,
+  PROFILE_THEME_STORAGE_KEY,
+} from "../../utilities/src/Colors";
 // Customizable Area End
 
 export const configJSON = require("./config");
@@ -48,6 +55,7 @@ interface S {
   countryCodeClickedAndroid: boolean;
   selectedCountryCode: any;
   countryCodeFetched:boolean
+  isDarkMode: boolean;
   // Customizable Area End
 }
 
@@ -62,6 +70,7 @@ export default class ContactusController extends BlockComponent<Props, S, SS> {
   addContactApiCallId: any;
   postContactUsApiCallID: any;
   getCountryCodeListId: string = "";
+  profileThemeListener: { remove: () => void } | null = null;
   // Customizable Area End
   constructor(props: Props) {
     super(props);
@@ -104,7 +113,8 @@ export default class ContactusController extends BlockComponent<Props, S, SS> {
       countryCodeClicked: false,
       countryCodeClickedAndroid: false,
       selectedCountryCode: {},
-      countryCodeFetched:false
+      countryCodeFetched:false,
+      isDarkMode: true,
     };
 
     // Customizable Area End
@@ -122,6 +132,7 @@ export default class ContactusController extends BlockComponent<Props, S, SS> {
     // Customizable Area Start
     const authToken = await getStorageData('authToken');
     this.handleCountryCodeListAPICall()
+    this.loadContactTheme();
     if (authToken !== null) {
       const name = await getStorageData('user_name') ?? "";
       const email = await getStorageData('user_email') ?? "";
@@ -150,6 +161,31 @@ export default class ContactusController extends BlockComponent<Props, S, SS> {
   }
 
   // Customizable Area Start
+  loadContactTheme = async () => {
+    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
+    this.setState({ isDarkMode: savedTheme !== "false" });
+    if (!this.profileThemeListener) {
+      this.profileThemeListener = DeviceEventEmitter.addListener(
+        PROFILE_THEME_CHANGED_EVENT,
+        (isDarkMode: boolean) => {
+          this.setState({ isDarkMode });
+        },
+      );
+    }
+  };
+
+  getContactTheme = () => {
+    return this.state.isDarkMode ? redesignTheme : lightTheme;
+  };
+
+  async componentWillUnmount() {
+    if (this.profileThemeListener) {
+      this.profileThemeListener.remove();
+      this.profileThemeListener = null;
+    }
+    await super.componentWillUnmount();
+  }
+
   handleSessionResponse(message: Message) {
     const token = message.getData(getName(MessageEnum.SessionResponseToken));
     runEngine.debugLog("TOKEN", token);
