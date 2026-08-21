@@ -8,7 +8,14 @@ import { runEngine } from "../../../framework/src/RunEngine";
 
 // Customizable Area Start
 import { imgPasswordInVisible, imgPasswordVisible } from "./assets";
-import { removeStorageData } from "../../../framework/src/Utilities";
+import { getStorageData, removeStorageData } from "../../../framework/src/Utilities";
+import { DeviceEventEmitter } from "react-native";
+import {
+  lightTheme,
+  PROFILE_THEME_CHANGED_EVENT,
+  PROFILE_THEME_STORAGE_KEY,
+  redesignTheme,
+} from "../../utilities/src/Colors";
 // Customizable Area End
 
 export const configJSON = require("./config");
@@ -38,6 +45,7 @@ interface S {
   btnTxtSocialLogin: string;
   labelOr: string;
   showPswrd: boolean;
+  isDarkMode: boolean;
   // Customizable Area End
 }
 
@@ -87,6 +95,7 @@ export default class EmailAccountLoginController extends BlockComponent<
       btnTxtSocialLogin: configJSON.btnTxtSocialLogin,
       labelOr: configJSON.labelOr,
       showPswrd: false,
+      isDarkMode: true,
     };
 
     this.emailReg = new RegExp("");
@@ -100,6 +109,7 @@ export default class EmailAccountLoginController extends BlockComponent<
     this.callGetValidationApi();
     this.send(new Message(getName(MessageEnum.RequestUserCredentials)));
     // Customizable Area Start
+    this.loadLoginTheme();
     // Customizable Area End
   }
 
@@ -112,9 +122,32 @@ export default class EmailAccountLoginController extends BlockComponent<
     onPress: () => this.doEmailLogIn(),
   };
 
+  profileThemeListener: any = null;
+
   async componentWillUnmount(): Promise<void> {
+    if (this.profileThemeListener) {
+      this.profileThemeListener.remove();
+      this.profileThemeListener = null;
+    }
     super.componentWillUnmount()
   }
+
+  loadLoginTheme = async () => {
+    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
+    this.setState({ isDarkMode: savedTheme !== "false" });
+    if (!this.profileThemeListener) {
+      this.profileThemeListener = DeviceEventEmitter.addListener(
+        PROFILE_THEME_CHANGED_EVENT,
+        (isDarkMode: boolean) => {
+          this.setState({ isDarkMode });
+        },
+      );
+    }
+  };
+
+  getLoginTheme = () => {
+    return this.state.isDarkMode ? redesignTheme : lightTheme;
+  };
   btnPasswordShowHideProps = {
     onPress: () => {
       this.setState({ enablePasswordField: !this.state.enablePasswordField });

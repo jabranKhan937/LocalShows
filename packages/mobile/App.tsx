@@ -21,6 +21,7 @@ import AddEventDetailScreen from '../blocks/events/src/AddEventDetailScreen';
 import AddEventLocation from '../blocks/events/src/AddEventLocation';
 import AllEventDetailScreen from '../blocks/events/src/AllEventDetailScreen';
 import AllEventScreen from '../blocks/events/src/AllEventScreen';
+import ArtistsToWatchAllScreen from '../blocks/events/src/ArtistsToWatchAllScreen';
 import Events from '../blocks/events/src/Events';
 import Customisableusersubscriptions from '../blocks/customisableusersubscriptions/src/Customisableusersubscriptions';
 import SubscriptionDetails from '../blocks/customisableusersubscriptions/src/SubscriptionDetails';
@@ -173,6 +174,11 @@ function HomeStack() {
         name="AllEventScreen"
         component={AllEventScreen}
         options={{title: 'AllEventScreen'}}
+      />
+      <Stack.Screen
+        name="ArtistsToWatchAllScreen"
+        component={ArtistsToWatchAllScreen}
+        options={{title: 'ArtistsToWatchAllScreen'}}
       />
       <Stack.Screen
         name="Events"

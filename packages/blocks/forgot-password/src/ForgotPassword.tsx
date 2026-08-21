@@ -10,18 +10,17 @@ import {
   TextInput,
   StatusBar,
   KeyboardAvoidingView,
-  Dimensions,
   Image,
-  ImageBackground,
   ScrollView,
   TouchableWithoutFeedback,
   Platform
 } from "react-native";
 import ForgotPasswordController, { Props } from "./ForgotPasswordController";
-import { colors } from "../../utilities/src/Colors";
+import { redesignTheme } from "../../utilities/src/Colors";
 import { leftArrow } from "../../email-account-registration/src/assets";
-import { loginBg } from "../../email-account-login/src/assets";
 //Customizable Area End
+
+type ForgotPasswordTheme = typeof redesignTheme;
 
 export default class ForgotPassword extends ForgotPasswordController {
   constructor(props: Props) {
@@ -30,13 +29,19 @@ export default class ForgotPassword extends ForgotPasswordController {
     //Customizable Area End
   }
 
+  get styles() {
+    return createForgotPasswordStyles(this.getForgotPasswordTheme());
+  }
+
   render() {
     const { navigation } = this.props;
+    const theme = this.getForgotPasswordTheme();
+    const styles = this.styles;
 
     return (
       <KeyboardAvoidingView
         behavior={this.isPlatformiOS() ? "padding" : undefined}
-        style={{ flex: 1 }}
+        style={{ flex: 1, backgroundColor: theme.background }}
       >
         <ScrollView
           keyboardShouldPersistTaps="always"
@@ -47,28 +52,27 @@ export default class ForgotPassword extends ForgotPasswordController {
           <TouchableWithoutFeedback onPress={() => this.hideKeyboard()}>
             {/* Customizable Area Start */}
             <SafeAreaView style={styles.parentContainer}>
-              <View style={{ width: "100%", }}>
+              <StatusBar
+                barStyle={this.state.isDarkMode ? "light-content" : "dark-content"}
+                backgroundColor={theme.background}
+              />
+              <View pointerEvents="none" style={styles.decorTop} />
+              <View pointerEvents="none" style={styles.decorBottom} />
+              <View style={styles.headerRow}>
                 <TouchableOpacity
                   testID="navigationBackButton"
-                  style={{
-                    position: 'absolute', marginLeft: 20,
-                    paddingTop: 10,
-                  }}
+                  style={styles.backButtonIconContainer}
                   onPress={() => {
                     this.props.navigation.goBack();
                   }}>
                   <Image
                     source={leftArrow}
-                    style={{
-                      width: 12,
-                      resizeMode: "contain",
-                    }}
+                    style={[styles.navigateBackIcon, { tintColor: theme.foreground }]}
                   />
                 </TouchableOpacity>
                 <Text testID="testLabel" style={styles.headerTitle}>Forgot password</Text>
               </View>
-              <StatusBar barStyle="dark-content" backgroundColor="white" />
-              <ImageBackground source={loginBg} style={styles.pageBgImage}>
+              <View style={styles.pageBgImage}>
                 <View style={styles.contentContainer}>
                   <Text style={[styles.text, styles.textHeading]}>
                     Local Shows
@@ -89,7 +93,7 @@ export default class ForgotPassword extends ForgotPasswordController {
                   <TextInput
                     testID="txtInputEmail"
                     placeholder="Enter your email address"
-                    placeholderTextColor="#CBD5E1"
+                    placeholderTextColor={theme.muted}
                     style={styles.inputField}
                     value={this.state.emailValue}
                     onChangeText={emailValue => this.setState({ emailValue: emailValue.replace(" ", "")  })}
@@ -111,7 +115,7 @@ export default class ForgotPassword extends ForgotPasswordController {
                     </Text>
                   </TouchableOpacity>
                 </View>
-              </ImageBackground>
+              </View>
             </SafeAreaView>
             {/* Customizable Area End */}
           </TouchableWithoutFeedback>
@@ -122,10 +126,10 @@ export default class ForgotPassword extends ForgotPasswordController {
 }
 
 // Customizable Area Start
-const styles = StyleSheet.create({
+const createForgotPasswordStyles = (theme: ForgotPasswordTheme) => StyleSheet.create({
   containerMobile: {
     flex: 1,
-    backgroundColor: colors(false).background
+    backgroundColor: theme.background
   },
   containerWeb: {
     marginLeft: "auto",
@@ -135,7 +139,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: colors(false).background
+    backgroundColor: theme.background
+  },
+  headerRow: {
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8,
+    marginBottom: 10,
   },
   headerElementContainer: {
     position: "absolute",
@@ -148,9 +159,10 @@ const styles = StyleSheet.create({
   },
   backButtonIconContainer: {
     position: "absolute",
-    left: 0,
+    left: 10,
     padding: 10,
-    alignSelf: "center"
+    alignSelf: "center",
+    zIndex: 2,
   },
   navigateBackIcon: {
     width: 12,
@@ -159,14 +171,34 @@ const styles = StyleSheet.create({
   },
   headerElementText: {
     fontWeight: "bold",
-    fontSize: 30
+    fontSize: 30,
+    color: theme.primary,
+  },
+  decorTop: {
+    position: "absolute",
+    top: -90,
+    right: -70,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: theme.primarySoft,
+  },
+  decorBottom: {
+    position: "absolute",
+    bottom: -110,
+    left: -80,
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: theme.primarySoft,
   },
   pageBgImage: {
     flex: 1,
     width: "100%",
     justifyContent: "center",
     alignItems: "center",
-    height: Dimensions.get("window").height - 150
+    minHeight: 520,
+    backgroundColor: theme.background,
   },
   contentContainer: {
     alignItems: "center",
@@ -174,52 +206,58 @@ const styles = StyleSheet.create({
     paddingHorizontal: "5%",
   },
   validationsErrorText: {
-    color: "red",
+    color: "#D32F2F",
     fontSize: 13,
     paddingTop: 2
   },
   text: {
     fontFamily: "OpenSans",
     alignSelf: "flex-start",
-    color: colors(false).text
+    color: theme.foreground
   },
   textHeading: {
-    color: "#4949EE",
-    fontSize: 45,
+    color: theme.primary,
+    fontSize: 42,
     fontWeight: "bold",
     alignSelf: "center"
   },
   textSubHeading: {
     fontWeight: "bold",
     fontSize: 25,
-    marginTop: 30
+    marginTop: 30,
+    color: theme.foreground,
   },
   textInfo: {
-    marginVertical: 15
+    marginVertical: 15,
+    color: theme.muted,
+    fontSize: 14,
+    lineHeight: 20,
   },
   inputFieldLabel: {
     fontWeight: "bold",
     marginTop: 20,
-    marginBottom: 5
+    marginBottom: 5,
+    color: theme.foreground,
   },
   inputField: {
     width: "100%",
     height: 50,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 0.5,
-    borderColor: "#C5C5FF",
-    color: colors(false).text
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.border,
+    backgroundColor: theme.input,
+    color: theme.foreground
   },
   emailSubmitButton: {
-    backgroundColor: "#3333CC",
+    backgroundColor: theme.primary,
     width: "100%",
     padding: 15,
-    borderRadius: 10,
+    borderRadius: 12,
     marginTop: 30
   },
   textEmailSubmitButton: {
-    color: colors(false).white,
+    color: "#FFFFFF",
     fontWeight: "700",
     fontSize: 18,
     alignSelf: "center"
@@ -227,11 +265,12 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontWeight: "700",
     fontSize: 24,
-    color: '#334155',
-    textAlign: 'center',
-    textAlignVertical: 'center',
+    color: theme.primary,
+    textAlign: "center",
+    textAlignVertical: "center",
     marginHorizontal: 50,
-    alignSelf: 'center',
+    alignSelf: "center",
     marginTop: 15,
   },
 });
+// Customizable Area End

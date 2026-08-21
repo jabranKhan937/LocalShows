@@ -34,6 +34,9 @@ import GeolocationServices from 'react-native-geolocation-service';
 /** Set to true to use GPS for the home feed (lat/long APIs). Off: avoids native geolocation crashes on some Android builds. */
 const DEVICE_GEOLOCATION_ENABLED_FOR_FEED = false;
 
+/** Number of shows revealed on the home feed at a time. */
+export const HOME_FEED_PAGE_SIZE = 10;
+
 type HomeFeedEventsCache = {
   authenticatedEventsList: any[];
   filteredEventList: any[];
@@ -43,6 +46,8 @@ type HomeFeedEventsCache = {
 
 /** Keeps the home feed list across remounts (e.g. returning from event details). */
 let homeFeedEventsCache: HomeFeedEventsCache | null = null;
+/** Full band/artist directory from all_band_artists, shared across home and See all. */
+let allBandsListCache: any[] = [];
 import Geocoder from 'react-native-geocoding';
 import { check, PERMISSIONS } from 'react-native-permissions';
 import _ from 'lodash';
@@ -147,6 +152,8 @@ interface S {
   forceUpdateRequired: boolean;
   forceUpdateStoreUrl: string;
   isDarkMode: boolean;
+  visibleShowsCount: number;
+  guestSignupBannerDismissed: boolean;
   // Customizable Area End
 }
 
@@ -254,6 +261,8 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
       forceUpdateRequired: false,
       forceUpdateStoreUrl: '',
       isDarkMode: true,
+      visibleShowsCount: HOME_FEED_PAGE_SIZE,
+      guestSignupBannerDismissed: false,
       // Customizable Area End
     };
 
@@ -328,6 +337,7 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
       (homeFeedEventsCache?.authenticatedEventsList?.length ?? 0) > 0);
 
   restoreHomeFeedCacheIfNeeded = () => {
+    this.restoreAllBandsListCacheIfNeeded();
     if (this.isEventDetailScreen() || !homeFeedEventsCache) {
       return;
     }
@@ -342,6 +352,20 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
       isLoading: false,
       detailsLoading: false,
     });
+  };
+
+  restoreAllBandsListCacheIfNeeded = () => {
+    if (this.state.allBandsList.length > 0 || allBandsListCache.length === 0) {
+      return;
+    }
+    this.safeSetState({ allBandsList: allBandsListCache });
+  };
+
+  getAllBandsListRecords = () => {
+    if (this.state.allBandsList.length > 0) {
+      return this.state.allBandsList;
+    }
+    return allBandsListCache;
   };
 
   saveHomeFeedEventsCache = (cache: HomeFeedEventsCache) => {
@@ -1475,6 +1499,7 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
             stateNameList,
             filteredEventList: [],
             isLoading: false,
+            visibleShowsCount: HOME_FEED_PAGE_SIZE,
           },
           () => {
             this.saveHomeFeedEventsCache({
@@ -1502,6 +1527,7 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
           stateNameList: filteredStateList,
           filteredEventList,
           isLoading: false,
+          visibleShowsCount: HOME_FEED_PAGE_SIZE,
         },
         () => {
           this.saveHomeFeedEventsCache({
@@ -1523,6 +1549,7 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
           stateNameList,
           filteredEventList: [],
           isLoading: false,
+          visibleShowsCount: HOME_FEED_PAGE_SIZE,
         },
         () => {
           this.saveHomeFeedEventsCache({
@@ -1827,7 +1854,13 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
       getName(MessageEnum.RestAPIResponceSuccessMessage),
     );
     if (response != null && !response.errors) {
-      this.setState({ allBandsList: response.data });
+      const list = Array.isArray(response.data)
+        ? response.data
+        : Array.isArray(response?.data?.data)
+          ? response.data.data
+          : [];
+      allBandsListCache = list;
+      this.setState({ allBandsList: list });
     } else {
       this.setState({ isLoading: false });
     }
@@ -1973,6 +2006,63 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
       expandedItems: prevState.expandedItems.includes(stateName)
         ? prevState.expandedItems.filter(state_name => state_name !== stateName)
         : [...prevState.expandedItems, stateName],
+    }));
+  };
+
+  isHomeFeedShowItem = (item: any, includePosts: boolean) => {
+    if (!item || typeof item !== 'object') {
+      return false;
+    }
+    if (item.type === 'show') {
+      return true;
+    }
+    return includePosts && item.type === 'post';
+  };
+
+  flattenHomeFeedShows = (eventList: any[], includePosts: boolean) => {
+    const flattened: { show: any; group: any }[] = [];
+    if (!Array.isArray(eventList)) {
+      return flattened;
+    }
+    eventList.forEach(group => {
+      const shows = Array.isArray(group?.shows) ? group.shows : [];
+      shows.forEach((show: any) => {
+        if (this.isHomeFeedShowItem(show, includePosts)) {
+          flattened.push({ show, group });
+        }
+      });
+    });
+    return flattened;
+  };
+
+  getVisibleHomeFeedGroups = (eventList: any[], includePosts: boolean) => {
+    const flattened = this.flattenHomeFeedShows(eventList, includePosts);
+    const visibleShowsCount =
+      this.state.visibleShowsCount > 0
+        ? this.state.visibleShowsCount
+        : HOME_FEED_PAGE_SIZE;
+    const visible = flattened.slice(0, visibleShowsCount);
+    const groups: any[] = [];
+    const groupIndexByKey: Record<string, number> = {};
+    visible.forEach(({ show, group }) => {
+      const key = String(group?.state_name ?? '');
+      if (groupIndexByKey[key] === undefined) {
+        groupIndexByKey[key] = groups.length;
+        groups.push({ ...group, shows: [show] });
+      } else {
+        groups[groupIndexByKey[key]].shows.push(show);
+      }
+    });
+    return {
+      groups,
+      totalShowCount: flattened.length,
+      hasMoreShows: flattened.length > visibleShowsCount,
+    };
+  };
+
+  handleShowMore = () => {
+    this.setState(prevState => ({
+      visibleShowsCount: prevState.visibleShowsCount + HOME_FEED_PAGE_SIZE,
     }));
   };
 
@@ -2643,6 +2733,7 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
 
   performSearch = async () => {
     try {
+      this.setState({ visibleShowsCount: HOME_FEED_PAGE_SIZE });
       this.getEventsListAPI();
     } catch (_error) {}
   };
@@ -3355,6 +3446,7 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
   };
 
   handleRefresh = (options?: { silent?: boolean }) => {
+    this.setState({ visibleShowsCount: HOME_FEED_PAGE_SIZE });
     this.getCategoriesListAPI();
     this.getEventsListAPI(undefined, options);
   };
@@ -3421,6 +3513,7 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
         selectedFilterIndex: index,
         selectedCategoryID: categoryId,
         isLoading: true,
+        visibleShowsCount: HOME_FEED_PAGE_SIZE,
       },
       () => {
         this.getEventsListAPI();
@@ -3433,15 +3526,26 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
   };
 
   handleStateValueChangeAndroid = (selectedState: string) => {
-    this.setState({ selectedState, isLoading: true }, () => {
-      this.getEventsListAPI();
-    });
+    this.setState(
+      { selectedState, isLoading: true, visibleShowsCount: HOME_FEED_PAGE_SIZE },
+      () => {
+        this.getEventsListAPI();
+      },
+    );
   };
 
   handleStateValueChangeIOS = (selectedState: string) => {
-    this.setState({ stateClicked: false, selectedState, isLoading: true }, () => {
-      this.getEventsListAPI();
-    });
+    this.setState(
+      {
+        stateClicked: false,
+        selectedState,
+        isLoading: true,
+        visibleShowsCount: HOME_FEED_PAGE_SIZE,
+      },
+      () => {
+        this.getEventsListAPI();
+      },
+    );
   };
 
   showSort = () => {
@@ -3449,17 +3553,30 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
   };
 
   handleSortValueChangeAndroid = (selectedSortBy: string) => {
-    this.setState({ selectedSortBy, isLoading: true }, () => {
-      // Call API for both logged-in and logged-out users
-      this.getEventsListAPI();
-    });
+    this.setState(
+      {
+        selectedSortBy,
+        isLoading: true,
+        visibleShowsCount: HOME_FEED_PAGE_SIZE,
+      },
+      () => {
+        this.getEventsListAPI();
+      },
+    );
   };
 
   handleSortValueChangeIOS = (selectedSortBy: string) => {
-    this.setState({ sortClicked: false, selectedSortBy, isLoading: true }, () => {
-      // Call API for both logged-in and logged-out users
-      this.getEventsListAPI();
-    });
+    this.setState(
+      {
+        sortClicked: false,
+        selectedSortBy,
+        isLoading: true,
+        visibleShowsCount: HOME_FEED_PAGE_SIZE,
+      },
+      () => {
+        this.getEventsListAPI();
+      },
+    );
   };
 
   hideModalSort = () => {
@@ -3542,17 +3659,47 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
   };
 
   navigateToBandProfile = async (accountId: number) => {
+    if (this.isForceUpdateBlocking()) {
+      return;
+    }
+    if (accountId == null || `${accountId}` === '') {
+      return;
+    }
+    if (!this.state.authToken) {
+      this.setState({ loginPopup: true });
+      return;
+    }
+
     await setStorageData('profileIdToLoad', `${accountId}`);
 
     if (this.state.userId === accountId.toString()) {
       this.props.navigation.navigate('Profile', {
         isOtherUser: false,
       });
-    } else {
-      this.props.navigation.push('UserProfileBasicBlockArtist2', {
-        isOtherUser: true,
-      });
+      return;
     }
+
+    const screen = 'UserProfileBasicBlockArtist2';
+    const params = { isOtherUser: true };
+    try {
+      if (typeof this.props.navigation.push === 'function') {
+        this.props.navigation.push(screen, params);
+        return;
+      }
+    } catch (_error) {}
+    try {
+      if (typeof this.props.navigation.navigate === 'function') {
+        this.props.navigation.navigate(screen, params);
+        return;
+      }
+    } catch (_error) {}
+
+    const message: Message = new Message(
+      getName(MessageEnum.NavigationMessage),
+    );
+    message.addData(getName(MessageEnum.NavigationPropsMessage), this.props);
+    message.addData(getName(MessageEnum.NavigationTargetMessage), screen);
+    this.send(message);
   };
 
   showTokenExpiredPopup = () => {

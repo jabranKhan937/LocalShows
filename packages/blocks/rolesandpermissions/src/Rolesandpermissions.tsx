@@ -14,14 +14,16 @@ import {
 import FanIcon from './FanIcon';
 import BandIcon from './BandIcon';
 import VenueIcon from './VenueIcon';
+import { redesignTheme } from '../../utilities/src/Colors';
 // Customizable Area End
 
 import RolesandpermissionsController, {
   Props,
   configJSON,
 } from './RolesandpermissionsController';
-import {colors} from '../../utilities/src/Colors';
 import {leftArrow} from '../../email-account-registration/src/assets';
+
+type RoleTheme = typeof redesignTheme;
 
 export default class Rolesandpermissions extends RolesandpermissionsController {
   constructor(props: Props) {
@@ -31,6 +33,10 @@ export default class Rolesandpermissions extends RolesandpermissionsController {
   }
 
   // Customizable Area Start
+  get styles() {
+    return createRoleStyles(this.getRoleTheme());
+  }
+
   RoleButton = ({
     testID,
     role,
@@ -44,18 +50,27 @@ export default class Rolesandpermissions extends RolesandpermissionsController {
     icon: React.ReactElement;
     onPress: () => void;
   }) => {
-    const textColor =
-      this.state.selectedRole === fieldName ? '#FFFFFF' : '#334155';
-    const bgColor =
-      this.state.selectedRole === fieldName ? '#4949EE' : '#FFFFFF';
+    const theme = this.getRoleTheme();
+    const isSelected = this.state.selectedRole === fieldName;
+    const textColor = isSelected ? '#FFFFFF' : theme.foreground;
     return (
       <TouchableOpacity
         testID={testID}
-        style={[styles.roleButton, {backgroundColor: bgColor}]}
-        onPress={onPress}>
-        {icon}
+        style={[
+          this.styles.roleButton,
+          isSelected && this.styles.roleButtonSelected,
+        ]}
+        onPress={onPress}
+        activeOpacity={0.85}>
+        <View
+          style={[
+            this.styles.roleIconWrap,
+            isSelected && this.styles.roleIconWrapSelected,
+          ]}>
+          {icon}
+        </View>
         <Text
-          style={[styles.text, styles.textRoleButton, {color: textColor}]}
+          style={[this.styles.text, this.styles.textRoleButton, {color: textColor}]}
           numberOfLines={2}>
           {role}
         </Text>
@@ -68,12 +83,17 @@ export default class Rolesandpermissions extends RolesandpermissionsController {
   render() {
     // Customizable Area Start
     // Merge Engine - render - Start
+    const theme = this.getRoleTheme();
+    const styles = this.styles;
+    const selected = this.state.selectedRole;
     return (
       <SafeAreaView style={styles.container}>
+        <View pointerEvents="none" style={styles.decorTop} />
+        <View pointerEvents="none" style={styles.decorBottom} />
         <View style={styles.contentContainer}>
           <StatusBar
-            barStyle="dark-content"
-            backgroundColor={colors(false).background}
+            barStyle={this.state.isDarkMode ? 'light-content' : 'dark-content'}
+            backgroundColor={theme.background}
           />
           <Text style={[styles.text, styles.textHeading]}>Local Shows</Text>
           <Text style={[styles.text, styles.textIntro]}>I am a</Text>
@@ -83,7 +103,7 @@ export default class Rolesandpermissions extends RolesandpermissionsController {
             icon={
               <FanIcon
                 color={
-                  this.state.selectedRole === 'fan' ? '#DADADA' : '#334155'
+                  selected === 'fan' ? '#FFFFFF' : theme.muted
                 }
               />
             }
@@ -98,7 +118,7 @@ export default class Rolesandpermissions extends RolesandpermissionsController {
             icon={
               <VenueIcon
                 color={
-                  this.state.selectedRole === 'venue' ? '#DADADA' : '#334155'
+                  selected === 'venue' ? '#FFFFFF' : theme.muted
                 }
               />
             }
@@ -112,7 +132,7 @@ export default class Rolesandpermissions extends RolesandpermissionsController {
             icon={
               <BandIcon
                 color={
-                  this.state.selectedRole === 'band' ? '#DADADA' : '#334155'
+                  selected === 'band' ? '#FFFFFF' : theme.muted
                 }
               />
             }
@@ -135,7 +155,7 @@ export default class Rolesandpermissions extends RolesandpermissionsController {
           </TouchableOpacity>
         </View>
         <Modal visible={this.state.isModalVisible}>
-          <View style={styles.flex1}>
+          <View style={[styles.flex1, {backgroundColor: theme.background}]}>
             <View style={[styles.header]}>
               <TouchableOpacity
                 testID="backToHome"
@@ -143,7 +163,7 @@ export default class Rolesandpermissions extends RolesandpermissionsController {
                 onPress={() => {
                   this.handleBack();
                 }}>
-                <Image source={leftArrow} style={styles.backArrow} />
+                <Image source={leftArrow} style={[styles.backArrow, {tintColor: theme.foreground}]} />
               </TouchableOpacity>
             </View>
             <View style={styles.body}>
@@ -165,11 +185,29 @@ export default class Rolesandpermissions extends RolesandpermissionsController {
 }
 
 // Customizable Area Start
-const styles = StyleSheet.create({
+const createRoleStyles = (theme: RoleTheme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors(false).background,
+    backgroundColor: theme.background,
     justifyContent: 'center',
+  },
+  decorTop: {
+    position: 'absolute',
+    top: -80,
+    right: -60,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: theme.primarySoft,
+  },
+  decorBottom: {
+    position: 'absolute',
+    bottom: -100,
+    left: -70,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: theme.primarySoft,
   },
   contentContainer: {
     flex: 1,
@@ -180,52 +218,73 @@ const styles = StyleSheet.create({
   text: {
     fontFamily: 'OpenSans',
     alignSelf: 'flex-start',
-    color: colors(false).text,
+    color: theme.foreground,
   },
   textHeading: {
-    color: '#0F172A',
+    color: theme.primary,
     fontSize: 40,
     fontWeight: 'bold',
   },
   textIntro: {
     fontSize: 18,
     marginTop: 20,
-    marginBottom: 5,
+    marginBottom: 12,
+    color: theme.muted,
   },
   roleButton: {
-    backgroundColor: colors(false).background,
+    backgroundColor: theme.card,
+    borderWidth: 1,
+    borderColor: theme.border,
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
-      height: 1,
+      height: 4,
     },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 3,
     width: '100%',
-    height: 70,
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    marginVertical: 10,
+    minHeight: 76,
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginVertical: 8,
     flexDirection: 'row',
     alignItems: 'center',
   },
+  roleButtonSelected: {
+    backgroundColor: theme.primary,
+    borderColor: theme.primary,
+    shadowColor: theme.primary,
+    shadowOpacity: 0.35,
+  },
+  roleIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: theme.input,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  roleIconWrapSelected: {
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+  },
   textRoleButton: {
     fontSize: 14,
-    paddingHorizontal: 10,
+    fontWeight: '600',
+    paddingHorizontal: 12,
     alignSelf: 'center',
     maxWidth: '90%',
   },
   continueButton: {
-    backgroundColor: '#3333CC',
+    backgroundColor: theme.primary,
     width: '100%',
     padding: 15,
-    borderRadius: 10,
+    borderRadius: 12,
     marginTop: 25,
   },
   textContinueButton: {
-    color: colors(false).white,
+    color: '#FFFFFF',
     fontWeight: '700',
     fontSize: 18,
     alignSelf: 'center',
@@ -243,13 +302,13 @@ const styles = StyleSheet.create({
   comingSoon: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#4949EE',
+    color: theme.primary,
     lineHeight: 28,
   },
   launchSoon: {
     fontSize: 14,
     fontWeight: '400',
-    color: '#334155',
+    color: theme.muted,
     lineHeight: 22,
     marginTop: 15,
   },
@@ -258,7 +317,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
-    backgroundColor: 'white',
+    backgroundColor: theme.background,
     paddingHorizontal: 16,
   },
   backArrowContainer: {},

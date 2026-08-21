@@ -7,9 +7,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
-  ImageBackground,
   StatusBar,
-  Platform,
   Image,
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
@@ -20,16 +18,20 @@ import {
 
 // Merge Engine - Artboard Dimension  - Start
 // Merge Engine - Artboard Dimension  - End
-import { colors } from "../../utilities/src/Colors";
-import { loginBg } from "./assets";
+import { redesignTheme } from "../../utilities/src/Colors";
 // Customizable Area End
 
 import EmailAccountLoginController, {
   Props,
 } from "./EmailAccountLoginController";
 
+type LoginTheme = typeof redesignTheme;
+
 export default class EmailAccountLoginBlock extends EmailAccountLoginController {
   // Customizable Area Start
+  get styles() {
+    return createLoginStyles(this.getLoginTheme());
+  }
   // Customizable Area End
 
   constructor(props: Props) {
@@ -41,10 +43,12 @@ export default class EmailAccountLoginBlock extends EmailAccountLoginController 
   render() {
     // Customizable Area Start
     // Merge Engine - render - Start
+    const theme = this.getLoginTheme();
+    const styles = this.styles;
     return (
       // Required for all blocks
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={{ flex: 1, backgroundColor: theme.background }}
         behavior={this.isPlatformiOS() ? "padding" : undefined}>
         <TouchableWithoutFeedback
           testID={"loginBackground"}
@@ -52,8 +56,13 @@ export default class EmailAccountLoginBlock extends EmailAccountLoginController 
             this.hideKeyboard();
           }}>
           <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="white" />
-            <ImageBackground source={loginBg} style={styles.imageBg}>
+            <StatusBar
+              barStyle={this.state.isDarkMode ? "light-content" : "dark-content"}
+              backgroundColor={theme.background}
+            />
+            <View style={styles.imageBg}>
+              <View pointerEvents="none" style={styles.decorTop} />
+              <View pointerEvents="none" style={styles.decorBottom} />
               <View style={styles.contentContainer}>
                 <Text style={[styles.text, styles.textHeading]}>Local Shows</Text>
                 <Text style={[styles.text, styles.textSubHeading]}>Log in</Text>
@@ -63,7 +72,7 @@ export default class EmailAccountLoginBlock extends EmailAccountLoginController 
                 <TextInput
                   testID="txtInputEmail"
                   placeholder="Enter your email address"
-                  placeholderTextColor="#CBD5E1"
+                  placeholderTextColor={theme.muted}
                   style={styles.textInput}
                   value={this.state.email}
                   onChangeText={this.setEmail}
@@ -79,7 +88,7 @@ export default class EmailAccountLoginBlock extends EmailAccountLoginController 
                   <TextInput
                     testID="txtInputPassword"
                     placeholder="Enter your password"
-                    placeholderTextColor="#CBD5E1"
+                    placeholderTextColor={theme.muted}
                     style={styles.inputPassword}
                     value={this.state.password}
                     onChangeText={this.setPassword}
@@ -90,7 +99,7 @@ export default class EmailAccountLoginBlock extends EmailAccountLoginController 
                     textContentType="oneTimeCode"
                   />
                   <TouchableOpacity testID="passwordIcon" style={styles.passwordIconTouchable} onPress={this.handlePasswordIcon}>
-                    <Image source={require("../../../mobile/assets/images/password_eye.png")} style={[styles.passwordIconImage, { tintColor: this.state.showPswrd ? "#475569" : "#3333CC" }]} />
+                    <Image source={require("../../../mobile/assets/images/password_eye.png")} style={[styles.passwordIconImage, { tintColor: this.state.showPswrd ? theme.muted : theme.primary }]} />
                   </TouchableOpacity>
                 </View>
                 <Text style={[styles.text, styles.errorText]}>{this.state.passwordError}</Text>
@@ -122,7 +131,7 @@ export default class EmailAccountLoginBlock extends EmailAccountLoginController 
                   </TouchableOpacity>
                 </View>
               </View>
-            </ImageBackground>
+            </View>
           </SafeAreaView>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
@@ -133,10 +142,10 @@ export default class EmailAccountLoginBlock extends EmailAccountLoginController 
 }
 
 // Customizable Area Start
-const styles = StyleSheet.create({
+const createLoginStyles = (theme: LoginTheme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors(false).background,
+    backgroundColor: theme.background,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -146,6 +155,25 @@ const styles = StyleSheet.create({
     height: "100%",
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: theme.background,
+  },
+  decorTop: {
+    position: "absolute",
+    top: -90,
+    right: -70,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: theme.primarySoft,
+  },
+  decorBottom: {
+    position: "absolute",
+    bottom: -110,
+    left: -80,
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: theme.primarySoft,
   },
   contentContainer: {
     alignItems: "center",
@@ -153,17 +181,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: "5%",
   },
   errorText: {
-    color: 'red',
+    color: '#D32F2F',
     fontSize: 13,
     paddingTop: 2,
   },
   text: {
     fontFamily: "OpenSans",
     alignSelf: "flex-start",
-    color: colors(false).text,
+    color: theme.foreground,
   },
   textHeading: {
-    color: "#4949EE",
+    color: theme.primary,
     fontSize: 45,
     fontWeight: "bold",
     alignSelf: "center",
@@ -172,19 +200,22 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 25,
     marginTop: 30,
+    color: theme.foreground,
   },
   textInputLabel: {
     fontWeight: "bold",
     marginTop: 20,
     marginBottom: 5,
+    color: theme.foreground,
   },
   textInput: {
     width: "100%",
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 0.5,
-    borderColor: "#C5C5FF",
-    color: colors(false).text,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.border,
+    backgroundColor: theme.input,
+    color: theme.foreground,
     height: 50,
   },
   forgotPass: {
@@ -192,27 +223,28 @@ const styles = StyleSheet.create({
     alignSelf: "flex-end",
   },
   forgotPassText: {
-    color: "#4949EE",
+    color: theme.primary,
   },
   loginButton: {
-    backgroundColor: "#3333CC",
+    backgroundColor: theme.primary,
     width: "100%",
     padding: 15,
-    borderRadius: 10,
+    borderRadius: 12,
     marginTop: 25,
   },
   textLoginButton: {
-    color: colors(false).white,
+    color: '#FFFFFF',
     fontWeight: "700",
     fontSize: 18,
     alignSelf: "center",
   },
   textSignup: {
     alignSelf: "center",
+    color: theme.muted,
   },
   textSignupLink: {
     fontWeight: "bold",
-    color: "#4949EE",
+    color: theme.primary,
   },
   signUpContainer: {
     flexDirection: "row",
@@ -221,16 +253,17 @@ const styles = StyleSheet.create({
   },
   passwordView: {
     width: "100%",
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 0.5,
-    borderColor: "#C5C5FF",
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.border,
+    backgroundColor: theme.input,
     height: 50,
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   inputPassword: {
-    color: colors(false).text,
+    color: theme.foreground,
     width: '80%',
   },
   passwordIconTouchable: {

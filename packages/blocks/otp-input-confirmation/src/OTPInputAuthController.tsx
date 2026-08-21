@@ -7,11 +7,18 @@ import MessageEnum, {
 import { CommonActions } from '@react-navigation/native';
 
 // Customizable Area Start
+import { DeviceEventEmitter } from 'react-native';
 import {
   getStorageData,
   removeStorageData,
   setStorageData,
 } from '../../../framework/src/Utilities';
+import {
+  lightTheme,
+  PROFILE_THEME_CHANGED_EVENT,
+  PROFILE_THEME_STORAGE_KEY,
+  redesignTheme,
+} from '../../utilities/src/Colors';
 // Customizable Area End
 
 export const configJSON = require('./config');
@@ -37,6 +44,7 @@ export interface S {
   isFetching: boolean;
   redirectToScreen: string;
   claimID: string;
+  isDarkMode: boolean;
   // Customizable Area End
 }
 
@@ -82,12 +90,36 @@ export default class OTPInputAuthController extends BlockComponent<
       redirectToScreen: routeParams?.redirect_to,
       claimID: routeParams?.claim_id,
     });
+    this.loadOtpTheme();
   }
+
+  profileThemeListener: any = null;
 
   async componentWillUnmount() {
     clearInterval(this.interval);
+    if (this.profileThemeListener) {
+      this.profileThemeListener.remove();
+      this.profileThemeListener = null;
+    }
     super.componentWillUnmount();
   }
+
+  loadOtpTheme = async () => {
+    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
+    this.setState({ isDarkMode: savedTheme !== 'false' });
+    if (!this.profileThemeListener) {
+      this.profileThemeListener = DeviceEventEmitter.addListener(
+        PROFILE_THEME_CHANGED_EVENT,
+        (isDarkMode: boolean) => {
+          this.setState({ isDarkMode });
+        },
+      );
+    }
+  };
+
+  getOtpTheme = () => {
+    return this.state.isDarkMode ? redesignTheme : lightTheme;
+  };
   // Customizable Area End
 
   constructor(props: Props) {
@@ -117,6 +149,7 @@ export default class OTPInputAuthController extends BlockComponent<
       isFetching: false,
       redirectToScreen: '',
       claimID: '',
+      isDarkMode: true,
     };
 
     this.btnTxtSubmitOtp = configJSON.btnTxtSubmitOtp;

@@ -38,11 +38,12 @@ import {
   deviceWidth,
   getStorageData,
   removeStorageData,
+  setStorageData,
 } from '../../../framework/src/Utilities';
 
 // Customizable Area End
 
-import AllEventController, { Props } from './AllEventController';
+import AllEventController, { Props, baseURL } from './AllEventController';
 
 export default class AllEventScreen extends AllEventController {
   constructor(props: Props) {
@@ -54,6 +55,8 @@ export default class AllEventScreen extends AllEventController {
   get styles() {
     return this.state.isDarkMode ? darkAllEventStyles : lightAllEventStyles;
   }
+
+  failedArtistImageIds = new Set<string>();
                                                       
   async componentDidMount() {
     try {
@@ -65,6 +68,7 @@ export default class AllEventScreen extends AllEventController {
       this.showPopup();
 
       this.getAuthToken();
+      this.getAllBandsList();
       this.initialiseLocation();
       this.refreshUserSelectionStateList();
       this.getUnreadNotificationsCount();
@@ -149,11 +153,11 @@ export default class AllEventScreen extends AllEventController {
                                 
   renderEventItem = ({
     item,
-    index,
+    index = 0,
     totalItems,
   }: {
     item: any;
-    index: number;
+    index?: number;
     totalItems?: number;
   }) => {
     const allShows = this.state.expandedItems.includes(item.state_name);
@@ -163,8 +167,6 @@ export default class AllEventScreen extends AllEventController {
     );
     const seeMoreButton = showsListForGuestUsers.length > 4;
     const isLoggedIn = !!this.state.authToken;
-
-    // Check if this is the last item (index will match since we're using filtered list)
     const isLastItem =
       totalItems !== undefined ? index === totalItems - 1 : false;
     const stateKey = String(item?.state_name ?? 'unknown');
@@ -257,6 +259,247 @@ export default class AllEventScreen extends AllEventController {
             </Text>
           </View>
         )}
+      </View>
+    );
+  };
+
+  renderShowMoreFooter = (hasMoreShows: boolean) => {
+    if (!hasMoreShows) {
+      return null;
+    }
+    return (
+      <TouchableOpacity
+        testID="toggleSeeMore"
+        onPress={this.handleShowMore}
+        activeOpacity={0.7}
+        style={this.styles.compactShowMoreFooterButton}
+      >
+        <Text style={this.styles.compactShowMoreFooter}>Show more</Text>
+      </TouchableOpacity>
+    );
+  };
+
+  renderHomeFeedFooter = (hasMoreShows: boolean) => {
+    const artists = this.getArtistsToWatch();
+    const venues = this.getHotVenues();
+    if (!hasMoreShows && artists.length === 0 && venues.length === 0) {
+      return null;
+    }
+    return (
+      <View testID="homeFeedDiscoveryFooter" style={this.styles.discoveryFooter}>
+        {this.renderShowMoreFooter(hasMoreShows)}
+        {this.renderArtistsToWatchSection(artists)}
+        {this.renderHotVenuesSection(venues)}
+      </View>
+    );
+  };
+
+  renderArtistWatchAvatar = (artist: {
+    id: string;
+    image?: string;
+  }) => {
+    const uri = this.resolveHomeFeedImageUrl(artist.image);
+    if (!uri || this.failedArtistImageIds.has(artist.id)) {
+      return this.renderThemedArtistPlaceholder();
+    }
+    return (
+      <FastImage
+        style={this.styles.artistWatchAvatar}
+        source={{ uri, priority: FastImage.priority.high }}
+        resizeMode={FastImage.resizeMode.cover}
+        onError={() => {
+          this.failedArtistImageIds.add(artist.id);
+          this.forceUpdate();
+        }}
+      />
+    );
+  };
+
+  renderThemedArtistPlaceholder = () => {
+    return (
+      <View
+        testID="artistWatchPlaceholder"
+        style={this.styles.artistWatchAvatarPlaceholder}
+      >
+        <Icon name="music" size={26} color={this.getHomeTheme().primary} />
+      </View>
+    );
+  };
+
+  resolveHomeFeedImageUrl = (value: any): string => {
+    if (!value) {
+      return '';
+    }
+    if (typeof value === 'object') {
+      return this.resolveHomeFeedImageUrl(
+        value.url || value.uri || value.image,
+      );
+    }
+    if (typeof value !== 'string') {
+      return '';
+    }
+    let trimmed = value.trim();
+    if (!trimmed || trimmed === 'null' || trimmed === 'undefined') {
+      return '';
+    }
+    if (
+      /default[_-]?profile|placeholder|missing\.png|person\.png/i.test(trimmed)
+    ) {
+      return '';
+    }
+    if (trimmed.startsWith('//')) {
+      trimmed = `https:${trimmed}`;
+    } else if (trimmed.startsWith('/') || trimmed.startsWith('rails/')) {
+      const origin = String(baseURL || '').replace(/\/$/, '');
+      trimmed = `${origin}/${trimmed.replace(/^\//, '')}`;
+    }
+    return trimmed.replace(/^(https?:\/\/[^/]+)\/\//, '$1/');
+  };
+
+  renderArtistsToWatchSection = (
+    artists = this.getArtistsToWatch(),
+  ) => {
+    if (!artists.length) {
+      return null;
+    }
+    return (
+      <View testID="artistsToWatchSection" style={this.styles.discoverySection}>
+        <View style={this.styles.discoverySectionHeader}>
+          <Text style={this.styles.discoverySectionTitle}>ARTISTS TO WATCH</Text>
+          <TouchableOpacity
+            testID="seeAllArtists"
+            style={this.styles.discoverySectionLink}
+            onPress={this.handleSeeAllArtists}
+            activeOpacity={0.7}
+          >
+            <Text style={this.styles.discoverySectionLinkText}>See all</Text>
+            <Icon
+              name="chevron-right"
+              size={14}
+              color={this.getHomeTheme().primary}
+            />
+          </TouchableOpacity>
+        </View>
+        <ScrollView
+          horizontal
+          nestedScrollEnabled
+          directionalLockEnabled
+          keyboardShouldPersistTaps="handled"
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={this.styles.discoveryRowContent}
+        >
+          {artists.map(artist => (
+            <Pressable
+              key={artist.id}
+              testID={`artistToWatch-${artist.id}`}
+              style={this.styles.artistWatchItem}
+              onPress={() => {
+                this.handleArtistToWatchPress(artist);
+              }}
+            >
+              <View
+                pointerEvents="none"
+                style={this.styles.artistWatchAvatarWrap}
+              >
+                {this.renderArtistWatchAvatar(artist)}
+                <View style={this.styles.artistWatchBadge}>
+                  <Icon name="plus" size={12} color="#FFFFFF" />
+                </View>
+              </View>
+              <Text
+                pointerEvents="none"
+                style={this.styles.artistWatchName}
+                numberOfLines={1}
+              >
+                {artist.name}
+              </Text>
+              <Text
+                pointerEvents="none"
+                style={this.styles.artistWatchMeta}
+                numberOfLines={1}
+              >
+                {artist.upcomingCount > 0
+                  ? `${artist.upcomingCount} upcoming`
+                  : ''}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </View>
+    );
+  };
+
+  renderHotVenuesSection = (venues = this.getHotVenues()) => {
+    if (!venues.length) {
+      return null;
+    }
+    return (
+      <View testID="hotVenuesSection" style={this.styles.discoverySection}>
+        <View style={this.styles.discoverySectionHeader}>
+          <Text style={this.styles.discoverySectionTitle}>HOT VENUES</Text>
+          <TouchableOpacity
+            testID="viewVenuesMap"
+            style={this.styles.discoverySectionLink}
+            onPress={this.handleViewHotVenuesMap}
+            activeOpacity={0.7}
+          >
+            <Text style={this.styles.discoverySectionLinkText}>View map</Text>
+            <Icon
+              name="chevron-right"
+              size={14}
+              color={this.getHomeTheme().primary}
+            />
+          </TouchableOpacity>
+        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={this.styles.discoveryRowContent}
+        >
+          {venues.map(venue => {
+            const showLabel =
+              venue.showCount === 1
+                ? '1 show'
+                : `${venue.showCount} shows`;
+            return (
+              <TouchableOpacity
+                key={venue.id}
+                testID={`hotVenue-${venue.id}`}
+                style={this.styles.hotVenueCard}
+                activeOpacity={0.9}
+                onPress={() => this.openGoogleMaps(venue)}
+              >
+                {venue.image ? (
+                  <FastImage
+                    style={this.styles.hotVenueImage}
+                    source={{
+                      uri: venue.image,
+                      priority: FastImage.priority.high,
+                    }}
+                    resizeMode={FastImage.resizeMode.cover}
+                  />
+                ) : (
+                  <View
+                    style={[
+                      this.styles.hotVenueImage,
+                      this.styles.compactShowThumbPlaceholder,
+                    ]}
+                  />
+                )}
+                <View style={this.styles.hotVenueScrim} />
+                <View style={this.styles.hotVenueTextWrap}>
+                  <Text style={this.styles.hotVenueName} numberOfLines={1}>
+                    {venue.name}
+                  </Text>
+                  <Text style={this.styles.hotVenueMeta} numberOfLines={1}>
+                    {venue.city ? `${venue.city} • ` : ''}
+                    <Text style={this.styles.hotVenueCount}>{showLabel}</Text>
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
       </View>
     );
   };
@@ -1029,6 +1272,373 @@ export default class AllEventScreen extends AllEventController {
     return `${locationLabel} area`;
   };
 
+  getDiscoveryShows = (): any[] => {
+    const eventList = this.filterEventList();
+    if (!Array.isArray(eventList)) {
+      return [];
+    }
+    const shows: any[] = [];
+    eventList.forEach((group: any) => {
+      const raw = Array.isArray(group?.shows) ? group.shows : [];
+      raw.forEach((show: any) => {
+        if (show && typeof show === 'object' && show.type === 'show') {
+          shows.push(show);
+        }
+      });
+    });
+    return shows;
+  };
+
+  getArtistsToWatch = (limit: number | null = 12) => {
+    const byKey = new Map<
+      string,
+      {
+        id: string;
+        accountId: any;
+        accountType: string;
+        name: string;
+        image: string;
+        upcomingCount: number;
+      }
+    >();
+
+    const addArtist = ({
+      name,
+      accountId,
+      image,
+      accountType,
+      upcomingCount = 1,
+    }: {
+      name: string;
+      accountId: any;
+      image?: string;
+      accountType?: string;
+      upcomingCount?: number;
+    }) => {
+      const trimmedName = typeof name === 'string' ? name.trim() : '';
+      const band = this.findBandArtistRecord(trimmedName, accountId);
+      const resolvedId =
+        accountId != null && accountId !== '' ? accountId : band?.id;
+      const resolvedName =
+        trimmedName ||
+        (typeof band?.first_name === 'string' ? band.first_name.trim() : '');
+      if (!resolvedName || resolvedId == null || resolvedId === '') {
+        return;
+      }
+      const key = `id:${resolvedId}`;
+      const resolvedImage =
+        (typeof image === 'string' && image) ||
+        (typeof band?.profile_image === 'string' && band.profile_image) ||
+        '';
+      const resolvedType =
+        accountType || band?.account_type || band?.role || 'Artist';
+      const existing = byKey.get(key);
+      if (existing) {
+        existing.upcomingCount += upcomingCount;
+        if (!existing.image && resolvedImage) {
+          existing.image = resolvedImage;
+        }
+        return;
+      }
+      byKey.set(key, {
+        id: key,
+        accountId: resolvedId,
+        accountType: resolvedType,
+        name: resolvedName,
+        image: resolvedImage,
+        upcomingCount,
+      });
+    };
+
+    const eventList = this.filterEventList();
+    if (Array.isArray(eventList)) {
+      eventList.forEach((group: any) => {
+        const raw = Array.isArray(group?.shows) ? group.shows : [];
+        raw.forEach((show: any) => {
+          if (!show || typeof show !== 'object' || show.type !== 'show') {
+            return;
+          }
+          const image =
+            (typeof show.band_profile_image === 'string' &&
+              show.band_profile_image) ||
+            (typeof show.profile_image === 'string' && show.profile_image) ||
+            '';
+          const bandName =
+            typeof show.band_name === 'string' ? show.band_name.trim() : '';
+          if (bandName) {
+            addArtist({
+              name: bandName,
+              accountId: show.account_id,
+              image,
+              accountType: show.account_type || 'Band',
+            });
+          } else if (show.account_id != null && show.account_id !== '') {
+            addArtist({
+              name:
+                (typeof show.event_title === 'string' &&
+                  show.event_title.trim()) ||
+                '',
+              accountId: show.account_id,
+              image,
+              accountType: show.account_type || 'Band',
+            });
+          }
+          const lineups = Array.isArray(show.line_ups) ? show.line_ups : [];
+          lineups.forEach((entry: any) => {
+            if (typeof entry === 'string') {
+              addArtist({
+                name: entry,
+                accountId: null,
+                image: '',
+                accountType: 'Artist',
+              });
+              return;
+            }
+            if (!entry || typeof entry !== 'object') {
+              return;
+            }
+            addArtist({
+              name: entry.first_name || entry.name || '',
+              accountId: entry.id || entry.account_id,
+              image: entry.profile_image || '',
+              accountType: entry.account_type || 'Artist',
+            });
+          });
+        });
+      });
+    }
+
+    const bands = this.getAllBandsListRecords();
+    bands.forEach((band: any) => {
+      const mapped = this.mapBandRecordToArtist(band);
+      if (!mapped) {
+        return;
+      }
+      const key = `id:${mapped.accountId}`;
+      const existing = byKey.get(key);
+      if (existing) {
+        if (!existing.image && mapped.image) {
+          existing.image = mapped.image;
+        }
+        if (mapped.accountType && existing.accountType === 'Artist') {
+          existing.accountType = mapped.accountType;
+        }
+        return;
+      }
+      byKey.set(key, {
+        id: key,
+        accountId: mapped.accountId,
+        accountType: mapped.accountType,
+        name: mapped.name,
+        image: mapped.image,
+        upcomingCount: 0,
+      });
+    });
+
+    const sorted = Array.from(byKey.values()).sort((a, b) => {
+      if (b.upcomingCount !== a.upcomingCount) {
+        return b.upcomingCount - a.upcomingCount;
+      }
+      return a.name.localeCompare(b.name);
+    });
+    if (limit == null || limit <= 0) {
+      return sorted;
+    }
+    return sorted.slice(0, limit);
+  };
+
+  mapBandRecordToArtist = (band: any) => {
+    if (!band || typeof band !== 'object') {
+      return null;
+    }
+    const attrs =
+      band.attributes && typeof band.attributes === 'object'
+        ? band.attributes
+        : band;
+    const accountId = band.id ?? attrs.id ?? attrs.account_id;
+    const name = String(
+      attrs.first_name || attrs.name || band.first_name || band.name || '',
+    ).trim();
+    const imageValue =
+      attrs.profile_image ||
+      attrs.profile_image_url ||
+      band.profile_image ||
+      '';
+    const image = typeof imageValue === 'string' ? imageValue : '';
+    const accountType =
+      attrs.account_type ||
+      attrs.role ||
+      band.account_type ||
+      band.role ||
+      'Artist';
+    if (!name || accountId == null || accountId === '') {
+      return null;
+    }
+    return { accountId, name, image, accountType };
+  };
+
+  findBandArtistRecord = (name: string, accountId?: any) => {
+    const list = this.getAllBandsListRecords();
+    if (accountId != null && accountId !== '') {
+      const byId = list.find(
+        (item: any) => String(item?.id) === String(accountId),
+      );
+      if (byId) {
+        return byId;
+      }
+    }
+    const lower = String(name || '')
+      .trim()
+      .toLowerCase();
+    if (!lower) {
+      return null;
+    }
+    return (
+      list.find((item: any) => {
+        const bandName = String(item?.first_name || item?.name || '')
+          .trim()
+          .toLowerCase();
+        return bandName !== '' && bandName === lower;
+      }) || null
+    );
+  };
+
+  resolveArtistAccountId = (artist: {
+    accountId?: any;
+    name?: string;
+  }) => {
+    if (artist.accountId != null && artist.accountId !== '') {
+      return artist.accountId;
+    }
+    return this.findBandArtistRecord(String(artist.name || ''))?.id ?? null;
+  };
+
+  getSearchStyleProfileScreen = (accountType?: string) => {
+    const typeName = String(accountType || 'Artist');
+    const artistOrBandTypes = [
+      'Band',
+      'Artist',
+      'Venue',
+      'Club',
+      'Theater',
+      'Museum',
+      'Record_Label',
+      'Promoter',
+      'Bar',
+      'Gallery',
+      'Casino',
+      'Booking_Agent',
+      'Agency',
+      'Record_Store',
+    ];
+    const isArtistOrBand = artistOrBandTypes.some(
+      item => item.toLowerCase() === typeName.toLowerCase(),
+    );
+    return isArtistOrBand
+      ? 'UserProfileBasicBlockArtist3'
+      : 'UserProfileBasicBlock3';
+  };
+
+  handleArtistToWatchPress = async (artist: {
+    accountId?: any;
+    accountType?: string;
+    name?: string;
+  }) => {
+    if (this.isForceUpdateBlocking()) {
+      return;
+    }
+    const accountId = this.resolveArtistAccountId(artist);
+    if (accountId == null || accountId === '') {
+      return;
+    }
+
+    const authToken =
+      this.state.authToken || (await getStorageData('authToken'));
+    if (!authToken) {
+      this.setState({ loginPopup: true });
+      return;
+    }
+
+    await setStorageData('profileIdToLoad', `${accountId}`);
+    const screen = this.getSearchStyleProfileScreen(artist.accountType);
+    if (this.state.userId === `${accountId}`) {
+      this.props.navigation.navigate('Profile', {
+        isOtherUser: false,
+      });
+      return;
+    }
+    this.props.navigation.push(screen, {
+      isOtherUser: true,
+    });
+  };
+
+  getHotVenues = () => {
+    const byKey = new Map<
+      string,
+      {
+        id: string;
+        name: string;
+        city: string;
+        image: string;
+        showCount: number;
+        address: string;
+        state: string;
+        zip_code: any;
+      }
+    >();
+    this.getDiscoveryShows().forEach(show => {
+      const name =
+        (typeof show.location === 'string' && show.location.trim()) ||
+        (typeof show.address === 'string' && show.address.trim()) ||
+        '';
+      if (!name) {
+        return;
+      }
+      const key = name.toLowerCase();
+      const image =
+        typeof show.profile_image === 'string' ? show.profile_image : '';
+      const existing = byKey.get(key);
+      if (existing) {
+        existing.showCount += 1;
+        if (!existing.image && image) {
+          existing.image = image;
+        }
+      } else {
+        byKey.set(key, {
+          id: key,
+          name,
+          city:
+            (typeof show.city === 'string' && show.city.trim()) ||
+            (typeof show.state === 'string' && show.state.trim()) ||
+            '',
+          image,
+          showCount: 1,
+          address: typeof show.address === 'string' ? show.address : '',
+          state: typeof show.state === 'string' ? show.state : '',
+          zip_code: show.zip_code,
+        });
+      }
+    });
+    return Array.from(byKey.values())
+      .sort((a, b) => b.showCount - a.showCount)
+      .slice(0, 8);
+  };
+
+  handleSeeAllArtists = () => {
+    if (this.isForceUpdateBlocking()) {
+      return;
+    }
+    this.props.navigation.navigate('ArtistsToWatchAllScreen');
+  };
+
+  handleViewHotVenuesMap = () => {
+    const venues = this.getHotVenues();
+    if (venues.length === 0) {
+      return;
+    }
+    this.openGoogleMaps(venues[0]);
+  };
+
   formatGenreLabel = (genre: any): string => {
     if (Array.isArray(genre)) {
       return genre
@@ -1400,6 +2010,38 @@ export default class AllEventScreen extends AllEventController {
             );
           })}
         </ScrollView>
+      </View>
+    );
+  };
+
+  renderGuestSignupBanner = () => {
+    if (this.state.authToken || this.state.guestSignupBannerDismissed) {
+      return null;
+    }
+    return (
+      <View testID="guestSignupBanner" style={this.styles.guestSignupBanner}>
+        <View style={this.styles.guestSignupStarWrap}>
+          <Icon name="star" size={16} color={this.getHomeTheme().primary} />
+        </View>
+        <Text style={this.styles.guestSignupBannerText} numberOfLines={1}>
+          Sign up free to unlock more shows
+        </Text>
+        <TouchableOpacity
+          testID="guestSignupJoinButton"
+          style={this.styles.guestSignupJoinButton}
+          onPress={() => this.moveToLoginScreen('signup')}
+          activeOpacity={0.85}
+        >
+          <Text style={this.styles.guestSignupJoinText}>Join</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          testID="guestSignupCloseButton"
+          style={this.styles.guestSignupCloseButton}
+          onPress={() => this.setState({ guestSignupBannerDismissed: true })}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Icon name="x" size={14} color={this.getHomeTheme().muted} />
+        </TouchableOpacity>
       </View>
     );
   };
@@ -1917,10 +2559,11 @@ export default class AllEventScreen extends AllEventController {
 
         <View style={this.styles.feedToolbarSurface}>
           {this.renderSearch()}
-          {this.renderFeaturedCard()}
+          {!!this.state.authToken && this.renderFeaturedCard()}
           {this.renderCategories()}
-          {this.renderSortPills()}
-          {this.renderShowsSectionHeader()}
+          {this.renderGuestSignupBanner()}
+          {!!this.state.authToken && this.renderSortPills()}
+          {!!this.state.authToken && this.renderShowsSectionHeader()}
         </View>
       </View>
     );
@@ -1929,15 +2572,19 @@ export default class AllEventScreen extends AllEventController {
   renderEventsList = () => {
     const eventList = this.filterEventList();
     const isLoggedIn = !!this.state.authToken;
-    const hasEvents = eventList && eventList.length > 0;
-    // Filter out items with no shows for guest users to get accurate count
-    const eventListWithShows = eventList.filter((item: any) => {
-      const showsRaw = Array.isArray(item.shows) ? item.shows : [];
-      const showsListForGuestUsers = showsRaw.filter(
-        (card: { type?: string }) => card && card.type === 'show',
-      );
-      return showsListForGuestUsers.length > 0;
-    });
+    const guestEventList = isLoggedIn
+      ? eventList
+      : eventList.filter((item: any) => {
+          const showsRaw = Array.isArray(item.shows) ? item.shows : [];
+          return showsRaw.some(
+            (card: { type?: string }) => card && card.type === 'show',
+          );
+        });
+    const { groups: visibleEventList, hasMoreShows } = isLoggedIn
+      ? this.getVisibleHomeFeedGroups(guestEventList, isLoggedIn)
+      : { groups: guestEventList, hasMoreShows: false };
+    const hasEvents = visibleEventList.length > 0;
+    const eventListWithShows = visibleEventList;
 
     const showFeedLoader =
       this.state.isLoading &&
@@ -2030,6 +2677,9 @@ export default class AllEventScreen extends AllEventController {
             ]}
             scrollEnabled
             bounces={hasEvents}
+            nestedScrollEnabled
+            keyboardShouldPersistTaps="handled"
+            removeClippedSubviews={false}
             refreshControl={
               <RefreshControl
                 refreshing={false}
@@ -2044,7 +2694,7 @@ export default class AllEventScreen extends AllEventController {
             ref={this.eventsFeedListRef}
             testID="authenticatedEventsList"
             style={{ flex: 1, backgroundColor: this.getHomeTheme().background }}
-            data={eventList}
+            data={visibleEventList}
             ListHeaderComponent={this.renderFeedListHeader}
             renderItem={({ item, index }: any) => this.renderItems(item, index)}
             contentContainerStyle={[
@@ -2056,6 +2706,9 @@ export default class AllEventScreen extends AllEventController {
             }
             scrollEnabled
             bounces={hasEvents}
+            nestedScrollEnabled
+            keyboardShouldPersistTaps="handled"
+            removeClippedSubviews={false}
             refreshControl={
               <RefreshControl
                 refreshing={false}
@@ -2064,6 +2717,7 @@ export default class AllEventScreen extends AllEventController {
               />
             }
             ListEmptyComponent={listEmptyAuth}
+            ListFooterComponent={() => this.renderHomeFeedFooter(hasMoreShows)}
           />
         )}
       </>

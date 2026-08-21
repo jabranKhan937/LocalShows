@@ -9,11 +9,18 @@ import MessageEnum, {
 // Customizable Area Start
 import * as Yup from "yup";
 import { imgPasswordVisible, imgPasswordInVisible } from "./assets";
+import { DeviceEventEmitter } from "react-native";
 import {
   getStorageData,
   isEmpty,
   setStorageData
 } from "../../../framework/src/Utilities";
+import {
+  lightTheme,
+  PROFILE_THEME_CHANGED_EVENT,
+  PROFILE_THEME_STORAGE_KEY,
+  redesignTheme,
+} from "../../utilities/src/Colors";
 // Customizable Area End
 
 export const configJSON = require("./config");
@@ -47,6 +54,7 @@ interface S {
   isFetching: boolean;
   showPassword: boolean;
   showConfirmPassword: boolean;
+  isDarkMode: boolean;
   // Customizable Area End
 }
 
@@ -187,7 +195,8 @@ export default class ForgotPasswordController extends BlockComponent<
       confirmNewPasswordError: "",
       isFetching: false,
       showPassword: false,
-      showConfirmPassword: false
+      showConfirmPassword: false,
+      isDarkMode: true
     };
 
     this.isChangePassword = false;
@@ -197,7 +206,35 @@ export default class ForgotPasswordController extends BlockComponent<
   async componentDidMount() {
     super.componentDidMount();
     this.validationRulesRequest();
+    this.loadForgotPasswordTheme();
   }
+
+  profileThemeListener: any = null;
+
+  async componentWillUnmount(): Promise<void> {
+    if (this.profileThemeListener) {
+      this.profileThemeListener.remove();
+      this.profileThemeListener = null;
+    }
+    await super.componentWillUnmount();
+  }
+
+  loadForgotPasswordTheme = async () => {
+    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
+    this.setState({ isDarkMode: savedTheme !== "false" });
+    if (!this.profileThemeListener) {
+      this.profileThemeListener = DeviceEventEmitter.addListener(
+        PROFILE_THEME_CHANGED_EVENT,
+        (isDarkMode: boolean) => {
+          this.setState({ isDarkMode });
+        },
+      );
+    }
+  };
+
+  getForgotPasswordTheme = () => {
+    return this.state.isDarkMode ? redesignTheme : lightTheme;
+  };
 
   validationRulesRequest = () => {
     const header = {

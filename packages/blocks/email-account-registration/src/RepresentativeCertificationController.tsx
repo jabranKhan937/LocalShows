@@ -7,6 +7,13 @@ import MessageEnum, {
 
 // Customizable Area Start
 import { setStorageData, isEmpty, getStorageData } from "../../../framework/src/Utilities";
+import { DeviceEventEmitter } from "react-native";
+import {
+  lightTheme,
+  PROFILE_THEME_CHANGED_EVENT,
+  PROFILE_THEME_STORAGE_KEY,
+  redesignTheme,
+} from "../../utilities/src/Colors";
 export type IosPickerProps = {
     stateName: 'title' | 'placeName',
 }
@@ -39,6 +46,7 @@ export interface S {
   fullNameError: string;
   bandArtistError: string;
   placeNameError: string;
+  isDarkMode: boolean;
   // Customizable Area End
 }
 
@@ -83,7 +91,8 @@ export default class RepresentativeCertificationController extends BlockComponen
       titleError: "",
       fullNameError: "",
       bandArtistError: "",
-      placeNameError: ""
+      placeNameError: "",
+      isDarkMode: true
       // Customizable Area End
     };
 
@@ -126,15 +135,43 @@ export default class RepresentativeCertificationController extends BlockComponen
   }
 
 
+  profileThemeListener: any = null;
+
   async componentDidMount() {
     // Get user role immediately when component mounts
     await this.getUserRole();
+    this.loadCertificationTheme();
     
     // Also listen for navigation focus events
     this.props.navigation.addListener("willFocus", async () => {
       await this.getUserRole();
     });
   }
+
+  async componentWillUnmount(): Promise<void> {
+    if (this.profileThemeListener) {
+      this.profileThemeListener.remove();
+      this.profileThemeListener = null;
+    }
+    await super.componentWillUnmount();
+  }
+
+  loadCertificationTheme = async () => {
+    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
+    this.setState({ isDarkMode: savedTheme !== "false" });
+    if (!this.profileThemeListener) {
+      this.profileThemeListener = DeviceEventEmitter.addListener(
+        PROFILE_THEME_CHANGED_EVENT,
+        (isDarkMode: boolean) => {
+          this.setState({ isDarkMode });
+        },
+      );
+    }
+  };
+
+  getCertificationTheme = () => {
+    return this.state.isDarkMode ? redesignTheme : lightTheme;
+  };
 
   dynamicOpacity = (property: boolean | string) => {
     return property ? 1 : 0.5;

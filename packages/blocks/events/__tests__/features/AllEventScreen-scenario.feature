@@ -80,6 +80,33 @@ Feature: AllEventScreen
         When The screen is loaded for a guest user with only posts
         Then Nothing should be showed to the guest user
 
+    Scenario: Logged out user sees signup banner below filters
+        Given I am a User loading AllEventScreen
+        When I navigate to the AllEventScreen
+        Then Guest signup banner is shown below filters
+
+    Scenario: User taps Show more on the home feed
+        Given I am a User loading AllEventScreen
+        When I navigate to the AllEventScreen
+        When the home feed has twenty five swimming shows
+        Then the home feed shows ten events
+        When I tap Show more
+        Then the home feed shows twenty events
+        When I tap Show more again
+        Then the home feed shows all twenty five events
+
+    Scenario: Home feed shows artists to watch and hot venues
+        Given I am a User loading AllEventScreen
+        When I navigate to the AllEventScreen
+        When the home feed has swimming shows from the API
+        Then Artists to Watch and Hot Venues are shown from those shows
+
+    Scenario: See all artists opens the all artists screen
+        Given I am a User loading AllEventScreen
+        When I navigate to the AllEventScreen
+        When the home feed has swimming shows from the API
+        Then See all opens the all artists list
+
     Scenario: User navigate to all AllEventScreen with params on the route
         Given User attempting to AllEventScreen
         When I load the AllEventScreen screen

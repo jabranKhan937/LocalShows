@@ -12,9 +12,15 @@ import {
   removeStorageData,
   setStorageData,
 } from '../../../framework/src/Utilities';
-import { PermissionsAndroid, Platform } from 'react-native';
+import { DeviceEventEmitter, PermissionsAndroid, Platform } from 'react-native';
 import Geolocation from 'react-native-geolocation-service';
 import { check, PERMISSIONS, RESULTS } from 'react-native-permissions';
+import {
+  lightTheme,
+  PROFILE_THEME_CHANGED_EVENT,
+  PROFILE_THEME_STORAGE_KEY,
+  redesignTheme,
+} from '../../utilities/src/Colors';
 
 interface IPlaceRecord {
   key: string;
@@ -77,6 +83,7 @@ export interface S {
   selectedCountryCode: any;
   adminName: string;
   title: string;
+  isDarkMode: boolean;
   // Customizable Area End
 }
 
@@ -170,6 +177,7 @@ export default class CreatePageController extends BlockComponent<Props, S, SS> {
       selectedCountryCode: {},
       adminName: '',
       title: '',
+      isDarkMode: true,
       // Customizable Area End
     };
     // Customizable Area Start
@@ -194,7 +202,31 @@ export default class CreatePageController extends BlockComponent<Props, S, SS> {
   }
   async componentWillUnmount(): Promise<void> {
     this._isMounted = false;
+    if (this.profileThemeListener) {
+      this.profileThemeListener.remove();
+      this.profileThemeListener = null;
+    }
+    await super.componentWillUnmount();
   }
+
+  profileThemeListener: any = null;
+
+  loadCreatePageTheme = async () => {
+    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
+    this.setState({ isDarkMode: savedTheme !== 'false' });
+    if (!this.profileThemeListener) {
+      this.profileThemeListener = DeviceEventEmitter.addListener(
+        PROFILE_THEME_CHANGED_EVENT,
+        (isDarkMode: boolean) => {
+          this.setState({ isDarkMode });
+        },
+      );
+    }
+  };
+
+  getCreatePageTheme = () => {
+    return this.state.isDarkMode ? redesignTheme : lightTheme;
+  };
 
   async handleComponentDidMount() {
     if (this._isMounted) {
@@ -215,6 +247,7 @@ export default class CreatePageController extends BlockComponent<Props, S, SS> {
       
       this.getCountryCodeListApi();
       this.handleCountryListAPI();
+      this.loadCreatePageTheme();
       this.props.navigation.addListener('willFocus', async () => {
         const tAndCAcceptance = await getStorageData('tAndCAcceptance');
         if (tAndCAcceptance) {

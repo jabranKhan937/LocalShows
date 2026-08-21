@@ -17,7 +17,7 @@ import {
   Platform
 } from "react-native";
 
-import { colors } from "../../utilities/src/Colors";
+import { redesignTheme } from "../../utilities/src/Colors";
 import { leftArrow, usFlag } from "./assets";
 import { Picker } from '@react-native-picker/picker';
 
@@ -28,6 +28,8 @@ import CreatePageController, {
   configJSON
 } from "./CreatePageController";
 
+type CreatePageTheme = typeof redesignTheme;
+
 export default class CreatePage extends CreatePageController {
   constructor(props: Props) {
     super(props);
@@ -35,8 +37,14 @@ export default class CreatePage extends CreatePageController {
     // Customizable Area End
   }
 
+  get styles() {
+    return createCreatePageStyles(this.getCreatePageTheme());
+  }
+
   // Customizable Area Start
   renderType = () => {
+    const styles = this.styles;
+    const theme = this.getCreatePageTheme();
     return (
       <>
         <Text style={[styles.text, styles.textInputHeader]}>
@@ -50,6 +58,8 @@ export default class CreatePage extends CreatePageController {
   }
 
   renderIOSTypePicker = () => {
+    const styles = this.styles;
+    const theme = this.getCreatePageTheme();
     return (
       <TouchableOpacity
         testID="btnTypeSelect"
@@ -59,15 +69,17 @@ export default class CreatePage extends CreatePageController {
         ]}
         onPress={this.openTypePicker}
       >
-        <Text style={[styles.text, { marginHorizontal: 10 }]}>
+        <Text style={[styles.text, { marginHorizontal: 10 }, !this.state.selectedType && { color: theme.muted }]}>
           {this.state.selectedType ? this.getTypeDisplayLabel(this.state.selectedType) : `${configJSON.selectAType}`}
         </Text>
-        <Image source={leftArrow} style={styles.downArrow} />
+        <Image source={leftArrow} style={[styles.downArrow, { tintColor: theme.muted }]} />
       </TouchableOpacity>
     )
   }
 
   renderAndroidTypePicker = () => {
+    const styles = this.styles;
+    const theme = this.getCreatePageTheme();
     return (
       <View
         style={[
@@ -80,8 +92,9 @@ export default class CreatePage extends CreatePageController {
       >
         <Picker
           testID="typePicker"
-          style={[styles.textInput, styles.selector]}
+          style={[styles.textInput, styles.selector, { color: theme.foreground }]}
           itemStyle={[styles.text]}
+          dropdownIconColor={theme.muted}
           selectedValue={this.state.selectedType}
           onValueChange={selectedType => this.handleTypeSelection(selectedType)
 
@@ -95,13 +108,15 @@ export default class CreatePage extends CreatePageController {
             <Picker.Item key={name} label={this.getTypeDisplayLabel(name)} value={name} />
           ))}
         </Picker>
-        <Image source={leftArrow} style={styles.downArrow} />
+        <Image source={leftArrow} style={[styles.downArrow, { tintColor: theme.muted }]} />
       </View>
     )
   }
 
 
   renderError = (errorType: string) => {
+    const styles = this.styles;
+    const theme = this.getCreatePageTheme();
     return (
       <>
         {errorType !== "" && (
@@ -114,6 +129,8 @@ export default class CreatePage extends CreatePageController {
   }
 
   renderNameOrLocationName = () => {
+    const styles = this.styles;
+    const theme = this.getCreatePageTheme();
     return (
       <>
         <Text style={[styles.text, styles.textInputHeader]}>
@@ -122,7 +139,7 @@ export default class CreatePage extends CreatePageController {
         <TextInput
           testID="txtInputName"
           placeholder={this.state.userRole === "band" ? configJSON.bandPlaceholder : configJSON.locationlaceholder}
-          placeholderTextColor="#CBD5E1"
+          placeholderTextColor={theme.muted}
           style={styles.textInput}
           value={this.state.name}
           onChangeText={name => this.handleName(name)}
@@ -134,6 +151,8 @@ export default class CreatePage extends CreatePageController {
   }
 
   renderEmail = () => {
+    const styles = this.styles;
+    const theme = this.getCreatePageTheme();
     return (
       <>
         <Text style={[styles.text, styles.textInputHeader]}>
@@ -142,7 +161,7 @@ export default class CreatePage extends CreatePageController {
         <TextInput
           testID="txtInputEmail"
           placeholder="Enter your email address"
-          placeholderTextColor="#CBD5E1"
+          placeholderTextColor={theme.muted}
           style={styles.textInput}
           value={this.state.email}
           onChangeText={email => this.handleEmail(email.replace(" ", ""))}
@@ -158,6 +177,8 @@ export default class CreatePage extends CreatePageController {
   }
 
   renderPassword = () => {
+    const styles = this.styles;
+    const theme = this.getCreatePageTheme();
     return (
       <>
         <Text style={[styles.text, styles.textInputHeader]}>
@@ -167,7 +188,7 @@ export default class CreatePage extends CreatePageController {
           <TextInput
             testID="txtInputPassword"
             placeholder="Enter your password"
-            placeholderTextColor="#CBD5E1"
+            placeholderTextColor={theme.muted}
             style={styles.passwordInput}
             value={this.state.password}
             onChangeText={password => this.handlePassword(password)}
@@ -177,7 +198,7 @@ export default class CreatePage extends CreatePageController {
             autoCorrect={false}
           />
           <TouchableOpacity testID="passwordIcon" style={styles.passwordIconContainer} onPress={this.handlePasswordVisibility}>
-            <Image source={require("../../../mobile/assets/images/password_eye.png")} style={[styles.passwordIcon, { tintColor: this.state.showPassword ? "#475569" : "#3333CC" }]} />
+            <Image source={require("../../../mobile/assets/images/password_eye.png")} style={[styles.passwordIcon, { tintColor: this.state.showPassword ? theme.muted : theme.primary }]} />
           </TouchableOpacity>
         </View>
       </>
@@ -185,6 +206,8 @@ export default class CreatePage extends CreatePageController {
   }
 
   renderConfirmPassword = () => {
+    const styles = this.styles;
+    const theme = this.getCreatePageTheme();
     return (
       <>
         <Text style={[styles.text, styles.textInputHeader]}>
@@ -194,7 +217,7 @@ export default class CreatePage extends CreatePageController {
           <TextInput
             testID="txtInputConfirmPassword"
             placeholder="Enter your password"
-            placeholderTextColor="#CBD5E1"
+            placeholderTextColor={theme.muted}
             style={styles.passwordInput}
             value={this.state.confirmPassword}
             onChangeText={confirmPassword =>
@@ -205,13 +228,15 @@ export default class CreatePage extends CreatePageController {
             autoCorrect={false}
           />
           <TouchableOpacity testID="confirmPasswordIcon" style={styles.passwordIconContainer} onPress={this.handleConfirmPasswordVisibility}>
-            <Image source={require("../../../mobile/assets/images/password_eye.png")} style={[styles.passwordIcon, { tintColor: this.state.showConfirmPassword ? "#475569" : "#3333CC" }]} />
+            <Image source={require("../../../mobile/assets/images/password_eye.png")} style={[styles.passwordIcon, { tintColor: this.state.showConfirmPassword ? theme.muted : theme.primary }]} />
           </TouchableOpacity>
         </View>
       </>
     )
   }
- renderCountry = () => {
+  renderCountry = () => {
+    const styles = this.styles;
+    const theme = this.getCreatePageTheme();
     return (
       <>
         <Text style={[styles.text, styles.textInputHeader]}>
@@ -225,26 +250,31 @@ export default class CreatePage extends CreatePageController {
   };
 
   renderIOSCountryPicker = () => {
+    const styles = this.styles;
+    const theme = this.getCreatePageTheme();
     return (
       <TouchableOpacity
         testID="btnCountrySelect"
         style={[styles.textInput, styles.selector]}
         onPress={this.openCountryPicker}
       >
-        <Text style={[styles.text, { marginHorizontal: 10 }]}>
+        <Text style={[styles.text, { marginHorizontal: 10 }, !this.state.selectedCountry && { color: theme.muted }]}>
           {this.state.selectedCountry || configJSON.selectACountry}
         </Text>
-        <Image source={leftArrow} style={styles.downArrow} />
+        <Image source={leftArrow} style={[styles.downArrow, { tintColor: theme.muted }]} />
       </TouchableOpacity>
     );
   };
 
   renderAndroidCountryPicker = () => {
+    const styles = this.styles;
+    const theme = this.getCreatePageTheme();
     return (
       <View style={[styles.textInput, styles.selector, { paddingHorizontal: 0 }]}>
         <Picker
           testID="countryPicker"
-          style={[styles.textInput, styles.selector]}
+          style={[styles.textInput, styles.selector, { color: theme.foreground }]}
+          dropdownIconColor={theme.muted}
           selectedValue={this.state.selectedCountry}
           onValueChange={selectedCountry =>
             this.handleCountryChange(selectedCountry)
@@ -266,7 +296,7 @@ export default class CreatePage extends CreatePageController {
               />
             ))}
         </Picker>
-        <Image source={leftArrow} style={styles.downArrow} />
+        <Image source={leftArrow} style={[styles.downArrow, { tintColor: theme.muted }]} />
       </View>
     );
   };
@@ -274,6 +304,8 @@ export default class CreatePage extends CreatePageController {
 
   
   renderState = () => {
+    const styles = this.styles;
+    const theme = this.getCreatePageTheme();
     return (
       <>
         <Text style={[styles.text, styles.textInputHeader]}>
@@ -287,6 +319,8 @@ export default class CreatePage extends CreatePageController {
   }
 
   renderIOSStatePicker = () => {
+    const styles = this.styles;
+    const theme = this.getCreatePageTheme();
     return (
       <TouchableOpacity
         testID="btnStateSelect"
@@ -300,15 +334,17 @@ export default class CreatePage extends CreatePageController {
         disabled={this.state.selectedCountry === "" || this.state.selectedCountry !== "United States"}
         onPress={this.openStatePicker}
       >
-        <Text style={[styles.text, { marginHorizontal: 10 }]}>
+        <Text style={[styles.text, { marginHorizontal: 10 }, !this.state.selectedState && { color: theme.muted }]}>
           {this.state.selectedState || `${configJSON.selectAState}`}
         </Text>
-        <Image source={leftArrow} style={styles.downArrow} />
+        <Image source={leftArrow} style={[styles.downArrow, { tintColor: theme.muted }]} />
       </TouchableOpacity>
     )
   }
 
   renderAndroidStatePicker = () => {
+    const styles = this.styles;
+    const theme = this.getCreatePageTheme();
     return (
       <View
         style={[
@@ -322,8 +358,9 @@ export default class CreatePage extends CreatePageController {
       >
         <Picker
           testID="statePicker"
-          style={[styles.textInput, styles.selector]}
+          style={[styles.textInput, styles.selector, { color: theme.foreground }]}
           itemStyle={[styles.text]}
+          dropdownIconColor={theme.muted}
           selectedValue={this.state.selectedState}
           onValueChange={selectedState => this.handleStateChange(selectedState)}
           enabled={this.state.selectedCountry !== "" && this.state.selectedCountry === "United States"}
@@ -338,12 +375,14 @@ export default class CreatePage extends CreatePageController {
             )
           )}
         </Picker>
-        <Image source={leftArrow} style={styles.downArrow} />
+        <Image source={leftArrow} style={[styles.downArrow, { tintColor: theme.muted }]} />
       </View>
     )
   }
 
   renderCity = () => {
+    const styles = this.styles;
+    const theme = this.getCreatePageTheme();
     return (
       <>
         <Text style={[styles.text, styles.textInputHeader]}>
@@ -355,6 +394,8 @@ export default class CreatePage extends CreatePageController {
   }
 
   renderAddress = () => {
+    const styles = this.styles;
+    const theme = this.getCreatePageTheme();
     return (
       <>
         <Text style={[styles.text, styles.textInputHeader]}>
@@ -363,7 +404,7 @@ export default class CreatePage extends CreatePageController {
         <TextInput
           testID="txtInputAddress"
           placeholder="Enter your address"
-          placeholderTextColor="#CBD5E1"
+          placeholderTextColor={theme.muted}
           style={[styles.textInput]}
           value={this.state.address}
           onChangeText={address => this.handleAddress(address)}
@@ -375,6 +416,8 @@ export default class CreatePage extends CreatePageController {
   }
 
   renderZipCode = () => {
+    const styles = this.styles;
+    const theme = this.getCreatePageTheme();
     return (
       <>
         <Text style={[styles.text, styles.textInputHeader,{ marginTop: -3 }]}>
@@ -383,7 +426,7 @@ export default class CreatePage extends CreatePageController {
         <TextInput
           testID="txtInputZipCode"
           placeholder="Enter zip code"
-          placeholderTextColor="#CBD5E1"
+          placeholderTextColor={theme.muted}
           style={[styles.textInput]}
           value={this.state.zipCode}
           onChangeText={zipCode => this.handleZipCode(zipCode)}
@@ -397,6 +440,8 @@ export default class CreatePage extends CreatePageController {
   }
 
   renderIOSCityPicker = () => {
+    const styles = this.styles;
+    const theme = this.getCreatePageTheme();
     return (
       <TouchableOpacity
         testID="btnCitySelect"
@@ -409,15 +454,17 @@ export default class CreatePage extends CreatePageController {
         ]}
         disabled={this.state.selectedState === ""}
         onPress={this.openCityPicker}>
-        <Text style={[styles.text, { marginHorizontal: 10 }]}>
+        <Text style={[styles.text, { marginHorizontal: 10 }, !this.state.selectedCity && { color: theme.muted }]}>
           {this.state.selectedCity || `${configJSON.selectACity}`}
         </Text>
-        <Image source={leftArrow} style={styles.downArrow} />
+        <Image source={leftArrow} style={[styles.downArrow, { tintColor: theme.muted }]} />
       </TouchableOpacity>
     )
   }
 
   renderAndroidCityPicker = () => {
+    const styles = this.styles;
+    const theme = this.getCreatePageTheme();
     return (
       <View style={[
         styles.textInput,
@@ -429,8 +476,9 @@ export default class CreatePage extends CreatePageController {
       ]}>
         <Picker
           testID="cityPicker"
-          style={[styles.textInput, styles.selector]}
+          style={[styles.textInput, styles.selector, { color: theme.foreground }]}
           itemStyle={[styles.text]}
+          dropdownIconColor={theme.muted}
           selectedValue={this.state.selectedCity}
           onValueChange={(selectedCity) => this.handleCityValueChange(selectedCity)}
           enabled={this.state.selectedState !== ""}>
@@ -441,12 +489,14 @@ export default class CreatePage extends CreatePageController {
             )
           )}
         </Picker>
-        <Image source={leftArrow} style={styles.downArrow} />
+        <Image source={leftArrow} style={[styles.downArrow, { tintColor: theme.muted }]} />
       </View>
     )
   }
 
   renderCellPhone = () => {
+    const styles = this.styles;
+    const theme = this.getCreatePageTheme();
     return (
       <>
         <Text style={[styles.text, styles.textInputHeader]}>
@@ -472,6 +522,8 @@ export default class CreatePage extends CreatePageController {
   }
 
   renderCountryCodePickeriOS = () => {
+    const styles = this.styles;
+    const theme = this.getCreatePageTheme();
     const hasFlag = this.state.selectedCountryCode && Object.keys(this.state.selectedCountryCode).length > 0
     const code = this.state.selectedCountryCode && Object.keys(this.state.selectedCountryCode).length > 0 ? `+${this.state.selectedCountryCode.attributes.country_code}` : "1"
     return (
@@ -488,6 +540,7 @@ export default class CreatePage extends CreatePageController {
             right: 0,
             marginLeft: 10,
             backgroundColor: 'transparent',
+            tintColor: theme.muted,
           }]} />
         <Text
           style={styles.countryCodeText}
@@ -497,6 +550,8 @@ export default class CreatePage extends CreatePageController {
   }
 
   renderCountryCodePickerAndroid = () => {
+    const styles = this.styles;
+    const theme = this.getCreatePageTheme();
     const hasFlag = this.state.selectedCountryCode && Object.keys(this.state.selectedCountryCode).length > 0
     const code = this.state.selectedCountryCode && Object.keys(this.state.selectedCountryCode).length > 0 ? `+${this.state.selectedCountryCode.attributes.country_code}` : "1"
     return (
@@ -522,6 +577,7 @@ export default class CreatePage extends CreatePageController {
               right: 0,
               marginLeft: 10,
               backgroundColor: 'transparent',
+            tintColor: theme.muted,
             }]} />
           <Text
             style={styles.countryCodeText}>{code}</Text>
@@ -531,9 +587,14 @@ export default class CreatePage extends CreatePageController {
   }
 
   renderTAndC = () => {
+    const styles = this.styles;
+    const theme = this.getCreatePageTheme();
     return (
       <View style={styles.tAndCContainer}>
-        <TouchableOpacity style={styles.tAndC}
+        <TouchableOpacity style={[
+          styles.tAndC,
+          this.state.acceptTermsConditions && styles.tAndCChecked,
+        ]}
           testID="btnAcceptTermsConditions"
           onPress={this.handleTAndC
           }
@@ -555,30 +616,88 @@ export default class CreatePage extends CreatePageController {
     )
   }
 
-  renderTypeModal = () => {
+  isPickerValueSelected = (itemValue: any, selectedValue: any) => {
+    if (itemValue === selectedValue) {
+      return true;
+    }
+    if (
+      itemValue &&
+      selectedValue &&
+      typeof itemValue === "object" &&
+      itemValue.id &&
+      selectedValue.id
+    ) {
+      return itemValue.id === selectedValue.id;
+    }
+    return false;
+  };
+
+  renderThemedPickerSheet = (props: {
+    visible: boolean;
+    hideTestID: string;
+    pickerTestID: string;
+    selectedValue: any;
+    onHide: () => void;
+    onValueChange: (value: any) => void;
+    items: { key: string; label: string; value: any }[];
+    title: string;
+  }) => {
+    const styles = this.styles;
     return (
       <Modal
         transparent={true}
-        visible={this.state.typeClicked}
+        visible={props.visible}
         animationType="slide"
       >
-        <TouchableWithoutFeedback testID="hideTypeModal" onPress={this.hideModalType}>
+        <TouchableWithoutFeedback testID={props.hideTestID} onPress={props.onHide}>
           <View style={styles.centeredModal}>
             <TouchableWithoutFeedback>
-              <View
-                style={[
-                  styles.modalView,
-                  { borderTopStartRadius: 20, padding: 15 }
-                ]}
-              >
+              <View style={styles.sheetContainer}>
+                <View style={styles.sheetHandle} />
+                <Text style={styles.sheetTitle}>{props.title}</Text>
+                <ScrollView
+                  style={styles.sheetList}
+                  keyboardShouldPersistTaps="always"
+                  showsVerticalScrollIndicator={false}
+                >
+                  {props.items.map((item) => {
+                    const selected = this.isPickerValueSelected(
+                      item.value,
+                      props.selectedValue,
+                    );
+                    return (
+                      <TouchableOpacity
+                        key={item.key}
+                        style={[
+                          styles.sheetOption,
+                          selected && styles.sheetOptionSelected,
+                        ]}
+                        onPress={() => props.onValueChange(item.value)}
+                      >
+                        <Text
+                          style={[
+                            styles.sheetOptionText,
+                            selected && styles.sheetOptionTextSelected,
+                          ]}
+                        >
+                          {item.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
                 <Picker
-                  selectedValue={this.state.selectedType}
-                  testID="typePickerModal"
-                  themeVariant="light"
-                  itemStyle={styles.pickerItemStyle}
-                  onValueChange={selectedType => this.handleTypeSelection(selectedType)} >
-                  {this.state.typeList.map((name: string) => (
-                    <Picker.Item key={name} label={this.getTypeDisplayLabel(name)} value={name} />
+                  testID={props.pickerTestID}
+                  selectedValue={props.selectedValue}
+                  onValueChange={props.onValueChange}
+                  style={styles.hiddenPicker}
+                >
+                  {props.items.map((item) => (
+                    <Picker.Item
+                      key={item.key}
+                      label={item.label}
+                      value={item.value}
+                    />
                   ))}
                 </Picker>
               </View>
@@ -586,80 +705,65 @@ export default class CreatePage extends CreatePageController {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-    )
+    );
+  };
+
+  renderTypeModal = () => {
+    return this.renderThemedPickerSheet({
+      visible: this.state.typeClicked,
+      hideTestID: "hideTypeModal",
+      pickerTestID: "typePickerModal",
+      selectedValue: this.state.selectedType,
+      onHide: this.hideModalType,
+      onValueChange: (selectedType) => this.handleTypeSelection(selectedType),
+      title: configJSON.type,
+      items: this.state.typeList.map((name: string) => ({
+        key: name,
+        label: this.getTypeDisplayLabel(name),
+        value: name,
+      })),
+    });
   }
 
   renderStateModal = () => {
-    return (
-      <Modal
-        transparent={true}
-        visible={this.state.stateClicked}
-        animationType="slide"
-      >
-        <TouchableWithoutFeedback testID="hideStateModal" onPress={this.hideModalState}>
-          <View style={styles.centeredModal}>
-            <TouchableWithoutFeedback>
-              <View
-                style={[
-                  styles.modalView,
-                  { borderTopStartRadius: 20, padding: 15 }
-                ]}
-              >
-                <Picker
-                  selectedValue={this.state.selectedState}
-                  testID="statePickerModal"
-                  themeVariant="light"
-                  itemStyle={styles.pickerItemStyle}
-                  onValueChange={selectedState => this.handleStateChange(selectedState)}
-                >
-                  {this.state.stateList.map(
-                    ({ key, name }: { key: string; name: string }) => (
-                      <Picker.Item key={key} label={name} value={name} />
-                    )
-                  )}
-                </Picker>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-    )
+    return this.renderThemedPickerSheet({
+      visible: this.state.stateClicked,
+      hideTestID: "hideStateModal",
+      pickerTestID: "statePickerModal",
+      selectedValue: this.state.selectedState,
+      onHide: this.hideModalState,
+      onValueChange: (selectedState) => this.handleStateChange(selectedState),
+      title: configJSON.state,
+      items: this.state.stateList.map(
+        ({ key, name }: { key: string; name: string }) => ({
+          key,
+          label: name,
+          value: name,
+        }),
+      ),
+    });
   }
 
   renderCityModal = () => {
-    return (
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={this.state.cityClicked} >
-        <TouchableWithoutFeedback testID="hideCityModal" onPress={this.hideModalCity}>
-          <View style={styles.centeredModal}>
-            <TouchableWithoutFeedback>
-              <View style={[
-                styles.modalView,
-                { borderTopStartRadius: 20, padding: 15 }
-              ]}>
-                <Picker
-                  testID="cityPickerModal"
-                  selectedValue={this.state.selectedCity}
-                  themeVariant="light"
-                  itemStyle={styles.pickerItemStyle}
-                  onValueChange={(selectedCity) => this.handleCityValueChange(selectedCity)} >
-                  {this.state.cityList?.map(
-                    (name: string) => (
-                      <Picker.Item key={name} value={name} label={name} />
-                    )
-                  )}
-                </Picker>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-    )
+    return this.renderThemedPickerSheet({
+      visible: this.state.cityClicked,
+      hideTestID: "hideCityModal",
+      pickerTestID: "cityPickerModal",
+      selectedValue: this.state.selectedCity,
+      onHide: this.hideModalCity,
+      onValueChange: (selectedCity) => this.handleCityValueChange(selectedCity),
+      title: configJSON.city,
+      items: (this.state.cityList || []).map((name: string) => ({
+        key: name,
+        label: name,
+        value: name,
+      })),
+    });
   }
 
   renderCountryChangeModal = () => {
+    const styles = this.styles;
+    const theme = this.getCreatePageTheme();
     return (
       <Modal
         animationType="slide"
@@ -690,92 +794,49 @@ export default class CreatePage extends CreatePageController {
   }
 
   renderCountryModal = () => {
-    return (
-      <Modal
-        transparent
-        visible={this.state.countryClicked}
-        animationType="slide"
-      >
-        <TouchableWithoutFeedback
-          testID="hideCountryPickerModal"
-          onPress={this.hideModalCountryPicker}
-        >
-          <View style={styles.centeredModal}>
-            <TouchableWithoutFeedback>
-              <View
-                style={[
-                  styles.modalView,
-                  { borderTopStartRadius: 20, padding: 15 }
-                ]}
-              >
-                <Picker
-                  testID="countryPickerModal"
-                  selectedValue={this.state.selectedCountry}
-                  themeVariant="light"
-                  itemStyle={styles.pickerItemStyle}
-                  onValueChange={selectedCountry =>
-                    this.handleCountryChange(selectedCountry)
-                  }
-                >
-                  {this.state.countryList
-                    .filter(
-                      ({ country_name }) =>
-                        country_name !== "Aland" &&
-                        country_name !== "country_name"
-                    )
-                    .map(({ country_code, country_name }) => (
-                      <Picker.Item
-                        key={country_code}
-                        label={country_name}
-                        value={country_name}
-                      />
-                    ))}
-                </Picker>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-    );
+    return this.renderThemedPickerSheet({
+      visible: this.state.countryClicked,
+      hideTestID: "hideCountryPickerModal",
+      pickerTestID: "countryPickerModal",
+      selectedValue: this.state.selectedCountry,
+      onHide: this.hideModalCountryPicker,
+      onValueChange: (selectedCountry) => this.handleCountryChange(selectedCountry),
+      title: configJSON.country,
+      items: this.state.countryList
+        .filter(
+          ({ country_name }: { country_name: string }) =>
+            country_name !== "Aland" &&
+            country_name !== "country_name"
+        )
+        .map(({ country_code, country_name }: { country_code: string; country_name: string }) => ({
+          key: country_code,
+          label: country_name,
+          value: country_name,
+        })),
+    });
   };
 
 
   renderCountriesCodeListModal = () => {
-
-    return (
-      <Modal
-        transparent={true}
-        visible={this.state.countryCodeClicked}
-        animationType="slide"
-      >
-        <TouchableWithoutFeedback testID="hideCountryCodePickerModal" onPress={this.toogleCountryCodeModal}>
-          <View style={styles.centeredModal}>
-            <TouchableWithoutFeedback>
-              <View
-                style={[
-                  styles.modalView,
-                  { borderTopStartRadius: 20, padding: 15 }
-                ]}
-              >
-                <Picker
-                  selectedValue={this.state.selectedCountryCode}
-                  testID="countryCodePickerModal"
-                  themeVariant="light"
-                  itemStyle={styles.pickerItemStyle}
-                  onValueChange={countryCodeSelected => this.handleCountryCodeSelectionIOS(countryCodeSelected)} >
-                  {this.state.countryCodesList.map((countryCode) => (
-                    <Picker.Item key={countryCode.id} label={countryCode.attributes.name} value={countryCode} />
-                  ))}
-                </Picker>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-    )
+    return this.renderThemedPickerSheet({
+      visible: this.state.countryCodeClicked,
+      hideTestID: "hideCountryCodePickerModal",
+      pickerTestID: "countryCodePickerModal",
+      selectedValue: this.state.selectedCountryCode,
+      onHide: this.toogleCountryCodeModal,
+      onValueChange: (countryCodeSelected) => this.handleCountryCodeSelectionIOS(countryCodeSelected),
+      title: "Country code",
+      items: this.state.countryCodesList.map((countryCode: any) => ({
+        key: countryCode.id,
+        label: `${countryCode.attributes.name} (+${countryCode.attributes.country_code})`,
+        value: countryCode,
+      })),
+    });
   }
 
   renderHeader = () => {
+    const styles = this.styles;
+    const theme = this.getCreatePageTheme();
     return (
       <View style={styles.headerContainer}>
         <TouchableOpacity
@@ -784,7 +845,7 @@ export default class CreatePage extends CreatePageController {
           onPress={() => {
             this.props.navigation.goBack();
           }}>
-          <Image source={leftArrow} style={styles.backArrow} />
+          <Image source={leftArrow} style={[styles.backArrow, { tintColor: theme.foreground }]} />
         </TouchableOpacity>
         <Text testID="pageTitle" style={[styles.text, styles.headerTitle]}>
           {configJSON.createMyPage}
@@ -795,10 +856,12 @@ export default class CreatePage extends CreatePageController {
   // Customizable Area End
 
   render() {
+    const styles = this.styles;
+    const theme = this.getCreatePageTheme();
     return (
       <KeyboardAvoidingView
         behavior={this.isPlatformiOS() ? "padding" : undefined}
-        style={styles.keyboardPadding}
+        style={[styles.keyboardPadding, { backgroundColor: theme.background }]}
       >
         {/* Customizable Area Start */}
         <ScrollView keyboardShouldPersistTaps="always" style={styles.container}>
@@ -808,8 +871,12 @@ export default class CreatePage extends CreatePageController {
               this.hideKeyboard();
             }} >
             <SafeAreaView>
+              <View pointerEvents="none" style={styles.decorTop} />
               <View style={styles.mainContainer}>
-                <StatusBar backgroundColor="white" barStyle="dark-content" />
+                <StatusBar
+                  backgroundColor={theme.background}
+                  barStyle={this.state.isDarkMode ? "light-content" : "dark-content"}
+                />
                 {this.renderHeader()}
                 <View style={{ marginTop: 20 }}>
                   {this.renderType()}
@@ -862,13 +929,27 @@ export default class CreatePage extends CreatePageController {
                 transparent={true}
                 visible={this.state.countryCodeClickedAndroid}>
                 <View style={styles.androidCountryCodeModal}>
-                  <View style={styles.androidCountryCodeView}>
-                    <ScrollView>
-                      {this.state.countryCodesList.map((item: any, index) => (
-                        <TouchableOpacity testID={`countryCodeModal-${index}`} key={item.attributes.country_code} style={{ marginVertical: 15, }} onPress={() => this.handleCountryCodeValueChangeAndroid(item)}>
-                          <Text style={{ color: 'black', }}>{`${item.attributes.name} (+${item.attributes.country_code})`}</Text>
+                  <View style={styles.sheetContainer}>
+                    <View style={styles.sheetHandle} />
+                    <Text style={styles.sheetTitle}>Country code</Text>
+                    <ScrollView showsVerticalScrollIndicator={false}>
+                      {this.state.countryCodesList.map((item: any, index) => {
+                        const selected = this.isPickerValueSelected(
+                          item,
+                          this.state.selectedCountryCode,
+                        );
+                        return (
+                        <TouchableOpacity testID={`countryCodeModal-${index}`} key={item.attributes.country_code} style={[
+                          styles.sheetOption,
+                          selected && styles.sheetOptionSelected,
+                        ]} onPress={() => this.handleCountryCodeValueChangeAndroid(item)}>
+                          <Text style={[
+                            styles.sheetOptionText,
+                            selected && styles.sheetOptionTextSelected,
+                          ]}>{`${item.attributes.name} (+${item.attributes.country_code})`}</Text>
                         </TouchableOpacity>
-                      ))}
+                        );
+                      })}
                     </ScrollView>
                   </View>
                 </View>
@@ -883,18 +964,28 @@ export default class CreatePage extends CreatePageController {
   }
 }
 
-const styles = StyleSheet.create({
+const createCreatePageStyles = (theme: CreatePageTheme) => StyleSheet.create({
   // Customizable Area Start
   container: {
     flex: 1,
     padding: 16,
     width: "100%",
-    backgroundColor: "#fff"
+    backgroundColor: theme.background
+  },
+  decorTop: {
+    position: "absolute",
+    top: -90,
+    right: -70,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: theme.primarySoft,
   },
   headerContainer: { 
     flexDirection: "row",
     justifyContent: "center",
-    marginBottom: 10
+    marginBottom: 10,
+    alignItems: "center",
   },
   backArrowContainer: {
     position: "absolute",
@@ -911,7 +1002,8 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 24,
     marginHorizontal: 30,
-    textAlign: "center"
+    textAlign: "center",
+    color: theme.primary,
   },
   mainContainer: {
     flex: 1,
@@ -924,20 +1016,22 @@ const styles = StyleSheet.create({
   text: {
     fontFamily: "OpenSans",
     alignSelf: "flex-start",
-    color: colors(false).text
+    color: theme.foreground
   },
   textInputHeader: {
     fontWeight: "bold",
     marginTop: 20,
-    marginBottom: 10
+    marginBottom: 10,
+    color: theme.foreground,
   },
   textInput: {
     width: "100%",
-    paddingHorizontal: 10,
-    borderRadius: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#C5C5FF",
-    color: colors(false).text,
+    borderColor: theme.border,
+    backgroundColor: theme.input,
+    color: theme.foreground,
     height: 50,
     fontSize: 16
   },
@@ -948,7 +1042,7 @@ const styles = StyleSheet.create({
   },
   pickerItemStyle: {
     fontFamily: "OpenSans",
-    color: "#0F172A",
+    color: theme.foreground,
     fontSize: 22,
     fontWeight: "400",
   },
@@ -957,19 +1051,80 @@ const styles = StyleSheet.create({
     right: 15,
     marginRight: 5,
     width: 8,
-    backgroundColor: "white",
+    backgroundColor: "transparent",
     transform: [{ rotate: "-90deg" }],
     resizeMode: "contain"
   },
   centeredModal: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "#33415580"
+    backgroundColor: "rgba(8, 8, 15, 0.72)"
+  },
+  sheetContainer: {
+    backgroundColor: theme.card,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderWidth: 1,
+    borderColor: theme.border,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 28,
+    maxHeight: "62%",
+  },
+  sheetHandle: {
+    alignSelf: "center",
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: theme.muted,
+    opacity: 0.5,
+    marginBottom: 14,
+  },
+  sheetTitle: {
+    fontFamily: "OpenSans",
+    fontWeight: "700",
+    fontSize: 18,
+    color: theme.primary,
+    marginBottom: 12,
+    textAlign: "center",
+    alignSelf: "center",
+  },
+  sheetList: {
+    maxHeight: 340,
+  },
+  sheetOption: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    marginBottom: 8,
+    backgroundColor: theme.input,
+    borderWidth: 1,
+    borderColor: theme.border,
+  },
+  sheetOptionSelected: {
+    backgroundColor: theme.primarySoft,
+    borderColor: theme.primary,
+  },
+  sheetOptionText: {
+    fontFamily: "OpenSans",
+    fontSize: 16,
+    fontWeight: "600",
+    color: theme.foreground,
+    textAlign: "center",
+  },
+  sheetOptionTextSelected: {
+    color: theme.primary,
+  },
+  hiddenPicker: {
+    height: 0,
+    width: 0,
+    opacity: 0,
+    position: "absolute",
   },
   modalView: {
     height: "30%",
     justifyContent: "space-between",
-    backgroundColor: "white",
+    backgroundColor: theme.card,
     borderTopEndRadius: 20,
     padding: 35,
     shadowColor: "#000",
@@ -982,29 +1137,30 @@ const styles = StyleSheet.create({
     elevation: 100
   },
   continueButton: {
-    backgroundColor: "#3333CC",
+    backgroundColor: theme.primary,
     padding: 15,
-    borderRadius: 10,
+    borderRadius: 12,
     marginTop: 35
   },
   continueText: {
-    color: colors(false).white,
+    color: "#FFFFFF",
     fontWeight: "700",
     fontSize: 18,
     alignSelf: "center"
   },
   errorTextMsg: {
-    color: "red",
+    color: "#D32F2F",
     fontSize: 13,
     paddingTop: 2
   },
   phoneTextInput: {
     width: "100%",
-    paddingHorizontal: 10,
-    borderRadius: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#CBD5E1",
-    color: colors(false).text,
+    borderColor: theme.border,
+    backgroundColor: theme.input,
+    color: theme.foreground,
     height: 50,
     paddingLeft: 115,
     fontSize: 16,
@@ -1023,7 +1179,7 @@ const styles = StyleSheet.create({
   },
   countryCodeText: {
     fontFamily: "OpenSans",
-    color: colors(false).text,
+    color: theme.foreground,
     alignSelf: "center",
     marginLeft: 10,
     fontSize: 16,
@@ -1031,70 +1187,70 @@ const styles = StyleSheet.create({
   tAndCContainer: {
     flexDirection: "row",
     marginTop: 20,
+    alignItems: "center",
   },
   tAndC: {
-    height: 20,
-    width: 20,
-    borderWidth: 1,
-    borderRadius: 5,
-    borderColor: colors(false).text,
+    height: 22,
+    width: 22,
+    borderWidth: 1.5,
+    borderRadius: 6,
+    borderColor: theme.muted,
     marginRight: 10,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: theme.input,
+  },
+  tAndCChecked: {
+    borderColor: theme.primary,
+    backgroundColor: theme.primarySoft,
   },
   tAndCSelected: {
     height: 12,
     width: 12,
-    backgroundColor: "#3333CC",
-    borderRadius: 2.5,
+    backgroundColor: theme.primary,
+    borderRadius: 3,
   },
   textLink: {
     fontWeight: "bold",
-    color: "#4949EE",
+    color: theme.primary,
   },
   passwordContainer: {
     width: "100%",
-    paddingHorizontal: 10,
-    borderRadius: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#C5C5FF",
+    borderColor: theme.border,
+    backgroundColor: theme.input,
     height: 50,
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   passwordInput: {
-    color: colors(false).text,
+    color: theme.foreground,
     fontSize: 16,
     width: '80%',
   },
   androidCountryCodeModal: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#00000080',
-  },
-  androidCountryCodeView: {
-    width: '90%',
-    maxHeight: '95%',
-    backgroundColor: '#FFFFFF',
-    padding: 10,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(8, 8, 15, 0.72)',
   },
   outsideUS: {
     fontWeight: "700",
     fontSize: 26,
     lineHeight: 28,
     marginVertical: 10,
-    color: "#0F172A",
+    color: theme.foreground,
   },
   supportUS: {
     fontFamily: "OpenSans",
     alignSelf: "flex-start",
-    color: colors(false).text,
+    color: theme.muted,
     fontSize: 18,
   },
   acceptText: {
     fontFamily: "OpenSans",
-    color: colors(false).white,
+    color: "#FFFFFF",
     fontWeight: "700",
     fontSize: 18,
     alignSelf: "center",

@@ -70,6 +70,7 @@ import { Message } from '../../framework/src/Message';
 import UserProfileBasicBlock from '../../blocks/user-profile-basic/src/UserProfileBasicBlock';
 import Scale from './Scale';
 import AllEventScreen from '../../blocks/events/src/AllEventScreen';
+import ArtistsToWatchAllScreen from '../../blocks/events/src/ArtistsToWatchAllScreen';
 import ForgotPassword from '../../blocks/forgot-password/src/ForgotPassword';
 import ForgotPasswordOTP from '../../blocks/forgot-password/src/ForgotPasswordOTP';
 import NewPassword from '../../blocks/forgot-password/src/NewPassword';
@@ -2084,6 +2085,12 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
               header: null,
             },
           },
+          ArtistsToWatchAllScreen: {
+            screen: ArtistsToWatchAllScreen,
+            navigationOptions: {
+              header: null,
+            },
+          },
           Notifications: {
             screen: Notifications,
             navigationOptions: {
@@ -2164,6 +2171,18 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
             },
           },
           UserProfileBasicBlockArtist2: {
+            screen: Customisableuserprofiles2,
+            navigationOptions: {
+              header: null,
+            },
+          },
+          UserProfileBasicBlock3: {
+            screen: UserProfileBasicBlock,
+            navigationOptions: {
+              header: null,
+            },
+          },
+          UserProfileBasicBlockArtist3: {
             screen: Customisableuserprofiles2,
             navigationOptions: {
               header: null,

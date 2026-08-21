@@ -5,7 +5,6 @@ import {
   StyleSheet,
   Text,
   View,
-  Modal,
   TextInput,
   ScrollView,
   Image,
@@ -15,19 +14,16 @@ import {
   StatusBar,
   SafeAreaView,
 } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
-import type {
-  IosPickerProps,
-  AndroidPickerProps,
-} from './RepresentativeCertificationController';
-import { colors } from '../../utilities/src/Colors';
-import { backIcon, downArrowIcon } from './assets';
+import { redesignTheme } from '../../utilities/src/Colors';
+import { backIcon } from './assets';
 // Customizable Area End
 
 import RepresentativeCertificationController, {
   Props,
   configJSON,
 } from './RepresentativeCertificationController';
+
+type CertTheme = typeof redesignTheme;
 
 export default class RepresentativeCertification extends RepresentativeCertificationController {
   constructor(props: Props) {
@@ -36,11 +32,17 @@ export default class RepresentativeCertification extends RepresentativeCertifica
     // Customizable Area End
   }
 
+  get styles() {
+    return createCertificationStyles(this.getCertificationTheme());
+  }
+
   render() {
+    const theme = this.getCertificationTheme();
+    const styles = this.styles;
     return (
       <KeyboardAvoidingView
         behavior={this.isPlatformiOS() ? 'padding' : undefined}
-        style={{ flex: 1 }}
+        style={{ flex: 1, backgroundColor: theme.background }}
       >
         <ScrollView keyboardShouldPersistTaps="always" style={styles.container}>
           <TouchableWithoutFeedback
@@ -51,7 +53,11 @@ export default class RepresentativeCertification extends RepresentativeCertifica
           >
             {/* Customizable Area Start */}
             <SafeAreaView>
-              <StatusBar backgroundColor="white" barStyle="dark-content" />
+              <StatusBar
+                backgroundColor={theme.background}
+                barStyle={this.state.isDarkMode ? 'light-content' : 'dark-content'}
+              />
+              <View pointerEvents="none" style={styles.decorTop} />
               <View style={styles.contentView}>
                 <View style={styles.headerView}>
                   <TouchableOpacity
@@ -61,7 +67,10 @@ export default class RepresentativeCertification extends RepresentativeCertifica
                       this.props.navigation.goBack();
                     }}
                   >
-                    <Image source={backIcon} style={styles.backBtn} />
+                    <Image
+                      source={backIcon}
+                      style={[styles.backBtn, { tintColor: theme.foreground }]}
+                    />
                   </TouchableOpacity>
                   <Text testID="pageTitle" style={[styles.txt, styles.title]}>
                     {configJSON.representativeCertificationTitle}
@@ -92,12 +101,14 @@ export default class RepresentativeCertification extends RepresentativeCertifica
       | 'handlePlaceName';
     suggestionsText?: string;
   }) {
+    const theme = this.getCertificationTheme();
+    const styles = this.styles;
     return (
       <View style={styles.textInputContainer}>
         <TextInput
           testID={props.textID}
           placeholder={props.placeholder}
-          placeholderTextColor="#CBD5E1"
+          placeholderTextColor={theme.muted}
           style={styles.textInput}
           value={this.state[props.stateName]}
           onChangeText={text => this[props.handleFunctionName](text)}
@@ -119,7 +130,7 @@ export default class RepresentativeCertification extends RepresentativeCertifica
   ) {
     if (this.state[stateName]) {
       return (
-        <Text style={[styles.txt, styles.errorTxt, { marginBottom: 5 }]}>
+        <Text style={[this.styles.txt, this.styles.errorTxt, { marginBottom: 5 }]}>
           {this.state[stateName]}
         </Text>
       );
@@ -127,6 +138,7 @@ export default class RepresentativeCertification extends RepresentativeCertifica
   }
   representativeContainer() {
     const { userRole } = this.state;
+    const styles = this.styles;
 
     console.log('here is the userRole', userRole);
 
@@ -194,21 +206,18 @@ export default class RepresentativeCertification extends RepresentativeCertifica
           {this.renderMessageError('bandArtistError')}
         </View>
 
-        <Text
-          style={[
-            styles.txt,
-            styles.descriptionTxt,
-            { fontWeight: '700', marginTop: 20 },
-          ]}
-        >
-          Note:{' '}
-          <Text style={{ fontWeight: '400' }}>
+        <View style={styles.noteCard}>
+          <Text style={[styles.txt, styles.noteTitle]}>Note:</Text>
+          <Text style={[styles.txt, styles.noteBody]}>
             {configJSON.representativeCertificationDisclaimer}
           </Text>
-        </Text>
+        </View>
         <View style={styles.checkboxContainer}>
           <TouchableOpacity
-            style={styles.checkbox}
+            style={[
+              styles.checkbox,
+              this.state.authorizePage && styles.checkboxChecked,
+            ]}
             testID="btnAuthorizePage"
             onPress={this.handleAuthorizePage}
           >
@@ -243,18 +252,28 @@ export default class RepresentativeCertification extends RepresentativeCertifica
   // Customizable Area End
 }
 
-const styles = StyleSheet.create({
+const createCertificationStyles = (theme: CertTheme) => StyleSheet.create({
   // Customizable Area Start
   container: {
     flex: 1,
     padding: 16,
     width: '100%',
-    backgroundColor: '#fff',
+    backgroundColor: theme.background,
+  },
+  decorTop: {
+    position: 'absolute',
+    top: -90,
+    right: -70,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: theme.primarySoft,
   },
   headerView: {
     flexDirection: 'row',
     justifyContent: 'center',
     marginBottom: 10,
+    alignItems: 'center',
   },
   backArrowBtn: {
     position: 'absolute',
@@ -270,6 +289,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     marginHorizontal: 25,
     textAlign: 'center',
+    color: theme.foreground,
   },
   contentView: {
     flex: 1,
@@ -279,17 +299,19 @@ const styles = StyleSheet.create({
   txt: {
     fontFamily: 'OpenSans',
     alignSelf: 'flex-start',
-    color: colors(false).text,
+    color: theme.foreground,
   },
   descriptionTxt: {
     fontWeight: '400',
     fontSize: 16,
     lineHeight: 22,
+    color: theme.muted,
   },
   textInputLabel: {
     fontWeight: 'bold',
     marginTop: 20,
     marginBottom: 10,
+    color: theme.foreground,
   },
   textInputContainer: {
     flexDirection: 'column',
@@ -297,19 +319,20 @@ const styles = StyleSheet.create({
   },
   textInput: {
     width: '100%',
-    paddingHorizontal: 10,
-    borderRadius: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#C5C5FF',
-    color: colors(false).text,
+    borderColor: theme.border,
+    backgroundColor: theme.input,
+    color: theme.foreground,
     height: 50,
     fontSize: 16,
   },
   fieldNotes: {
     fontSize: 12,
     marginTop: 4,
-    color: '#888',
-    opacity: 0.8,
+    color: theme.muted,
+    opacity: 0.9,
     fontStyle: 'italic',
   },
   selectorPicker: {
@@ -320,12 +343,12 @@ const styles = StyleSheet.create({
   centeredModalView: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: '#33415580',
+    backgroundColor: 'rgba(8, 8, 15, 0.72)',
   },
   modalView: {
     height: '30%',
     justifyContent: 'space-between',
-    backgroundColor: 'white',
+    backgroundColor: theme.card,
     borderTopEndRadius: 20,
     padding: 35,
     shadowColor: '#000',
@@ -340,44 +363,70 @@ const styles = StyleSheet.create({
   checkboxContainer: {
     flexDirection: 'row',
     marginTop: 20,
+    alignItems: 'center',
   },
   checkbox: {
-    height: 20,
-    width: 20,
-    borderWidth: 1,
-    borderRadius: 5,
-    borderColor: colors(false).text,
+    height: 22,
+    width: 22,
+    borderWidth: 1.5,
+    borderRadius: 6,
+    borderColor: theme.muted,
     marginRight: 10,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: theme.input,
+  },
+  checkboxChecked: {
+    borderColor: theme.primary,
+    backgroundColor: theme.primarySoft,
   },
   checkboxSelected: {
     height: 12,
     width: 12,
-    backgroundColor: '#3333CC',
-    borderRadius: 2.5,
+    backgroundColor: theme.primary,
+    borderRadius: 3,
+  },
+  noteCard: {
+    marginTop: 20,
+    backgroundColor: theme.card,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: theme.border,
+    padding: 14,
+  },
+  noteTitle: {
+    fontWeight: '700',
+    fontSize: 15,
+    color: theme.primary,
+    marginBottom: 6,
+  },
+  noteBody: {
+    fontWeight: '400',
+    fontSize: 14,
+    lineHeight: 20,
+    color: theme.muted,
   },
   createAccountButton: {
-    backgroundColor: '#3333CC',
+    backgroundColor: theme.primary,
     padding: 15,
-    borderRadius: 10,
+    borderRadius: 12,
     marginTop: 35,
   },
   createAccountText: {
-    color: colors(false).white,
+    color: '#FFFFFF',
     fontWeight: '700',
     fontSize: 18,
     alignSelf: 'center',
   },
   errorTxt: {
-    color: 'red',
+    color: '#D32F2F',
     fontSize: 13,
     paddingTop: 2,
   },
   centeredModal: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: '#33415580',
+    backgroundColor: 'rgba(8, 8, 15, 0.72)',
   },
   selector: {
     height: 50,
@@ -388,13 +437,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 15,
     backgroundColor: 'transparent',
-    tintColor: '#4949EE',
+    tintColor: theme.primary,
     resizeMode: 'contain',
   },
   text: {
     fontFamily: 'OpenSans',
     alignSelf: 'flex-start',
-    color: colors(false).text,
+    color: theme.foreground,
   },
   // Customizable Area End
 });

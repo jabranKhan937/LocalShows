@@ -8,7 +8,13 @@ import { runEngine } from "../../../framework/src/RunEngine";
 
 // Customizable Area Start
 import { getStorageData, removeStorageData, setStorageData } from "../../../framework/src/Utilities";
-import { Dimensions, Alert } from "react-native";
+import { DeviceEventEmitter, Dimensions, Alert } from "react-native";
+import {
+  lightTheme,
+  PROFILE_THEME_CHANGED_EVENT,
+  PROFILE_THEME_STORAGE_KEY,
+  redesignTheme,
+} from "../../utilities/src/Colors";
 export const configJSON = require("./config");
 
 interface ISubcategory {
@@ -78,6 +84,7 @@ interface S {
   categoriesSaved: boolean;
   influencesSaved: boolean;
   bandsArtistsSaved: boolean;
+  isDarkMode: boolean;
   // Customizable Area End
 }
 
@@ -161,6 +168,7 @@ export default class CategoriessubcategoriesController extends BlockComponent<
       categoriesSaved: false,
       influencesSaved: false,
       bandsArtistsSaved: false,
+      isDarkMode: true,
     };
     // Customizable Area End
     runEngine.attachBuildingBlock(this as IBlock, this.subScribedMessages);
@@ -272,6 +280,8 @@ export default class CategoriessubcategoriesController extends BlockComponent<
     // Load user role and set tab labels on initial mount
     this.getUserRole();
 
+    this.loadCategoriesTheme();
+
     this.willFocusUnsubscribe = this.props.navigation.addListener("willFocus", () => {
       this.handleEditMode();
       this.updateBottomTabVisibility();
@@ -291,8 +301,31 @@ export default class CategoriessubcategoriesController extends BlockComponent<
       this.willFocusUnsubscribe();
       this.willFocusUnsubscribe = undefined;
     }
+    if (this.profileThemeListener) {
+      this.profileThemeListener.remove();
+      this.profileThemeListener = null;
+    }
     this.showBottomTabBar();
   }
+
+  profileThemeListener: any = null;
+
+  loadCategoriesTheme = async () => {
+    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
+    this.setState({ isDarkMode: savedTheme !== "false" });
+    if (!this.profileThemeListener) {
+      this.profileThemeListener = DeviceEventEmitter.addListener(
+        PROFILE_THEME_CHANGED_EVENT,
+        (isDarkMode: boolean) => {
+          this.setState({ isDarkMode });
+        },
+      );
+    }
+  };
+
+  getCategoriesTheme = () => {
+    return this.state.isDarkMode ? redesignTheme : lightTheme;
+  };
 
   updateFontSize = () => {
     const { title } = this.state;

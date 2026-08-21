@@ -4,6 +4,7 @@ import { shallow, ShallowWrapper } from "enzyme";
 import * as helpers from "../../../../framework/src/Helpers";
 import React from "react";
 import AllEventScreen from "../../src/AllEventScreen";
+import ArtistsToWatchAllScreen from "../../src/ArtistsToWatchAllScreen";
 import { Platform } from "react-native";
 import { runEngine } from "../../../../framework/src/RunEngine";
 import { Message } from "../../../../framework/src/Message";
@@ -1041,16 +1042,11 @@ defineFeature(feature, (test) => {
       instance.setState({authToken:null})
       const flatList = allEventScreen.findWhere(node => node.prop("testID") === "eventsList");
       instance.state.authenticatedEventsList.forEach((item, index) => {
-        const innerWrapper = flatList.renderProp("renderItem")({
+        flatList.renderProp("renderItem")({
           item: item,
           index: index,
         });
-
-        innerWrapper.findWhere(
-          (node) => node.prop("testID") === "toggleSeeMore"
-        ).simulate("press");
       })
-     
     })
 
     then("User clicks on event to navigate", () => {
@@ -1876,6 +1872,299 @@ defineFeature(feature, (test) => {
 
     });
   })
+
+  test("Logged out user sees signup banner below filters", ({ given, when, then }) => {
+    let allEventScreen: ShallowWrapper;
+    let instance: AllEventScreen;
+
+    given("I am a User loading AllEventScreen", () => {
+      allEventScreen = shallow(<AllEventScreen {...screenProps} />);
+    });
+
+    when("I navigate to the AllEventScreen", () => {
+      instance = allEventScreen.instance() as AllEventScreen;
+      instance.setState({ authToken: null });
+    });
+
+    then("Guest signup banner is shown below filters", () => {
+      const banner = shallow(instance.renderGuestSignupBanner());
+      expect(banner.findWhere((node) => node.prop("testID") === "guestSignupBanner").length).toBeGreaterThan(0);
+      banner
+        .findWhere((node) => node.prop("testID") === "guestSignupJoinButton")
+        .first()
+        .simulate("press");
+      expect(screenProps.navigation.navigate).toHaveBeenCalledWith(
+        "Rolesandpermissions"
+      );
+      banner
+        .findWhere((node) => node.prop("testID") === "guestSignupCloseButton")
+        .first()
+        .simulate("press");
+      expect(instance.state.guestSignupBannerDismissed).toBe(true);
+      instance.setState({ authToken: "authToken" });
+      expect(instance.renderGuestSignupBanner()).toBeNull();
+    });
+  });
+
+  test("User taps Show more on the home feed", ({ given, when, then }) => {
+    let allEventScreen: ShallowWrapper;
+    let instance: AllEventScreen;
+    const swimmingShowFromApi = mockResponse.data[0].UP.find(
+      (item: { type?: string }) => item.type === "show"
+    );
+    const buildHomeFeedSwimmingShows = (count: number) =>
+      Array.from({ length: count }, (_, index) => ({
+        ...swimmingShowFromApi,
+        id: Number(swimmingShowFromApi.id) + index,
+      }));
+
+    const getVisibleShowCount = () =>
+      instance.getVisibleHomeFeedGroups(instance.filterEventList(), true)
+        .groups.reduce(
+          (total: number, group: { shows?: any[] }) =>
+            total + (Array.isArray(group.shows) ? group.shows.length : 0),
+          0
+        );
+
+    given("I am a User loading AllEventScreen", () => {
+      allEventScreen = shallow(<AllEventScreen {...screenProps} />);
+    });
+
+    when("I navigate to the AllEventScreen", async () => {
+      instance = allEventScreen.instance() as AllEventScreen;
+    });
+
+    when("the home feed has twenty five swimming shows", () => {
+      const swimmingShows = buildHomeFeedSwimmingShows(25);
+      const feedGroups = [
+        {
+          state_name: "UP",
+          shows: swimmingShows,
+        },
+      ];
+      instance.setState({
+        authToken: "authToken",
+        authenticatedEventsList: feedGroups,
+        filteredEventList: feedGroups,
+        selectedState: "All",
+        isLoading: false,
+        visibleShowsCount: 10,
+      });
+      allEventScreen.update();
+    });
+
+    then("the home feed shows ten events", () => {
+      expect(instance.state.visibleShowsCount).toBe(10);
+      expect(getVisibleShowCount()).toBe(10);
+      const visible = instance.getVisibleHomeFeedGroups(
+        instance.filterEventList(),
+        true
+      );
+      expect(visible.hasMoreShows).toBe(true);
+      expect(visible.totalShowCount).toBe(25);
+    });
+
+    when("I tap Show more", () => {
+      const footer = shallow(instance.renderShowMoreFooter(true));
+      footer
+        .findWhere((node) => node.prop("testID") === "toggleSeeMore")
+        .first()
+        .simulate("press");
+    });
+
+    then("the home feed shows twenty events", () => {
+      expect(instance.state.visibleShowsCount).toBe(20);
+      expect(getVisibleShowCount()).toBe(20);
+    });
+
+    when("I tap Show more again", () => {
+      const footer = shallow(instance.renderShowMoreFooter(true));
+      footer
+        .findWhere((node) => node.prop("testID") === "toggleSeeMore")
+        .first()
+        .simulate("press");
+    });
+
+    then("the home feed shows all twenty five events", () => {
+      expect(instance.state.visibleShowsCount).toBe(30);
+      expect(getVisibleShowCount()).toBe(25);
+      const visible = instance.getVisibleHomeFeedGroups(
+        instance.filterEventList(),
+        true
+      );
+      expect(visible.hasMoreShows).toBe(false);
+      expect(instance.renderShowMoreFooter(visible.hasMoreShows)).toBeNull();
+    });
+  });
+
+  test("Home feed shows artists to watch and hot venues", ({ given, when, then }) => {
+    let allEventScreen: ShallowWrapper;
+    let instance: AllEventScreen;
+    const swimmingShowFromApi = mockResponse.data[0].UP.find(
+      (item: { type?: string }) => item.type === "show"
+    );
+
+    given("I am a User loading AllEventScreen", () => {
+      allEventScreen = shallow(<AllEventScreen {...screenProps} />);
+    });
+
+    when("I navigate to the AllEventScreen", async () => {
+      instance = allEventScreen.instance() as AllEventScreen;
+    });
+
+    when("the home feed has swimming shows from the API", () => {
+      const feedGroups = [
+        {
+          state_name: "UP",
+          shows: [
+            { ...swimmingShowFromApi, id: 179 },
+            { ...swimmingShowFromApi, id: 180 },
+          ],
+        },
+      ];
+      instance.setState({
+        authToken: "authToken",
+        userId: "123",
+        authenticatedEventsList: feedGroups,
+        filteredEventList: feedGroups,
+        selectedState: "All",
+        isLoading: false,
+      });
+    });
+
+    then("Artists to Watch and Hot Venues are shown from those shows", async () => {
+      const artists = instance.getArtistsToWatch();
+      const venues = instance.getHotVenues();
+      expect(artists.length).toBeGreaterThan(0);
+      expect(artists[0].name).toBe(swimmingShowFromApi.event_title);
+      expect(artists[0].upcomingCount).toBe(2);
+      expect(venues.length).toBeGreaterThan(0);
+      expect(venues[0].name).toBe(swimmingShowFromApi.location);
+      expect(venues[0].city).toBe(swimmingShowFromApi.city);
+      expect(venues[0].showCount).toBe(2);
+
+      const footer = shallow(instance.renderHomeFeedFooter(false));
+      expect(
+        footer.findWhere((node) => node.prop("testID") === "artistsToWatchSection")
+          .length
+      ).toBeGreaterThan(0);
+      expect(
+        footer.findWhere((node) => node.prop("testID") === "hotVenuesSection")
+          .length
+      ).toBeGreaterThan(0);
+      footer
+        .findWhere((node) => node.prop("testID") === "seeAllArtists")
+        .first()
+        .simulate("press");
+      expect(screenProps.navigation.navigate).toHaveBeenCalledWith(
+        "ArtistsToWatchAllScreen",
+      );
+      footer
+        .findWhere((node) => node.prop("testID") === "viewVenuesMap")
+        .first()
+        .simulate("press");
+      await instance.handleArtistToWatchPress(artists[0]);
+      expect(screenProps.navigation.push).toHaveBeenCalledWith(
+        "UserProfileBasicBlockArtist3",
+        { isOtherUser: true }
+      );
+    });
+  });
+
+  test("See all artists opens the all artists screen", ({ given, when, then }) => {
+    let allEventScreen: ShallowWrapper;
+    let instance: AllEventScreen;
+    const swimmingShowFromApi = mockResponse.data[0].UP.find(
+      (item: { type?: string }) => item.type === "show"
+    );
+
+    given("I am a User loading AllEventScreen", () => {
+      allEventScreen = shallow(<AllEventScreen {...screenProps} />);
+    });
+
+    when("I navigate to the AllEventScreen", async () => {
+      instance = allEventScreen.instance() as AllEventScreen;
+    });
+
+    when("the home feed has swimming shows from the API", () => {
+      const feedGroups = [
+        {
+          state_name: "UP",
+          shows: [
+            { ...swimmingShowFromApi, id: 179 },
+            { ...swimmingShowFromApi, id: 180 },
+          ],
+        },
+      ];
+      instance.setState({
+        authToken: "authToken",
+        userId: "123",
+        authenticatedEventsList: feedGroups,
+        filteredEventList: feedGroups,
+        selectedState: "All",
+        isLoading: false,
+      });
+    });
+
+    then("See all opens the all artists list", () => {
+      const extraArtists = Array.from({ length: 15 }, (_, index) => ({
+        id: 900 + index,
+        first_name: `Directory Artist ${index + 1}`,
+        profile_image: "",
+        account_type: "Artist",
+      }));
+      instance.setState({
+        allBandsList: extraArtists,
+      });
+      const previewArtists = instance.getArtistsToWatch(12);
+      const allArtists = instance.getArtistsToWatch(null);
+      expect(previewArtists.length).toBe(12);
+      expect(allArtists.length).toBeGreaterThan(12);
+      expect(allArtists.map((artist) => artist.name)).toEqual(
+        expect.arrayContaining([
+          "Directory Artist 1",
+          "Directory Artist 15",
+        ])
+      );
+      screenProps.navigation.navigate.mockClear();
+      instance.handleSeeAllArtists();
+      expect(screenProps.navigation.navigate).toHaveBeenCalledWith(
+        "ArtistsToWatchAllScreen"
+      );
+      expect(screenProps.navigation.navigate).not.toHaveBeenCalledWith("Search");
+
+      const allArtistsProps = {
+        ...screenProps,
+        navigation: {
+          ...screenProps.navigation,
+          getParam: jest.fn(),
+          canGoBack: jest.fn(() => true),
+          goBack: jest.fn(),
+        },
+      };
+      const allArtistsScreen = shallow(
+        <ArtistsToWatchAllScreen {...allArtistsProps} />
+      );
+      const allInstance = allArtistsScreen.instance() as ArtistsToWatchAllScreen;
+      allInstance.setState({
+        allBandsList: extraArtists,
+        authenticatedEventsList: instance.state.authenticatedEventsList,
+        filteredEventList: instance.state.filteredEventList,
+        selectedState: "All",
+      });
+      expect(allInstance.getAllArtists().length).toBeGreaterThan(12);
+      expect(
+        allArtistsScreen.findWhere((node) => node.prop("testID") === "allArtistsList")
+          .length
+      ).toBeGreaterThan(0);
+      allArtistsScreen
+        .findWhere((node) => node.prop("testID") === "allArtistsBackButton")
+        .first()
+        .simulate("press");
+      expect(allArtistsProps.navigation.goBack).toHaveBeenCalled();
+    });
+  });
+
   test("User navigate to all AllEventScreen with params on the route", ({given, when , then}) => {
     let eventsWrapper: ShallowWrapper;
     let instance: AllEventScreen;

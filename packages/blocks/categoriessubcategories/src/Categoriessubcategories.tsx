@@ -21,18 +21,27 @@ import {
 import CategoriessubcategoriesController, {
   Props,
 } from './CategoriessubcategoriesController';
-import { colors } from '../../utilities/src/Colors';
+import { redesignTheme } from '../../utilities/src/Colors';
 import { leftArrow } from '../../events/src/assets';
 import Icon from 'react-native-vector-icons/Feather';
 import { Picker } from '@react-native-picker/picker';
 // Customizable Area End
+
+type CategoriesTheme = typeof redesignTheme;
+
 export default class Categoriessubcategories extends CategoriessubcategoriesController {
   // Customizable Area Start
   constructor(props: Props) {
     super(props);
   }
 
+  get styles() {
+    return createCategoriesStyles(this.getCategoriesTheme());
+  }
+
   renderSelectorItem = ({ item }: { item: string }) => {
+    const styles = this.styles;
+    const theme = this.getCategoriesTheme();
     return (
       <View style={styles.selectorSection}>
         <Text style={styles.categoryText}>{item}</Text>
@@ -55,7 +64,7 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
             <Text style={[styles.text, styles.iOSPickerText]}>
               {`Select ${item}`}
             </Text>
-            <Image source={leftArrow} style={styles.iOSPickerArrow} />
+            <Image source={leftArrow} style={[styles.iOSPickerArrow, { tintColor: theme.muted }]} />
           </TouchableOpacity>
         ) : (
           <View
@@ -67,8 +76,9 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
             ]}>
             <Picker
               testID="subcategoryPicker"
-              style={styles.selectorPicker}
+              style={[styles.selectorPicker, { color: theme.foreground }]}
               itemStyle={[styles.text, styles.selectorPickerText]}
+              dropdownIconColor={theme.muted}
               onValueChange={(subCat: string) =>
                 this.handleSubCatSelection(item, subCat)
               }>
@@ -92,7 +102,7 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
                 <Icon
                   name="x"
                   size={17}
-                  color="#4949EE"
+                  color={theme.primary}
                   onPress={() => this.handleRemoveSubcat(item, subCat.item)}
                 />
               </View>
@@ -107,6 +117,8 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
   };
 
   conditionalRenderngBasedOnActiveTab = () => {
+    const styles = this.styles;
+    const theme = this.getCategoriesTheme();
     if (this.state.activeTab === 0) {
       return (
         <View style={{ alignSelf: 'flex-start', width: '100%' }}>
@@ -125,7 +137,7 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
             <TouchableOpacity
               style={styles.newCategoryLinkContainer}
               onPress={this.handleAddNewCategory}>
-              <Icon name="plus-circle" color="#4949EE" size={18} />
+              <Icon name="plus-circle" color={theme.primary} size={18} />
               <Text style={styles.newCategoryLink}>Add a new category</Text>
             </TouchableOpacity>
           </View>
@@ -156,7 +168,7 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
                     <TextInput
                       testID="rosterTextInput"
                       placeholder="E.g. Aerosmith"
-                      placeholderTextColor="#CBD5E1"
+                      placeholderTextColor={theme.muted}
                       style={styles.rosterInput}
                       value={this.state.rosterTxt}
                       onChangeText={(text) =>
@@ -178,7 +190,7 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
                     <TextInput
                       testID="influencesTextInput"
                       placeholder="Enter your influences"
-                      placeholderTextColor="#CBD5E1"
+                      placeholderTextColor={theme.muted}
                       style={styles.rosterInput}
                       value={this.state.influenceTxt}
                       onChangeText={text =>
@@ -212,7 +224,7 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
                       <Icon
                         name="x"
                         size={17}
-                        color="#4949EE"
+                        color={theme.primary}
                         onPress={() => 
                           isRosterTab 
                             ? this.handleRemoveRosterItem(item)
@@ -261,7 +273,7 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
                     <TextInput
                       testID="txtInputAffiliates"
                       placeholder="E.g. Record Label / Epitaph records"
-                      placeholderTextColor="#CBD5E1"
+                      placeholderTextColor={theme.muted}
                       style={styles.rosterInput}
                       value={this.state.affiliateTxt}
                       onChangeText={affiliateTxt => this.setState({ affiliateTxt })}
@@ -290,7 +302,7 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
                         <Icon
                           name="x"
                           size={17}
-                          color="#4949EE"
+                          color={theme.primary}
                           onPress={() => this.handleRemoveAffiliate(item)}
                         />
                       </View>
@@ -326,7 +338,7 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
                   <TextInput
                     testID="rosterTextInput"
                     placeholder="E.g. Aerosmith"
-                    placeholderTextColor="#CBD5E1"
+                    placeholderTextColor={theme.muted}
                     style={styles.rosterInput}
                     value={this.state.rosterTxt}
                     onChangeText={(text) =>
@@ -352,7 +364,7 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
                         <Icon
                           name="x"
                           size={17}
-                          color="#4949EE"
+                          color={theme.primary}
                           onPress={() => this.handleRemoveRosterItem(item)}
                         />
                       </View>
@@ -431,7 +443,7 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
                               }
                             }}>
                             {isSelected ? (
-                              <Icon name="check" size={14} color="#3333CC" />
+                              <Icon name="check" size={14} color={theme.primary} />
                             ) : null}
                           </TouchableOpacity>
                           <Text style={styles.rulesItemText}>{item.title}</Text>
@@ -449,7 +461,7 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
                 <TextInput
                   testID="customRuleTextInput"
                   placeholder="Enter custom rule or regulation"
-                  placeholderTextColor="#CBD5E1"
+                  placeholderTextColor={theme.muted}
                   style={styles.rosterInput}
                   value={this.state.customRuleTxt}
                   onChangeText={(text) =>
@@ -507,7 +519,7 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
                   <Text style={[styles.text, styles.iOSPickerText]}>
                     {this.getStateNameForPicker(this.state.defaultState)}
                   </Text>
-                  <Image source={leftArrow} style={styles.iOSPickerArrow} />
+                  <Image source={leftArrow} style={[styles.iOSPickerArrow, { tintColor: theme.muted }]} />
                 </TouchableOpacity>
               ) : (
                 <View
@@ -519,8 +531,9 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
                   ]}>
                   <Picker
                     testID="statePicker"
-                    style={styles.selectorPicker}
+                    style={[styles.selectorPicker, { color: theme.foreground }]}
                     itemStyle={[styles.text, styles.selectorPickerText]}
+                    dropdownIconColor={theme.muted}
                     selectedValue={this.state.defaultState}
                     onValueChange={defaultState => this.setState({ defaultState })}>
                     <Picker.Item label={'Select a state'} value={''} />
@@ -532,7 +545,7 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
                       />
                     ))}
                   </Picker>
-                  <Image source={leftArrow} style={styles.pickerArrow} />
+                  <Image source={leftArrow} style={[styles.pickerArrow, { tintColor: theme.muted }]} />
                 </View>
               )}
             </View>
@@ -567,7 +580,7 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
                     <Text style={[styles.text, styles.iOSPickerText]}>
                       {this.getStateNameForPicker(this.state.altState)}
                     </Text>
-                    <Image source={leftArrow} style={styles.iOSPickerArrow} />
+                    <Image source={leftArrow} style={[styles.iOSPickerArrow, { tintColor: theme.muted }]} />
                   </TouchableOpacity>
                 ) : (
                   <View
@@ -579,8 +592,9 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
                     ]}>
                     <Picker
                       testID="stateAltPicker"
-                      style={styles.selectorPicker}
+                      style={[styles.selectorPicker, { color: theme.foreground }]}
                       itemStyle={[styles.text, styles.selectorPickerText]}
+                      dropdownIconColor={theme.muted}
                       selectedValue={this.state.altState}
                       onValueChange={altState => this.setState({ altState })}>
                       <Picker.Item label={'Select a state'} value={''} />
@@ -592,13 +606,13 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
                         />
                       ))}
                     </Picker>
-                    <Image source={leftArrow} style={styles.pickerArrow} />
+                    <Image source={leftArrow} style={[styles.pickerArrow, { tintColor: theme.muted }]} />
                   </View>
                 )}
               </View>
             )}
             <View style={styles.infoContainer}>
-              <Icon name="info" size={25} color="#4949EE" />
+              <Icon name="info" size={25} color={theme.primary} />
               <Text style={[styles.text, styles.infoText]}>
                 Local Shows only supports up to two states. If you want to
                 checkout any more please visit the Travel feature.
@@ -661,6 +675,8 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
   };
 
   renderTabOne = () => {
+    const styles = this.styles;
+    const theme = this.getCategoriesTheme();
     const isActiveTab = this.state.activeTab === 0;
     const baseStyle = isActiveTab ? styles.tabButtonActive : styles.tabButton;
     const tabWidth = this.getTabWidth();
@@ -682,6 +698,8 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
   };
 
   renderTabTwo = () => {
+    const styles = this.styles;
+    const theme = this.getCategoriesTheme();
     // Hide Influences tab for venue users only
     if (this.state.userRole === 'venue') {
       return null;
@@ -713,6 +731,8 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
   };
 
   renderTabThree = () => {
+    const styles = this.styles;
+    const theme = this.getCategoriesTheme();
     // Hide Affiliates tab for venue users only
     if (this.state.userRole === 'venue') {
       return null;
@@ -755,6 +775,8 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
   };
 
   renderTabFour = () => {
+    const styles = this.styles;
+    const theme = this.getCategoriesTheme();
     if (this.state.userRole === 'fan' || this.state.userRole === 'band') {
       return null;
     }
@@ -794,6 +816,8 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
   };
 
   renderTabFive = () => {
+    const styles = this.styles;
+    const theme = this.getCategoriesTheme();
     // Only show States tab for fan users
     if (this.state.userRole !== 'fan') {
       return null;
@@ -827,14 +851,17 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
 
   // Customizable Area End
   render() {
+    const styles = this.styles;
+    const theme = this.getCategoriesTheme();
     // Customizable Area Start
     return (
       <SafeAreaView
-        style={{ flex: 1, backgroundColor: colors(false).background }}>
+        style={{ flex: 1, backgroundColor: theme.background }}>
         <StatusBar
-          barStyle="dark-content"
-          backgroundColor={colors(false).background}
+          barStyle={this.state.isDarkMode ? 'light-content' : 'dark-content'}
+          backgroundColor={theme.background}
         />
+        <View pointerEvents="none" style={styles.decorTop} />
         <ScrollView
           style={styles.container}
           contentContainerStyle={{ alignItems: 'flex-start' }}
@@ -842,7 +869,7 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
             <RefreshControl
               refreshing={false}
               onRefresh={this.handleRefresh}
-              tintColor="#4285f4"
+              tintColor={theme.primary}
             />
           }>
           <View style={styles.headerView}>
@@ -850,7 +877,7 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
               testID="backButton"
               style={styles.backButtonContainer}
               onPress={this.goBack}>
-              <Image source={leftArrow} style={styles.backButton} />
+              <Image source={leftArrow} style={[styles.backButton, { tintColor: theme.foreground }]} />
             </TouchableOpacity>
             <Text
               testID="pageTitle"
@@ -880,7 +907,7 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
         </ScrollView>
         {this.state.fetching && (
           <View style={styles.fetchingContainer}>
-            <ActivityIndicator size={'large'} color="#4949EE" />
+            <ActivityIndicator size={'large'} color={theme.primary} />
           </View>
         )}
         <Modal
@@ -890,15 +917,39 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
           <TouchableWithoutFeedback testID="hideModal" onPress={this.hideModal}>
             <View style={styles.centeredModalView}>
               <TouchableWithoutFeedback>
-                <View
-                  style={[
-                    styles.modalContainerView,
-                    { borderTopStartRadius: 20, padding: 15 },
-                  ]}>
+                <View style={styles.sheetContainer}>
+                  <View style={styles.sheetHandle} />
+                  <Text style={styles.sheetTitle}>Select</Text>
+                  <ScrollView
+                    style={styles.sheetList}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="always">
+                    {this.state.modalValues.map((item: string, index: number) => {
+                      const selected = item === this.state.modalSelectedValue;
+                      return (
+                        <TouchableOpacity
+                          key={index}
+                          style={[
+                            styles.sheetOption,
+                            selected && styles.sheetOptionSelected,
+                          ]}
+                          onPress={() => this.modalCallback(item)}>
+                          <Text
+                            style={[
+                              styles.sheetOptionText,
+                              selected && styles.sheetOptionTextSelected,
+                            ]}>
+                            {item}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
                   <Picker
                     testID="pickerModal"
                     selectedValue={this.state.modalSelectedValue}
-                    onValueChange={value => this.modalCallback(value)}>
+                    onValueChange={value => this.modalCallback(value)}
+                    style={styles.hiddenPicker}>
                     {this.state.modalValues.map(
                       (item: string, index: number) => (
                         <Picker.Item key={index} label={item} value={item} />
@@ -919,15 +970,39 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
             onPress={this.hideStatePickerModal}>
             <View style={styles.centeredModalView}>
               <TouchableWithoutFeedback>
-                <View
-                  style={[
-                    styles.modalContainerView,
-                    { borderTopStartRadius: 20, padding: 15 },
-                  ]}>
+                <View style={styles.sheetContainer}>
+                  <View style={styles.sheetHandle} />
+                  <Text style={styles.sheetTitle}>Select a state</Text>
+                  <ScrollView
+                    style={styles.sheetList}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="always">
+                    {this.state.states.map((elem: any) => {
+                      const selected = elem.key === this.state.modalSelectedValue;
+                      return (
+                        <TouchableOpacity
+                          key={elem.key}
+                          style={[
+                            styles.sheetOption,
+                            selected && styles.sheetOptionSelected,
+                          ]}
+                          onPress={() => this.modalCallback(elem.key)}>
+                          <Text
+                            style={[
+                              styles.sheetOptionText,
+                              selected && styles.sheetOptionTextSelected,
+                            ]}>
+                            {elem.name}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
                   <Picker
                     testID="statePickerModal"
                     selectedValue={this.state.modalSelectedValue}
-                    onValueChange={value => this.modalCallback(value)}>
+                    onValueChange={value => this.modalCallback(value)}
+                    style={styles.hiddenPicker}>
                     {this.state.states.map((elem: any) => (
                       <Picker.Item
                         key={elem.key}
@@ -947,13 +1022,21 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
   }
 }
 
-const styles = StyleSheet.create({
+const createCategoriesStyles = (theme: CategoriesTheme) => StyleSheet.create({
   // Customizable Area Start
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: colors(false).background,
-    // backgroundColor: 'red',
+    backgroundColor: theme.background,
+  },
+  decorTop: {
+    position: 'absolute',
+    top: -90,
+    right: -70,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: theme.primarySoft,
   },
   headerView: {
     flexDirection: 'row',
@@ -970,18 +1053,17 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     resizeMode: 'contain',
-    tintColor: '#000000',
   },
   pageTitle: {
     fontWeight: 'bold',
     flex: 1,
     textAlign: 'center',
-    color: 'black',
+    color: theme.primary,
   },
   text: {
     fontFamily: 'OpenSans',
     alignSelf: 'flex-start',
-    color: colors(false).text,
+    color: theme.foreground,
   },
   tabBarScrollView: {
     marginVertical: 20,
@@ -990,8 +1072,10 @@ const styles = StyleSheet.create({
   tabBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
-    borderRadius: 10,
+    backgroundColor: theme.card,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.border,
     paddingHorizontal: 4,
     height: 44,
     minWidth: '100%',
@@ -1010,14 +1094,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 10,
     flexShrink: 0,
-    backgroundColor: '#4949EE',
+    backgroundColor: theme.primary,
     height: 36,
     justifyContent: 'center',
     alignItems: 'center',
   },
   tabButtonText: {
     textAlign: 'center',
-    color: colors(false).text,
+    color: theme.muted,
+    fontWeight: '600',
   },
   tabButtonActiveText: {
     textAlign: 'center',
@@ -1028,12 +1113,12 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   tabButtonDisabledText: {
-    color: '#9CA3AF',
+    color: theme.muted,
   },
   tabSeparator: {
     height: 24,
     width: 1,
-    backgroundColor: 'lightgrey',
+    backgroundColor: theme.border,
   },
   selectorSection: {
     marginVertical: 15,
@@ -1044,17 +1129,18 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 10,
     fontSize: 16,
-    color: colors(false).text,
+    color: theme.foreground,
     textAlign: 'left',
     alignSelf: 'flex-start',
   },
   selectorPicker: {
     width: '100%',
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 0.5,
-    borderColor: '#C5C5FF',
-    color: colors(false).text,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.border,
+    backgroundColor: theme.input,
+    color: theme.foreground,
     height: 50,
     textAlign: 'left',
   },
@@ -1066,19 +1152,20 @@ const styles = StyleSheet.create({
   },
   rosterInput: {
     flex: 1,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 0.5,
-    borderColor: '#C5C5FF',
-    color: colors(false).text,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.border,
+    backgroundColor: theme.input,
+    color: theme.foreground,
     height: 50,
     textAlign: 'left',
     fontSize: 16,
     marginRight: 10,
   },
   rosterSaveButton: {
-    backgroundColor: '#3333CC',
-    borderRadius: 10,
+    backgroundColor: theme.primary,
+    borderRadius: 12,
     paddingHorizontal: 20,
     height: 50,
     justifyContent: 'center',
@@ -1095,12 +1182,12 @@ const styles = StyleSheet.create({
     right: 15,
     marginRight: 5,
     width: 8,
-    backgroundColor: 'white',
+    backgroundColor: 'transparent',
     transform: [{ rotate: '-90deg' }],
     resizeMode: 'contain',
   },
   selectorPickerText: {
-    color: colors(false).text,
+    color: theme.foreground,
   },
   infoContainer: {
     flexDirection: 'row',
@@ -1109,13 +1196,13 @@ const styles = StyleSheet.create({
   infoText: {
     width: '90%',
     paddingLeft: 15,
-    color: colors(false).text,
+    color: theme.muted,
   },
   alertText: {
     fontWeight: 'bold',
     fontSize: 16,
     marginVertical: 15,
-    color: colors(false).text,
+    color: theme.foreground,
   },
   checkboxView: {
     flexDirection: 'row',
@@ -1123,11 +1210,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   checkboxTouchable: {
-    height: 20,
-    width: 20,
-    borderWidth: 1,
-    borderRadius: 5,
-    borderColor: colors(false).text,
+    height: 22,
+    width: 22,
+    borderWidth: 1.5,
+    borderRadius: 6,
+    borderColor: theme.muted,
+    backgroundColor: theme.input,
     marginRight: 10,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1135,19 +1223,19 @@ const styles = StyleSheet.create({
   checkboxChecked: {
     height: 12,
     width: 12,
-    backgroundColor: '#3333CC',
-    borderRadius: 2.5,
+    backgroundColor: theme.primary,
+    borderRadius: 3,
   },
   nextButton: {
-    backgroundColor: '#3333CC',
+    backgroundColor: theme.primary,
     width: '100%',
     padding: 15,
-    borderRadius: 10,
+    borderRadius: 12,
     marginTop: 10,
     marginBottom: 25,
   },
   textNextButton: {
-    color: colors(false).white,
+    color: '#FFFFFF',
     fontWeight: '700',
     fontSize: 18,
     alignSelf: 'center',
@@ -1155,11 +1243,11 @@ const styles = StyleSheet.create({
   skipButton: {
     width: '100%',
     padding: 15,
-    borderRadius: 10,
+    borderRadius: 12,
     marginTop: 10,
   },
   textSkipButton: {
-    color: '#3333CC',
+    color: theme.primary,
     fontWeight: '700',
     fontSize: 18,
     alignSelf: 'center',
@@ -1169,7 +1257,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   selectedItem: {
-    backgroundColor: '#EDEDFF',
+    backgroundColor: theme.primarySoft,
     paddingHorizontal: 10,
     paddingVertical: 5,
     fontSize: 14,
@@ -1179,24 +1267,28 @@ const styles = StyleSheet.create({
     justifyContent: 'space-evenly',
     marginRight: 5,
     marginTop: 10,
+    borderWidth: 1,
+    borderColor: theme.primary,
   },
   selectedItemText: {
-    color: '#4949EE',
+    color: theme.primary,
     paddingRight: 5,
+    fontWeight: '600',
   },
   fetchingContainer: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#ffffffdd',
+    backgroundColor: 'rgba(8, 8, 15, 0.72)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   inputField: {
     width: '100%',
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 0.5,
-    borderColor: '#C5C5FF',
-    color: colors(false).text,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.border,
+    backgroundColor: theme.input,
+    color: theme.foreground,
     height: 50,
   },
   affiliatesSelectedItem: {
@@ -1205,12 +1297,12 @@ const styles = StyleSheet.create({
   centeredModalView: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: '#33415580',
+    backgroundColor: 'rgba(8, 8, 15, 0.72)',
   },
   modalContainerView: {
     height: '30%',
     justifyContent: 'space-between',
-    backgroundColor: 'white',
+    backgroundColor: theme.card,
     borderTopEndRadius: 20,
     padding: 35,
     shadowColor: '#000',
@@ -1222,23 +1314,87 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 100,
   },
+  sheetContainer: {
+    backgroundColor: theme.card,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderWidth: 1,
+    borderColor: theme.border,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 28,
+    maxHeight: '62%',
+  },
+  sheetHandle: {
+    alignSelf: 'center',
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: theme.muted,
+    opacity: 0.5,
+    marginBottom: 14,
+  },
+  sheetTitle: {
+    fontFamily: 'OpenSans',
+    fontWeight: '700',
+    fontSize: 18,
+    color: theme.primary,
+    marginBottom: 12,
+    textAlign: 'center',
+    alignSelf: 'center',
+  },
+  sheetList: {
+    maxHeight: 340,
+  },
+  sheetOption: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    marginBottom: 8,
+    backgroundColor: theme.input,
+    borderWidth: 1,
+    borderColor: theme.border,
+  },
+  sheetOptionSelected: {
+    backgroundColor: theme.primarySoft,
+    borderColor: theme.primary,
+  },
+  sheetOptionText: {
+    fontFamily: 'OpenSans',
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.foreground,
+    textAlign: 'center',
+  },
+  sheetOptionTextSelected: {
+    color: theme.primary,
+  },
+  hiddenPicker: {
+    height: 0,
+    width: 0,
+    opacity: 0,
+    position: 'absolute',
+  },
   iOSPicker: {
     width: '100%',
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 0.5,
-    borderColor: '#C5C5FF',
-    color: colors(false).text,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.border,
+    backgroundColor: theme.input,
+    color: theme.foreground,
     height: 50,
     justifyContent: 'center',
   },
-  iOSPickerText: {},
+  iOSPickerText: {
+    color: theme.muted,
+  },
   iOSPickerArrow: {
     position: 'absolute',
     right: 15,
     marginRight: 5,
     width: 8,
-    backgroundColor: 'white',
+    backgroundColor: 'transparent',
     transform: [{ rotate: '-90deg' }],
     resizeMode: 'contain',
   },
@@ -1248,6 +1404,7 @@ const styles = StyleSheet.create({
   newCategoryHeading: {
     fontWeight: 'bold',
     fontSize: 16,
+    color: theme.foreground,
   },
   newCategoryLinkContainer: {
     flexDirection: 'row',
@@ -1255,7 +1412,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   newCategoryLink: {
-    color: '#4949EE',
+    color: theme.primary,
     fontWeight: 'bold',
     fontSize: 15,
     marginLeft: 5,
@@ -1269,11 +1426,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: theme.border,
   },
   rulesItemText: {
     fontSize: 16,
-    color: colors(false).text,
+    color: theme.foreground,
     fontFamily: 'OpenSans',
     flex: 1,
     marginLeft: 10,

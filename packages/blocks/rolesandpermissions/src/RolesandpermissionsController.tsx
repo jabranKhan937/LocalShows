@@ -8,7 +8,14 @@ import { runEngine } from "../../../framework/src/RunEngine";
 
 // Customizable Area Start
 import { imgPasswordInVisible, imgPasswordVisible } from "./assets";
-import { setStorageData } from "../../../framework/src/Utilities";
+import { getStorageData, setStorageData } from "../../../framework/src/Utilities";
+import { DeviceEventEmitter } from "react-native";
+import {
+  lightTheme,
+  PROFILE_THEME_CHANGED_EVENT,
+  PROFILE_THEME_STORAGE_KEY,
+  redesignTheme,
+} from "../../utilities/src/Colors";
 // Customizable Area End
 
 export const configJSON = require("./config");
@@ -26,7 +33,8 @@ interface S {
   enableField: boolean;
   // Customizable Area Start
   selectedRole: "" | "fan" | "venue" | "band";
-  isModalVisible: boolean
+  isModalVisible: boolean;
+  isDarkMode: boolean;
   // Customizable Area End
 }
 
@@ -61,7 +69,8 @@ export default class RolesandpermissionsController extends BlockComponent<
       enableField: false,
       // Customizable Area Start
       selectedRole: configJSON.defaultRole,
-      isModalVisible:false
+      isModalVisible:false,
+      isDarkMode: true,
       // Customizable Area End
     };
     runEngine.attachBuildingBlock(this as IBlock, this.subScribedMessages);
@@ -141,6 +150,38 @@ export default class RolesandpermissionsController extends BlockComponent<
 
   setEnableField = () => {
     this.setState({ enableField: !this.state.enableField });
+  };
+
+  profileThemeListener: any = null;
+
+  async componentDidMount() {
+    await super.componentDidMount();
+    this.loadRoleTheme();
+  }
+
+  async componentWillUnmount(): Promise<void> {
+    if (this.profileThemeListener) {
+      this.profileThemeListener.remove();
+      this.profileThemeListener = null;
+    }
+    await super.componentWillUnmount();
+  }
+
+  loadRoleTheme = async () => {
+    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
+    this.setState({ isDarkMode: savedTheme !== "false" });
+    if (!this.profileThemeListener) {
+      this.profileThemeListener = DeviceEventEmitter.addListener(
+        PROFILE_THEME_CHANGED_EVENT,
+        (isDarkMode: boolean) => {
+          this.setState({ isDarkMode });
+        },
+      );
+    }
+  };
+
+  getRoleTheme = () => {
+    return this.state.isDarkMode ? redesignTheme : lightTheme;
   };
 
   // Customizable Area Start

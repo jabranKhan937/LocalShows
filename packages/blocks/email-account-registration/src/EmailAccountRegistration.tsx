@@ -18,7 +18,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 
-import { colors } from "../../utilities/src/Colors";
+import { redesignTheme } from "../../utilities/src/Colors";
 import { leftArrow, usFlag } from "./assets";
 import { getStorageData, removeStorageData } from "../../../framework/src/Utilities";
 import { configJSON } from "./EmailAccountRegistrationController";
@@ -29,6 +29,8 @@ import EmailAccountRegistrationController, {
   Props
 } from "./EmailAccountRegistrationController";
 
+type SignupTheme = typeof redesignTheme;
+
 export default class EmailAccountRegistration extends EmailAccountRegistrationController {
   constructor(props: Props) {
     super(props);
@@ -36,8 +38,14 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
     // Customizable Area End
   }
 
+  get styles() {
+    return createSignupStyles(this.getSignupTheme());
+  }
+
   // Customizable Area Start
   renderHeader = () => {
+    const styles = this.styles;
+    const theme = this.getSignupTheme();
     return (
       <View style={styles.headerContainer}>
         <TouchableOpacity
@@ -47,7 +55,7 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
             this.props.navigation.goBack();
           }}
         >
-          <Image source={leftArrow} style={styles.backArrow} />
+          <Image source={leftArrow} style={[styles.backArrow, { tintColor: theme.foreground }]} />
         </TouchableOpacity>
         <Text style={[styles.text, styles.headerTitle]}>Sign up</Text>
       </View>
@@ -55,13 +63,15 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
   }
 
   renderName = () => {
+    const styles = this.styles;
+    const theme = this.getSignupTheme();
     return (
       <>
         <Text style={[styles.text, styles.textInputLabel]}>Name</Text>
         <TextInput
           testID="txtInputName"
           placeholder="Enter your name"
-          placeholderTextColor="#CBD5E1"
+          placeholderTextColor={theme.muted}
           style={styles.textInput}
           value={this.state.name}
           onChangeText={this.handleName}
@@ -71,6 +81,7 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
   }
 
   renderError = (errorType: string) => {
+    const styles = this.styles;
     return (
       <>
         {errorType !== "" && (
@@ -83,6 +94,8 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
   }
 
   renderEmail = () => {
+    const styles = this.styles;
+    const theme = this.getSignupTheme();
     return (
       <>
         <Text style={[styles.text, styles.textInputLabel]}>
@@ -91,7 +104,7 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
         <TextInput
           testID="txtInputEmail"
           placeholder="Enter your email address"
-          placeholderTextColor="#CBD5E1"
+          placeholderTextColor={theme.muted}
           style={styles.textInput}
           value={this.state.email}
           onChangeText={this.handleEmail}
@@ -105,6 +118,8 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
   }
 
   renderPassword = () => {
+    const styles = this.styles;
+    const theme = this.getSignupTheme();
     return (
       <>
         <Text style={[styles.text, styles.textInputLabel]}>
@@ -114,7 +129,7 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
           <TextInput
             testID="txtInputPassword"
             placeholder="Enter your password"
-            placeholderTextColor="#CBD5E1"
+            placeholderTextColor={theme.muted}
             style={styles.pswrdInput}
             value={this.state.password}
             onChangeText={this.handlePasswordTxt}
@@ -125,7 +140,7 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
             onBlur={this.handlePasswordBlur}
           />
           <TouchableOpacity testID="passwordImage" style={styles.passwordImageContainer} onPress={this.handlePassword}>
-            <Image source={require("../../../mobile/assets/images/password_eye.png")} style={[styles.passwordImage, { tintColor: this.state.showPassword ? "#475569" : "#3333CC" }]} />
+            <Image source={require("../../../mobile/assets/images/password_eye.png")} style={[styles.passwordImage, { tintColor: this.state.showPassword ? theme.muted : theme.primary }]} />
           </TouchableOpacity>
         </View>
       </>
@@ -133,6 +148,8 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
   }
 
   renderConfirmPassword = () => {
+    const styles = this.styles;
+    const theme = this.getSignupTheme();
     return (
       <>
         <Text style={[styles.text, styles.textInputLabel]}>
@@ -142,7 +159,7 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
           <TextInput
             testID="txtInputPasswordConfirm"
             placeholder="Enter your password"
-            placeholderTextColor="#CBD5E1"
+            placeholderTextColor={theme.muted}
             style={styles.pswrdInput}
             value={this.state.reTypePassword}
             onChangeText={this.handleConfirmPasswordTxt}
@@ -153,7 +170,7 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
             onBlur={this.handleConfirmPasswordBlur}
           />
           <TouchableOpacity testID="confirmPasswordImage" style={styles.passwordImageContainer} onPress={this.handleConfirmPassword}>
-            <Image source={require("../../../mobile/assets/images/password_eye.png")} style={[styles.passwordImage, { tintColor: this.state.showConfirmPassword ? "#475569" : "#3333CC" }]} />
+            <Image source={require("../../../mobile/assets/images/password_eye.png")} style={[styles.passwordImage, { tintColor: this.state.showConfirmPassword ? theme.muted : theme.primary }]} />
           </TouchableOpacity>
         </View>
       </>
@@ -161,6 +178,7 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
   }
 
   renderCountry = () => {
+    const styles = this.styles;
     return (
       <>
         <Text style={[styles.text, styles.textInputLabel]}>
@@ -172,21 +190,25 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
   }
 
   renderCountryiOSDropdown = () => {
+    const styles = this.styles;
+    const theme = this.getSignupTheme();
     return (
       <TouchableOpacity
         testID="btnCountrySelect"
         style={[styles.textInput, styles.selector]}
         onPress={this.showCountryModal}
       >
-        <Text style={[styles.text, styles.selectorText]}>
+        <Text style={[styles.text, styles.selectorText, !this.state.countrySelected && { color: theme.muted }]}>
           {this.state.countrySelected || "Select a country"}
         </Text>
-        <Image source={leftArrow} style={styles.downArrow} />
+        <Image source={leftArrow} style={[styles.downArrow, { tintColor: theme.muted }]} />
       </TouchableOpacity>
     )
   }
 
   renderCountryModal = () => {
+    const styles = this.styles;
+    const theme = this.getSignupTheme();
     return (
       <Modal
         animationType="slide"
@@ -201,10 +223,11 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
                   testID="countryPickerModal"
                   selectedValue={this.state.countrySelected}
                   onValueChange={this.handleCountryValueiOS}
+                  itemStyle={{ color: theme.foreground }}
                 >
                   {this.state.countries?.map(
                     ({ country_code, country_name }: { country_code: string; country_name: string }) => (
-                      <Picker.Item key={country_code} label={country_name} value={country_name} />
+                      <Picker.Item key={country_code} label={country_name} value={country_name} color={theme.foreground} />
                     )
                   )}
                 </Picker>
@@ -217,30 +240,34 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
   }
 
   renderCountryAndroidDropdown = () => {
+    const styles = this.styles;
+    const theme = this.getSignupTheme();
     return (
       <View style={[styles.textInput, styles.selector, {
         paddingHorizontal: 0
       }]}>
         <Picker
           testID="countryPicker"
-          style={[styles.textInput, styles.selector]}
+          style={[styles.textInput, styles.selector, { color: theme.foreground }]}
           itemStyle={[styles.text, styles.selectorText]}
           selectedValue={this.state.countrySelected}
           onValueChange={(countrySelected) => this.onSelectCountry(countrySelected)}
+          dropdownIconColor={theme.muted}
         >
-          <Picker.Item label={this.state.countrySelected || "Select a country"} value={""} />
+          <Picker.Item label={this.state.countrySelected || "Select a country"} value={""} color={theme.foreground} />
           {this.state.countries?.map(
             ({ country_code, country_name }: { country_code: string; country_name: string }) => (
-              <Picker.Item key={country_code} label={country_name} value={country_name} />
+              <Picker.Item key={country_code} label={country_name} value={country_name} color={theme.foreground} />
             )
           )}
         </Picker>
-        <Image source={leftArrow} style={styles.downArrow} />
+        <Image source={leftArrow} style={[styles.downArrow, { tintColor: theme.muted }]} />
       </View>
     )
   }
 
   renderState = () => {
+    const styles = this.styles;
     return (
       <>
         <Text style={[styles.text, styles.textInputLabel]}>State</Text>
@@ -250,6 +277,8 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
   }
 
   renderStateiOS = () => {
+    const styles = this.styles;
+    const theme = this.getSignupTheme();
     return (
       <TouchableOpacity
         testID="btnStateSelect"
@@ -257,15 +286,17 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
         onPress={this.showStateModal}
         disabled={this.state.countrySelected === "" || this.state.countrySelected !== "United States"}
       >
-        <Text style={[styles.text, styles.selectorText]}>
+        <Text style={[styles.text, styles.selectorText, !this.state.selectedState && { color: theme.muted }]}>
           {this.state.selectedState || "Select a state"}
         </Text>
-        <Image source={leftArrow} style={styles.downArrow} />
+        <Image source={leftArrow} style={[styles.downArrow, { tintColor: theme.muted }]} />
       </TouchableOpacity>
     )
   }
 
   renderStateModal = () => {
+    const styles = this.styles;
+    const theme = this.getSignupTheme();
     return (
       <Modal
         animationType="slide"
@@ -280,10 +311,11 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
                   testID="statePickerModal"
                   selectedValue={this.state.selectedState}
                   onValueChange={this.handleStateValueiOS}
+                  itemStyle={{ color: theme.foreground }}
                 >
                   {this.state.states.map(
                     ({ key, name }: { key: string; name: string }) => (
-                      <Picker.Item key={key} label={name} value={name} />
+                      <Picker.Item key={key} label={name} value={name} color={theme.foreground} />
                     )
                   )}
                 </Picker>
@@ -296,6 +328,8 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
   }
 
   renderStateAndroid = () => {
+    const styles = this.styles;
+    const theme = this.getSignupTheme();
     return (
       <View
         style={[styles.textInput, styles.selector, {
@@ -304,25 +338,27 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
         }]}>
         <Picker
           testID="statePicker"
-          style={[styles.textInput, styles.selector]}
+          style={[styles.textInput, styles.selector, { color: theme.foreground }]}
           itemStyle={[styles.text, styles.selectorText]}
           selectedValue={this.state.selectedState}
           onValueChange={(selectedState) => this.onSelectState(selectedState)}
           enabled={this.state.countrySelected !== "" && this.state.countrySelected === "United States"}
+          dropdownIconColor={theme.muted}
         >
-          <Picker.Item label={this.state.selectedState || "Select a state"} value={""} />
+          <Picker.Item label={this.state.selectedState || "Select a state"} value={""} color={theme.foreground} />
           {this.state.states.map(
             ({ key, name }: { key: string; name: string }) => (
-              <Picker.Item key={key} label={name} value={name} />
+              <Picker.Item key={key} label={name} value={name} color={theme.foreground} />
             )
           )}
         </Picker>
-        <Image source={leftArrow} style={styles.downArrow} />
+        <Image source={leftArrow} style={[styles.downArrow, { tintColor: theme.muted }]} />
       </View>
     )
   }
 
   renderCity = () => {
+    const styles = this.styles;
     return (
       <>
         <Text style={[styles.text, styles.textInputLabel]}>City</Text>
@@ -332,6 +368,8 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
   }
 
   renderCityiOS = () => {
+    const styles = this.styles;
+    const theme = this.getSignupTheme();
     return (
       <TouchableOpacity
         testID="btnCitySelect"
@@ -339,15 +377,17 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
         onPress={this.showCityModal}
         disabled={this.state.selectedState === ""}
       >
-        <Text style={[styles.text, styles.selectorText]}>
+        <Text style={[styles.text, styles.selectorText, !this.state.selectedCity && { color: theme.muted }]}>
           {this.state.selectedCity || "Select a city"}
         </Text>
-        <Image source={leftArrow} style={styles.downArrow} />
+        <Image source={leftArrow} style={[styles.downArrow, { tintColor: theme.muted }]} />
       </TouchableOpacity>
     )
   }
 
   renderCityModal = () => {
+    const styles = this.styles;
+    const theme = this.getSignupTheme();
     return (
       <Modal
         animationType="slide"
@@ -362,10 +402,11 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
                   testID="cityPickerModal"
                   selectedValue={this.state.selectedCity}
                   onValueChange={this.handleCityValueiOS}
+                  itemStyle={{ color: theme.foreground }}
                 >
                   {this.state.cities?.map(
                     (name: string) => (
-                      <Picker.Item key={name} label={name} value={name} />
+                      <Picker.Item key={name} label={name} value={name} color={theme.foreground} />
                     )
                   )}
                 </Picker>
@@ -378,6 +419,8 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
   }
 
   renderCityAndroid = () => {
+    const styles = this.styles;
+    const theme = this.getSignupTheme();
     return (
       <View style={[styles.textInput, styles.selector, {
         paddingHorizontal: 0,
@@ -385,25 +428,27 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
       }]}>
         <Picker
           testID="cityPicker"
-          style={[styles.textInput, styles.selector]}
+          style={[styles.textInput, styles.selector, { color: theme.foreground }]}
           itemStyle={[styles.text, styles.selectorText]}
           selectedValue={this.state.selectedCity}
           onValueChange={this.handleCityValueAndroid}
           enabled={this.state.selectedState !== ""}
+          dropdownIconColor={theme.muted}
         >
-          <Picker.Item label={"Select a city"} value={""} />
+          <Picker.Item label={"Select a city"} value={""} color={theme.foreground} />
           {this.state.cities?.map(
             (name: string) => (
-              <Picker.Item key={name} label={name} value={name} />
+              <Picker.Item key={name} label={name} value={name} color={theme.foreground} />
             )
           )}
         </Picker>
-        <Image source={leftArrow} style={styles.downArrow} />
+        <Image source={leftArrow} style={[styles.downArrow, { tintColor: theme.muted }]} />
       </View>
     )
   }
 
   renderPhone = () => {
+    const styles = this.styles;
     return (
       <>
         <Text style={[styles.text, styles.textInputLabel]}>
@@ -429,6 +474,8 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
   }
 
   renderCountryCodeModal = () => {
+    const styles = this.styles;
+    const theme = this.getSignupTheme();
     return (
       <Modal
         animationType="slide"
@@ -443,12 +490,14 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
                   testID="countryCodePickerModal"
                   selectedValue={this.state.countryCodeSelected}
                   onValueChange={this.handleCountryCodeiOS}
+                  itemStyle={{ color: theme.foreground }}
                 >
                   {this.state.countryCodes?.map(
                     (item: any) => (
                       <Picker.Item key={item.id}
                         label={`${item.attributes.name} (+${item.attributes.country_code})`}
-                        value={item} />
+                        value={item}
+                        color={theme.foreground} />
                     )
                   )}
                 </Picker>
@@ -461,6 +510,8 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
   }
 
   renderCountryCodeiOS = () => {
+    const styles = this.styles;
+    const theme = this.getSignupTheme();
     const hasFlag = this.state.countryCodeSelected && Object.keys(this.state.countryCodeSelected).length > 0
     const code = this.state.countryCodeSelected && Object.keys(this.state.countryCodeSelected).length > 0 ? `+${this.state.countryCodeSelected.attributes.country_code}` : ""
     return (
@@ -472,7 +523,7 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
         <Image source={hasFlag ? { uri: this.state.countryCodeSelected.attributes.map_url } : usFlag} style={styles.usFlag} />
         <Image
           source={leftArrow}
-          style={[styles.downArrow, styles.countryCodeArrow]}
+          style={[styles.downArrow, styles.countryCodeArrow, { tintColor: theme.muted }]}
         />
         <Text
           style={[styles.text, styles.textCountryCode]}
@@ -482,6 +533,8 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
   }
 
   renderCountryCodeAndroid = () => {
+    const styles = this.styles;
+    const theme = this.getSignupTheme();
     const hasFlag = this.state.countryCodeSelected && Object.keys(this.state.countryCodeSelected).length > 0
     const code = this.state.countryCodeSelected && Object.keys(this.state.countryCodeSelected).length > 0 ? `+${this.state.countryCodeSelected.attributes.country_code}` : ""
     return (
@@ -502,7 +555,7 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
           <Image source={hasFlag ? { uri: this.state.countryCodeSelected.attributes.map_url } : usFlag} style={styles.usFlag} />
           <Image
             source={leftArrow}
-            style={[styles.downArrow, styles.countryCodeArrow]}
+            style={[styles.downArrow, styles.countryCodeArrow, { tintColor: theme.muted }]}
           />
           <Text
             style={[styles.text, styles.textCountryCode]}
@@ -513,9 +566,13 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
   }
 
   renderTAndC = () => {
+    const styles = this.styles;
     return (
       <View style={styles.checkboxContainer}>
-        <TouchableOpacity style={styles.checkbox}
+        <TouchableOpacity style={[
+          styles.checkbox,
+          this.state.acceptTermsConditions && styles.checkboxChecked,
+        ]}
           testID="btnAcceptTerms"
           onPress={this.handleTAndC}
         >
@@ -537,10 +594,14 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
   }
 
   renderOptEmail = () => {
+    const styles = this.styles;
     return (
       <View style={styles.checkboxContainer}>
         <TouchableOpacity
-          style={styles.checkbox}
+          style={[
+            styles.checkbox,
+            this.state.optInEmails && styles.checkboxChecked,
+          ]}
           testID="btnOptIn"
           onPress={this.handleOptEmail}
         >
@@ -556,10 +617,14 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
   }
 
   renderAgeLimit = () => {
+    const styles = this.styles;
     return (
       <View style={styles.checkboxContainer}>
         <TouchableOpacity
-          style={styles.checkbox}
+          style={[
+            styles.checkbox,
+            this.state.isEighteenPlus && styles.checkboxChecked,
+          ]}
           testID="btnEighteenPlus"
           onPress={this.handleEighteenPlus}
         >
@@ -575,6 +640,7 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
   }
 
   renderBottom = () => {
+    const styles = this.styles;
     return (
       <View style={styles.loginPromptContainer}>
         <Text style={[styles.text, styles.textLogin]}>
@@ -591,6 +657,7 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
   }
 
   renderCountryAlertModal = () => {
+    const styles = this.styles;
     return (
       <Modal
         animationType="slide"
@@ -622,10 +689,12 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
   // Customizable Area End
 
   render() {
+    const theme = this.getSignupTheme();
+    const styles = this.styles;
     return (
       <KeyboardAvoidingView
         behavior={this.isPlatformiOS() ? "padding" : undefined}
-        style={styles.keyboardPadding}
+        style={[styles.keyboardPadding, { backgroundColor: theme.background }]}
       >
         <ScrollView keyboardShouldPersistTaps="always" style={styles.container}>
           <TouchableWithoutFeedback
@@ -636,8 +705,12 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
           >
             {/* Customizable Area Start */}
             <SafeAreaView>
+              <View pointerEvents="none" style={styles.decorTop} />
               <View style={styles.contentContainer}>
-                <StatusBar barStyle="dark-content" backgroundColor="white" />
+                <StatusBar
+                  barStyle={this.state.isDarkMode ? "light-content" : "dark-content"}
+                  backgroundColor={theme.background}
+                />
                 {this.renderHeader()}
                 {this.renderName()}
                 {this.renderError(this.state.nameError)}
@@ -697,7 +770,7 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
                     <ScrollView>
                       {this.state.countryCodes.map((item: any) => (
                         <TouchableOpacity testID="countryCode" key={item.attributes.country_code} style={{ marginVertical: 15, }} onPress={() => this.handleCountryCodeAndroid(item)}>
-                          <Text style={{ color: 'black', }}>{`${item.attributes.name} (+${item.attributes.country_code})`}</Text>
+                          <Text style={{ color: theme.foreground }}>{`${item.attributes.name} (+${item.attributes.country_code})`}</Text>
                         </TouchableOpacity>
                       ))}
                     </ScrollView>
@@ -717,6 +790,7 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
     // Customizable Area Start
     const userRole = await getStorageData("userRole");
     this.setState({ userRole: configJSON[userRole] });
+    this.loadSignupTheme();
     this.props.navigation.addListener("willFocus", async () => {
       const tAndCAcceptance = await getStorageData("tAndCAcceptance");
       if (tAndCAcceptance) {
@@ -728,7 +802,7 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
   }
 }
 
-const styles = StyleSheet.create({
+const createSignupStyles = (theme: SignupTheme) => StyleSheet.create({
   // Customizable Area Start
   container: {
     flex: 1,
@@ -737,12 +811,22 @@ const styles = StyleSheet.create({
     marginRight: "auto",
     width: "100%",
     maxWidth: 650,
-    backgroundColor: "#fff",
+    backgroundColor: theme.background,
+  },
+  decorTop: {
+    position: "absolute",
+    top: -90,
+    right: -70,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: theme.primarySoft,
   },
   headerContainer: {
     flexDirection: "row",
     justifyContent: "center",
     marginBottom: 10,
+    alignItems: "center",
   },
   backArrowContainer: {
     position: "absolute",
@@ -758,6 +842,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontWeight: "bold",
     fontSize: 30,
+    color: theme.primary,
   },
   contentContainer: {
     flex: 1,
@@ -766,10 +851,10 @@ const styles = StyleSheet.create({
   text: {
     fontFamily: "OpenSans",
     alignSelf: "flex-start",
-    color: colors(false).text,
+    color: theme.foreground,
   },
   errorText: {
-    color: 'red',
+    color: '#D32F2F',
     fontSize: 13,
     paddingTop: 2,
   },
@@ -780,15 +865,18 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginTop: 20,
     marginBottom: 10,
+    color: theme.foreground,
   },
   textInput: {
     width: "100%",
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 0.5,
-    borderColor: "#C5C5FF",
-    color: colors(false).text,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.border,
+    backgroundColor: theme.input,
+    color: theme.foreground,
     height: 50,
+    fontSize: 16,
   },
   selector: {
     height: 50,
@@ -799,11 +887,13 @@ const styles = StyleSheet.create({
     right: 15,
     marginRight: 5,
     width: 8,
-    backgroundColor: 'white',
+    backgroundColor: "transparent",
     transform: [{ rotate: "-90deg" }],
     resizeMode: "contain",
   },
-  selectorText: {},
+  selectorText: {
+    color: theme.foreground,
+  },
   textInputPhone: {
     paddingLeft: 110,
   },
@@ -826,52 +916,61 @@ const styles = StyleSheet.create({
     position: "relative",
     right: 0,
     marginLeft: 10,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
   },
   textCountryCode: {
     alignSelf: "center",
     marginLeft: 8,
     fontSize: 16,
     lineHeight: 20,
+    color: theme.foreground,
   },
   checkboxContainer: {
     flexDirection: "row",
     marginTop: 20,
+    alignItems: "center",
   },
   checkbox: {
-    height: 20,
-    width: 20,
-    borderWidth: 1,
-    borderRadius: 5,
-    borderColor: colors(false).text,
+    height: 22,
+    width: 22,
+    borderWidth: 1.5,
+    borderRadius: 6,
+    borderColor: theme.muted,
     marginRight: 10,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: theme.input,
+  },
+  checkboxChecked: {
+    borderColor: theme.primary,
+    backgroundColor: theme.primarySoft,
   },
   checkboxSelected: {
     height: 12,
     width: 12,
-    backgroundColor: "#3333CC",
-    borderRadius: 2.5,
+    backgroundColor: theme.primary,
+    borderRadius: 3,
   },
   textLink: {
     fontWeight: "bold",
-    color: "#4949EE",
+    color: theme.primary,
   },
   continueButton: {
-    backgroundColor: "#3333CC",
+    backgroundColor: theme.primary,
     width: "100%",
     padding: 15,
-    borderRadius: 10,
+    borderRadius: 12,
     marginTop: 25,
   },
   textContinueButton: {
-    color: colors(false).white,
+    color: "#FFFFFF",
     fontWeight: "700",
     fontSize: 18,
     alignSelf: "center",
   },
-  textLogin: {},
+  textLogin: {
+    color: theme.muted,
+  },
   loginPromptContainer: {
     alignSelf: "center",
     marginTop: 20,
@@ -880,12 +979,12 @@ const styles = StyleSheet.create({
   centeredView: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "#33415580",
+    backgroundColor: "rgba(8, 8, 15, 0.72)",
   },
   modalView: {
     height: "30%",
     justifyContent: "space-between",
-    backgroundColor: "white",
+    backgroundColor: theme.card,
     borderTopEndRadius: 20,
     padding: 35,
     shadowColor: "#000",
@@ -902,38 +1001,40 @@ const styles = StyleSheet.create({
     fontSize: 26,
     lineHeight: 28,
     marginVertical: 10,
-    color: "#0F172A",
+    color: theme.foreground,
   },
   textOnlySupportUS: {
     fontSize: 18,
+    color: theme.muted,
   },
   passwordViewContainer: {
     width: "100%",
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 0.5,
-    borderColor: "#C5C5FF",
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.border,
+    backgroundColor: theme.input,
     height: 50,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   pswrdInput: {
-    color: colors(false).text,
-    width: '80%',
+    color: theme.foreground,
+    width: "80%",
   },
   passwordImageContainer: {
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   passwordImage: {
     height: 20,
     width: 30,
-    resizeMode: 'contain',
+    resizeMode: "contain",
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#d1d1d1',
+    borderColor: theme.border,
     borderRadius: 8,
     paddingLeft: 10,
   },
@@ -947,20 +1048,21 @@ const styles = StyleSheet.create({
   },
   androidCountryCodeModalView: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#00000080',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(8, 8, 15, 0.72)",
   },
   androidCCModal: {
-    width: '90%',
-    maxHeight: '95%',
-    backgroundColor: '#FFFFFF',
+    width: "90%",
+    maxHeight: "95%",
+    backgroundColor: theme.card,
     padding: 10,
+    borderRadius: 16,
   },
   loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
   // Customizable Area End
 });

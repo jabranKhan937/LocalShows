@@ -7,10 +7,16 @@ import MessageEnum, {
 } from '../../../framework/src/Messages/MessageEnum';
 
 import { imgPasswordInVisible, imgPasswordVisible } from './assets';
-import { Keyboard, PermissionsAndroid, Platform } from 'react-native';
+import { Keyboard, PermissionsAndroid, Platform, DeviceEventEmitter } from 'react-native';
 import Geolocation from 'react-native-geolocation-service';
 import { check, PERMISSIONS, RESULTS } from 'react-native-permissions';
-import { isEmpty } from '../../../framework/src/Utilities';
+import { getStorageData, isEmpty } from '../../../framework/src/Utilities';
+import {
+  lightTheme,
+  PROFILE_THEME_CHANGED_EVENT,
+  PROFILE_THEME_STORAGE_KEY,
+  redesignTheme,
+} from '../../utilities/src/Colors';
 
 interface IPlaceRecord {
   key: string;
@@ -69,6 +75,7 @@ export interface S {
   countryCodeClicked: boolean;
   countryCodeClickedAndroid: boolean;
   isLoading: boolean;
+  isDarkMode: boolean;
 }
 
 export interface SS {
@@ -163,6 +170,7 @@ export default class EmailAccountRegistrationController extends BlockComponent<
       countryCodeClicked: false,
       countryCodeClickedAndroid: false,
       isLoading: false,
+      isDarkMode: true,
     };
 
     this.arrayholder = [];
@@ -189,7 +197,35 @@ export default class EmailAccountRegistrationController extends BlockComponent<
   async componentDidMount() {
     this.getCountryCodeList();
     this.getCountryList();
+    this.loadSignupTheme();
   }
+
+  profileThemeListener: any = null;
+
+  async componentWillUnmount(): Promise<void> {
+    if (this.profileThemeListener) {
+      this.profileThemeListener.remove();
+      this.profileThemeListener = null;
+    }
+    await super.componentWillUnmount();
+  }
+
+  loadSignupTheme = async () => {
+    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
+    this.setState({ isDarkMode: savedTheme !== 'false' });
+    if (!this.profileThemeListener) {
+      this.profileThemeListener = DeviceEventEmitter.addListener(
+        PROFILE_THEME_CHANGED_EVENT,
+        (isDarkMode: boolean) => {
+          this.setState({ isDarkMode });
+        },
+      );
+    }
+  };
+
+  getSignupTheme = () => {
+    return this.state.isDarkMode ? redesignTheme : lightTheme;
+  };
 
   async receive(from: string, message: Message) {
     if (getName(MessageEnum.RestAPIResponceMessage) === message.id) {
