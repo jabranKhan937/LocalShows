@@ -10,12 +10,15 @@ import {
   Platform,
   Modal,
   Image,
+  ImageBackground,
   ScrollView,
   TouchableWithoutFeedback,
+  StatusBar,
+  SafeAreaView,
 } from 'react-native';
 
 import MergeEngineUtilities from '../../utilities/src/MergeEngineUtilities';
-import {colors} from '../../utilities/src/Colors';
+import {redesignTheme} from '../../utilities/src/Colors';
 import {
   downArrow,
   leftArrow,
@@ -30,7 +33,7 @@ import moment from 'moment';
 import Icon from 'react-native-vector-icons/Feather';
 const DateRangePicker = require('react-native-daterange-picker').default;
 //@ts-ignore
-import {ItineraryProps} from './EventregistrationController';
+import {ItineraryProps, TopCityItem} from './EventregistrationController';
 import {Calendar} from 'react-native-calendars';
 
 // Merge Engine - import assets - Start
@@ -46,6 +49,8 @@ import EventregistrationController, {
   Props,
   configJSON,
 } from './EventregistrationController';
+
+type TravelTheme = typeof redesignTheme;
 
 export default class Eventregistration extends EventregistrationController {
   constructor(props: Props) {
@@ -63,9 +68,23 @@ export default class Eventregistration extends EventregistrationController {
     // Customizable Area End
   }
 
+  get styles() {
+    return createTravelStyles(this.getTravelTheme());
+  }
+
+  formatTravelDate = (value: string) => {
+    if (!value || value === 'MM-DD-YYYY' || value === 'MM/DD/YYYY') {
+      return 'Select';
+    }
+    const parsed = moment(value, ['MM-DD-YYYY', 'MM/DD/YYYY', 'MMM DD YYYY'], true);
+    return parsed.isValid() ? parsed.format('MMM D') : value;
+  };
+
   // Customizable Area Start
 
   ItineraryCard = (card: ItineraryProps, index: number) => {
+    const styles = this.styles;
+    const theme = this.getTravelTheme();
     const hasMoreCards = this.state.itineraryList.length > 1;
     const {cityName, endDate, showsCount, startDate, hasAcceptButton} = card;
     const cityNameFormatted =
@@ -111,6 +130,8 @@ export default class Eventregistration extends EventregistrationController {
   renderErrorMessage = (
     fieldName: 'Date' | 'Country' | 'State' | 'City' | '',
   ) => {
+    const styles = this.styles;
+    const theme = this.getTravelTheme();
     const isBlank = this.state.fieldNameBlank === fieldName;
     return (
       <>
@@ -123,6 +144,8 @@ export default class Eventregistration extends EventregistrationController {
     );
   };
   renderNotificationIndicator = () => {
+    const styles = this.styles;
+    const theme = this.getTravelTheme();
     const count = this.state.unreadNotificationCount || 0;
     if (count > 0) {
       const displayCount = count > 99 ? '99+' : `${count}`;
@@ -137,6 +160,8 @@ export default class Eventregistration extends EventregistrationController {
   };
 
   renderRedDot = ({ condition }: { condition: boolean }) => {
+    const styles = this.styles;
+    const theme = this.getTravelTheme();
     if (condition) {
       return <View style={styles.redDot} />;
     }
@@ -145,45 +170,66 @@ export default class Eventregistration extends EventregistrationController {
   };
 
   renderHeader = () => {
+    const styles = this.styles;
+    const theme = this.getTravelTheme();
     return (
-      <View style={styles.headerContainer1}>
-        <TouchableOpacity
-          testID="navigationBackButton"
-          onPress={this.handleBackNavigationPress}
-          style={styles.backArrowBtn}>
-          <Image source={leftArrow} style={styles.backArrowStyle} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitleTextSty}>Travel</Text>
-        <View style={styles.iconsContainSty}>
+      <View>
+        <View style={styles.headerContainer1}>
           <TouchableOpacity
-            testID="notificationIcon"
-            style={styles.notificationIconConStyle}
-            onPress={this.handleNotificationNavigationPressed}>
-            <View style={styles.notificationWrapper}>
-              <Image source={notificationIcon} style={styles.notificationIcon} />
-              {this.renderNotificationIndicator()}
-            </View>
+            testID="navigationBackButton"
+            onPress={this.handleBackNavigationPress}
+            style={styles.backArrowBtn}>
+            <Image
+              source={leftArrow}
+              style={[styles.backArrowStyle, {tintColor: theme.foreground}]}
+            />
           </TouchableOpacity>
-          <TouchableOpacity
-            testID="hamburger"
-            onPress={() => this.props.navigation.openDrawer()}>
-            <Image style={styles.hamburgerIcon} source={menuIcon} />
-          </TouchableOpacity>
+          <View style={styles.iconsContainSty}>
+            <TouchableOpacity
+              testID="notificationIcon"
+              style={styles.notificationIconConStyle}
+              onPress={this.handleNotificationNavigationPressed}>
+              <View style={styles.notificationWrapper}>
+                <Image
+                  source={notificationIcon}
+                  style={[styles.notificationIcon, {tintColor: theme.foreground}]}
+                />
+                {this.renderNotificationIndicator()}
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              testID="hamburger"
+              onPress={() => this.props.navigation.openDrawer()}>
+              <Image
+                style={[styles.hamburgerIcon, {tintColor: theme.foreground}]}
+                source={menuIcon}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View style={styles.plannerTitleRow}>
+          <MaterialCommunityIcons
+            name="airplane"
+            size={22}
+            color={theme.primary}
+          />
+          <Text style={styles.headerTitleTextSty}>TRAVEL PLANNER</Text>
         </View>
       </View>
     );
   };
   renderPrivateAccount = () => {
+    const styles = this.styles;
+    const theme = this.getTravelTheme();
     return (
       <View style={styles.rowViewSty}>
         <View style={styles.subView}>
-          <Text style={[styles.text, {fontWeight: 'bold'}]}>
-            Match my preferences
+          <Text style={[styles.text, styles.preferenceTitle]}>
+            Match My Preferences
           </Text>
-          <Image
-            source={require('../../../mobile/assets/images/termsAndConditions.png')}
-            style={styles.img}
-          />
+          <Text style={styles.preferenceSubtitle}>
+            Using saved tastes
+          </Text>
         </View>
         <TouchableWithoutFeedback
           onPress={() =>
@@ -195,8 +241,8 @@ export default class Eventregistration extends EventregistrationController {
               styles.switchContainerSty,
               {
                 backgroundColor: this.state.isPrivateAccount
-                  ? '#4949EE'
-                  : '#94A3B8',
+                  ? theme.primary
+                  : theme.muted,
               },
             ]}>
             <View
@@ -215,6 +261,8 @@ export default class Eventregistration extends EventregistrationController {
     );
   };
   renderCountry = () => {
+    const styles = this.styles;
+    const theme = this.getTravelTheme();
     return (
       <View>
         <Text style={[styles.text, styles.textInputLabel]}>Country</Text>
@@ -224,6 +272,8 @@ export default class Eventregistration extends EventregistrationController {
   };
 
   renderCountryiOSDropdown = () => {
+    const styles = this.styles;
+    const theme = this.getTravelTheme();
     return (
       <TouchableOpacity
         testID="btnCountrySelect"
@@ -238,33 +288,62 @@ export default class Eventregistration extends EventregistrationController {
     );
   };
 
-  renderTypeModal = () => {
+  renderThemedPickerSheet = (props: {
+    visible: boolean;
+    hideTestID: string;
+    pickerTestID: string;
+    selectedValue: any;
+    onHide: () => void;
+    onValueChange: (value: any) => void;
+    items: {key: string; label: string; value: any}[];
+    title: string;
+  }) => {
+    const styles = this.styles;
     return (
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={this.state.typeFieldClicked}>
+      <Modal animationType="slide" transparent={true} visible={props.visible}>
         <TouchableWithoutFeedback
-          testID="hideTypeModal"
-          onPress={this.handleToogleModalTypeField}>
+          testID={props.hideTestID}
+          onPress={props.onHide}>
           <View style={styles.centeredView}>
             <TouchableWithoutFeedback>
-              <View
-                style={[
-                  styles.modalView,
-                  {borderTopStartRadius: 20, padding: 15},
-                ]}>
+              <View style={styles.sheetContainer}>
+                <View style={styles.sheetHandle} />
+                <Text style={styles.sheetTitle}>{props.title}</Text>
+                <ScrollView
+                  style={styles.sheetList}
+                  keyboardShouldPersistTaps="always"
+                  showsVerticalScrollIndicator={false}>
+                  {props.items.map(item => {
+                    const selected = item.value === props.selectedValue;
+                    return (
+                      <TouchableOpacity
+                        key={item.key}
+                        style={[
+                          styles.sheetOption,
+                          selected && styles.sheetOptionSelected,
+                        ]}
+                        onPress={() => props.onValueChange(item.value)}>
+                        <Text
+                          style={[
+                            styles.sheetOptionText,
+                            selected && styles.sheetOptionTextSelected,
+                          ]}>
+                          {item.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
                 <Picker
-                  testID="typePickerModal"
-                  selectedValue={this.state.selectedType}
-                  onValueChange={(selectedType: string) =>
-                    this.handleSelectedTypeIos(selectedType)
-                  }>
-                  {this?.state?.typesList?.map(item => (
+                  testID={props.pickerTestID}
+                  selectedValue={props.selectedValue}
+                  onValueChange={props.onValueChange}
+                  style={styles.hiddenPicker}>
+                  {props.items.map(item => (
                     <Picker.Item
-                      key={item.id}
-                      value={item.attributes.name}
-                      label={item.attributes.name}
+                      key={item.key}
+                      label={item.label}
+                      value={item.value}
                     />
                   ))}
                 </Picker>
@@ -275,46 +354,46 @@ export default class Eventregistration extends EventregistrationController {
       </Modal>
     );
   };
+
+  renderTypeModal = () => {
+    return this.renderThemedPickerSheet({
+      visible: this.state.typeFieldClicked,
+      hideTestID: 'hideTypeModal',
+      pickerTestID: 'typePickerModal',
+      selectedValue: this.state.selectedType,
+      onHide: this.handleToogleModalTypeField,
+      onValueChange: (selectedType: string) =>
+        this.handleSelectedTypeIos(selectedType),
+      title: 'Type',
+      items: (this.state.typesList || []).map(item => ({
+        key: item.id,
+        label: item.attributes.name,
+        value: item.attributes.name,
+      })),
+    });
+  };
   renderCountryModal = () => {
-    return (
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={this.state.countryFieldClicked}>
-        <TouchableWithoutFeedback
-          testID="hideCountryModal"
-          onPress={this.handleToogleModalCountryField}>
-          <View style={styles.centeredView}>
-            <TouchableWithoutFeedback>
-              <View
-                style={[
-                  styles.modalView,
-                  {borderTopStartRadius: 20, padding: 15},
-                ]}>
-                <Picker
-                  testID="countryPickerModal"
-                  selectedValue={this.state.selectedCountry}
-                  onValueChange={(selectedCountry: string) =>
-                    this.handleSelectedCountryiOS(selectedCountry)
-                  }>
-                  {this?.state?.countriesList?.map(
-                    ({country_code, country_name}) => (
-                      <Picker.Item
-                        key={country_code}
-                        value={country_name}
-                        label={country_name}
-                      />
-                    ),
-                  )}
-                </Picker>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-    );
+    return this.renderThemedPickerSheet({
+      visible: this.state.countryFieldClicked,
+      hideTestID: 'hideCountryModal',
+      pickerTestID: 'countryPickerModal',
+      selectedValue: this.state.selectedCountry,
+      onHide: this.handleToogleModalCountryField,
+      onValueChange: (selectedCountry: string) =>
+        this.handleSelectedCountryiOS(selectedCountry),
+      title: 'Country',
+      items: (this.state.countriesList || []).map(
+        ({country_code, country_name}) => ({
+          key: country_code,
+          label: country_name,
+          value: country_name,
+        }),
+      ),
+    });
   };
   renderCountryAlertModal = () => {
+    const styles = this.styles;
+    const theme = this.getTravelTheme();
     return (
       <Modal
         animationType="slide"
@@ -343,6 +422,8 @@ export default class Eventregistration extends EventregistrationController {
   };
 
   renderState = () => {
+    const styles = this.styles;
+    const theme = this.getTravelTheme();
     return (
       <>
         <Text style={[styles.text, styles.textInputLabel]}>State</Text>
@@ -354,6 +435,8 @@ export default class Eventregistration extends EventregistrationController {
   };
 
   renderStateiOS = () => {
+    const styles = this.styles;
+    const theme = this.getTravelTheme();
     const {selectedState, selectedCountry} = this.state;
     const isCountryFieldInvalid =
       selectedCountry === '' || selectedCountry !== 'United States';
@@ -377,6 +460,8 @@ export default class Eventregistration extends EventregistrationController {
   };
 
   renderStateAndroid = () => {
+    const styles = this.styles;
+    const theme = this.getTravelTheme();
     const isCountryFieldInvalid =
       this.state.selectedCountry === '' ||
       this.state.selectedCountry !== 'United States';
@@ -395,17 +480,27 @@ export default class Eventregistration extends EventregistrationController {
           style={[
             styles.textInputSty,
             styles.selectorSty,
-            {opacity: isCountryFieldInvalid ? 0.5 : 1},
+            {opacity: isCountryFieldInvalid ? 0.5 : 1, color: theme.foreground},
           ]}
           selectedValue={this.state.selectedState}
           onValueChange={(selectedState: string) =>
             this.onSelectState(selectedState)
           }
           itemStyle={[styles.text, styles.selectorTextSty]}
+          dropdownIconColor={theme.muted}
           enabled={!isCountryFieldInvalid}>
-          <Picker.Item label={'Select a state'} value={''} />
+          <Picker.Item
+            label={'Select a state'}
+            value={''}
+            color={theme.foreground}
+          />
           {this?.state?.states?.map(({key, name}) => (
-            <Picker.Item label={name} key={key} value={key} />
+            <Picker.Item
+              label={name}
+              key={key}
+              value={key}
+              color={theme.foreground}
+            />
           ))}
         </Picker>
         <Image source={leftArrow} style={styles.downArrowSty} />
@@ -413,36 +508,26 @@ export default class Eventregistration extends EventregistrationController {
     );
   };
   renderStateModal = () => {
-    return (
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={this.state.stateFieldClicked}>
-        <TouchableWithoutFeedback
-          testID="hideStateModal"
-          onPress={this.handleToogleModalStatesField}>
-          <View style={styles.centeredView}>
-            <TouchableWithoutFeedback>
-              <View style={[styles.modalView, {borderTopStartRadius: 20}]}>
-                <Picker
-                  testID="statePickerModal"
-                  selectedValue={this.state.selectedState}
-                  onValueChange={(selectedState: string) =>
-                    this.handleSelectedStateIOS(selectedState)
-                  }>
-                  {this?.state?.states?.map(({key, name}) => (
-                    <Picker.Item key={key} value={name} label={name} />
-                  ))}
-                </Picker>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-    );
+    return this.renderThemedPickerSheet({
+      visible: this.state.stateFieldClicked,
+      hideTestID: 'hideStateModal',
+      pickerTestID: 'statePickerModal',
+      selectedValue: this.state.selectedState,
+      onHide: this.handleToogleModalStatesField,
+      onValueChange: (selectedState: string) =>
+        this.handleSelectedStateIOS(selectedState),
+      title: 'State',
+      items: (this.state.states || []).map(({key, name}) => ({
+        key,
+        label: name,
+        value: name,
+      })),
+    });
   };
 
   renderCity = () => {
+    const styles = this.styles;
+    const theme = this.getTravelTheme();
     return (
       <>
         <Text style={[styles.text, styles.textInputLabel]}>City</Text>
@@ -452,6 +537,8 @@ export default class Eventregistration extends EventregistrationController {
   };
 
   renderCityiOS = () => {
+    const styles = this.styles;
+    const theme = this.getTravelTheme();
     const hasSelectedState = this.state.selectedState !== '';
 
     return (
@@ -473,6 +560,8 @@ export default class Eventregistration extends EventregistrationController {
   };
 
   renderCityAndroid = () => {
+    const styles = this.styles;
+    const theme = this.getTravelTheme();
     const hasSelectedState = this.state.selectedState !== '';
     return (
       <View
@@ -493,12 +582,22 @@ export default class Eventregistration extends EventregistrationController {
           style={[
             styles.textInputSty,
             styles.selectorSty,
-            {opacity: hasSelectedState ? 1 : 0.5},
+            {opacity: hasSelectedState ? 1 : 0.5, color: theme.foreground},
           ]}
-          itemStyle={[styles.text, styles.selectorTextSty]}>
-          <Picker.Item label={'Select a city'} value={''} />
+          itemStyle={[styles.text, styles.selectorTextSty]}
+          dropdownIconColor={theme.muted}>
+          <Picker.Item
+            label={'Select a city'}
+            value={''}
+            color={theme.foreground}
+          />
           {this?.state?.cities?.map((name: string) => (
-            <Picker.Item label={name} key={name} value={name} />
+            <Picker.Item
+              label={name}
+              key={name}
+              value={name}
+              color={theme.foreground}
+            />
           ))}
         </Picker>
         <Image source={leftArrow} style={styles.downArrowSty} />
@@ -506,35 +605,25 @@ export default class Eventregistration extends EventregistrationController {
     );
   };
   renderCityModal = () => {
-    return (
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={this.state.cityFieldClicked}>
-        <TouchableWithoutFeedback
-          testID="hideCityModal"
-          onPress={this.handleToogleModalCitiesField}>
-          <View style={[styles.centeredView]}>
-            <TouchableWithoutFeedback>
-              <View style={[styles.modalView, {borderTopStartRadius: 20}]}>
-                <Picker
-                  testID="cityPickerModal"
-                  selectedValue={this.state.selectedCity}
-                  onValueChange={(selectedCity: string) =>
-                    this.handleSelectedCityIOS(selectedCity)
-                  }>
-                  {this?.state?.cities?.map((name: string) => (
-                    <Picker.Item key={name} value={name} label={name} />
-                  ))}
-                </Picker>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-    );
+    return this.renderThemedPickerSheet({
+      visible: this.state.cityFieldClicked,
+      hideTestID: 'hideCityModal',
+      pickerTestID: 'cityPickerModal',
+      selectedValue: this.state.selectedCity,
+      onHide: this.handleToogleModalCitiesField,
+      onValueChange: (selectedCity: string) =>
+        this.handleSelectedCityIOS(selectedCity),
+      title: 'City',
+      items: (this.state.cities || []).map((name: string) => ({
+        key: name,
+        label: name,
+        value: name,
+      })),
+    });
   };
   renderType = () => {
+    const styles = this.styles;
+    const theme = this.getTravelTheme();
     return (
       <>
         <Text style={[styles.text, styles.textInputLabel]}>Type</Text>
@@ -543,6 +632,8 @@ export default class Eventregistration extends EventregistrationController {
     );
   };
   renderTypeiOS = () => {
+    const styles = this.styles;
+    const theme = this.getTravelTheme();
     const {selectedType} = this.state;
     return (
       <TouchableOpacity
@@ -558,6 +649,8 @@ export default class Eventregistration extends EventregistrationController {
   };
 
   renderTypeAndroid = () => {
+    const styles = this.styles;
+    const theme = this.getTravelTheme();
     return (
       <View
         style={[
@@ -571,13 +664,15 @@ export default class Eventregistration extends EventregistrationController {
           testID="typePicker"
           selectedValue={this.state.selectedType}
           onValueChange={this.handleSelectedType}
-          style={[styles.textInputSty, styles.selectorSty]}
-          itemStyle={[styles.text, styles.selectorTextSty]}>
+          style={[styles.textInputSty, styles.selectorSty, {color: theme.foreground}]}
+          itemStyle={[styles.text, styles.selectorTextSty]}
+          dropdownIconColor={theme.muted}>
           {this?.state?.typesList?.map(item => (
             <Picker.Item
               key={item.id}
               label={item.attributes.name}
               value={item.attributes.name}
+              color={theme.foreground}
             />
           ))}
         </Picker>
@@ -587,7 +682,8 @@ export default class Eventregistration extends EventregistrationController {
   };
   datePicker = () => {
     const {showDateSelector, displayedDate} = this.state;
-    const PRIMARY_COLOR = '#3333cc';
+    const styles = this.styles;
+    const theme = this.getTravelTheme();
     return (
       <>
         {showDateSelector && (
@@ -596,7 +692,7 @@ export default class Eventregistration extends EventregistrationController {
               testID="closeCalendar"
               style={styles.cancelDateSelectionButtonSty}
               onPress={() => this.setState({showDateSelector: false})}>
-              <Icon name="x" size={30} />
+              <Icon name="x" size={30} color={theme.foreground} />
             </TouchableOpacity>
             <Calendar
               testID="DateRangePicker"
@@ -610,9 +706,13 @@ export default class Eventregistration extends EventregistrationController {
                   : moment().format('YYYY-MM-DD')
               }
               theme={{
-                selectedDayBackgroundColor: PRIMARY_COLOR,
-                todayTextColor: PRIMARY_COLOR,
-                arrowColor: PRIMARY_COLOR,
+                calendarBackground: theme.card,
+                dayTextColor: theme.foreground,
+                monthTextColor: theme.foreground,
+                textDisabledColor: theme.muted,
+                selectedDayBackgroundColor: theme.primary,
+                todayTextColor: theme.primary,
+                arrowColor: theme.primary,
                 textDayFontWeight: '500',
                 textMonthFontWeight: 'bold',
                 selectedDayTextColor: 'white',
@@ -623,7 +723,73 @@ export default class Eventregistration extends EventregistrationController {
       </>
     );
   };
+  formatTopCityShowCount = (showCount: number | null) => {
+    if (showCount === null) {
+      return 'Shows';
+    }
+    return `${showCount} ${showCount === 1 ? 'show' : 'shows'}`;
+  };
+
+  renderTopCitiesThisWeek = () => {
+    const styles = this.styles;
+    return (
+      <View style={styles.topCitiesSection}>
+        <Text style={styles.savedTripsTitle}>TOP CITIES THIS WEEK</Text>
+        <View style={styles.topCitiesGrid}>
+          {this.state.topCities.map(city => this.renderTopCityCard(city))}
+        </View>
+      </View>
+    );
+  };
+
+  renderTopCityCard = (city: TopCityItem) => {
+    const styles = this.styles;
+    return (
+      <TouchableOpacity
+        key={city.id}
+        activeOpacity={0.85}
+        onPress={() => this.handleSelectTopCity(city)}
+        style={styles.topCityCard}>
+        <ImageBackground
+          source={{uri: city.imageUri}}
+          style={styles.topCityImage}
+          imageStyle={styles.topCityImageInner}>
+          <View style={styles.topCityOverlay} />
+          <View style={styles.topCityTextWrap}>
+            <Text style={styles.topCityName}>{city.name.toUpperCase()}</Text>
+            <Text style={styles.topCityShows}>
+              {this.formatTopCityShowCount(city.showCount)}
+            </Text>
+          </View>
+        </ImageBackground>
+      </TouchableOpacity>
+    );
+  };
+
+  renderEmptySavedTrips = () => {
+    const styles = this.styles;
+    const theme = this.getTravelTheme();
+    return (
+      <View style={styles.emptySavedTrips}>
+        <MaterialCommunityIcons
+          name="airplane"
+          size={28}
+          color={theme.muted}
+        />
+        <Text style={styles.emptySavedTripsText}>No trips planned yet</Text>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={this.handlePlanATripPress}
+          style={styles.planTripBtn}>
+          <Text style={styles.planTripBtnText}>Plan a Trip</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
   renderAcceptBtn = (itinerary: ItineraryProps) => {
+    const styles = this.styles;
+    const theme = this.getTravelTheme();
     return (
       <View style={styles.acceptCardView}>
         <Text style={styles.searchItineraryText}>
@@ -639,6 +805,8 @@ export default class Eventregistration extends EventregistrationController {
     );
   };
   renderDeleteItineraryModal = () => {
+    const styles = this.styles;
+    const theme = this.getTravelTheme();
     let cityName = '';
     if (this.state.selectedItinerary.cityName) {
       cityName = this.state.selectedItinerary.cityName;
@@ -693,8 +861,14 @@ export default class Eventregistration extends EventregistrationController {
   render() {
     // Customizable Area Start
     // Merge Engine - render - Start
+    const styles = this.styles;
+    const theme = this.getTravelTheme();
     return (
-      <>
+      <SafeAreaView style={{flex: 1, backgroundColor: theme.background}}>
+        <StatusBar
+          barStyle={this.state.isDarkMode ? 'light-content' : 'dark-content'}
+          backgroundColor={theme.background}
+        />
         <ScrollView
           keyboardShouldPersistTaps="always"
           ref={this.scrollRef}
@@ -709,34 +883,48 @@ export default class Eventregistration extends EventregistrationController {
               <View style={styles.content}>
                 {this.renderHeader()}
                 <Text style={styles.textSty}>
-                  {
-                    'If you are traveling soon and want to be on \nyour favorite’s band show, find it here.'
-                  }
+                  Discover shows wherever you're headed. Build your trip
+                  itinerary.
                 </Text>
-                <Text style={[styles.textDateSty, styles.textInputLabelSty]}>
-                  Dates
-                </Text>
-                <TouchableOpacity
-                  testID="btnDateSelector"
-                  style={styles.dateSelectorBtn}
-                  onPress={() => this.handleShowDateSelector()}>
-                  <Text
-                    style={[styles.textDate, styles.dateSelectorButtonTextSty]}>
-                    {`${this.state.startDate} - ${this.state.endDate}`}
-                  </Text>
-                  <MaterialCommunityIcons
-                    name="calendar-blank"
-                    size={24}
-                    color="#4949EE"
-                  />
-                </TouchableOpacity>
+                <View style={styles.destinationCard}>
+                  <View style={styles.destinationHeader}>
+                    <MaterialCommunityIcons
+                      name="map-marker-outline"
+                      size={20}
+                      color={theme.primary}
+                    />
+                    <Text style={styles.destinationTitle}>
+                      Where are you headed?
+                    </Text>
+                    <Icon name="chevron-down" size={18} color={theme.muted} />
+                  </View>
+                  {this.renderCountry()}
+                  {this.renderErrorMessage('Country')}
+                  {this.renderState()}
+                  {this.renderErrorMessage('State')}
+                  {this.renderCity()}
+                  {this.renderErrorMessage('City')}
+                </View>
+                <View style={styles.dateRow}>
+                  <TouchableOpacity
+                    testID="btnDateSelector"
+                    style={styles.dateCard}
+                    onPress={() => this.handleShowDateSelector()}>
+                    <Text style={styles.dateCardLabel}>Depart</Text>
+                    <Text style={styles.dateCardValue}>
+                      {this.formatTravelDate(this.state.startDate)}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.dateCard}
+                    onPress={() => this.handleShowDateSelector()}>
+                    <Text style={styles.dateCardLabel}>Return</Text>
+                    <Text style={styles.dateCardValue}>
+                      {this.formatTravelDate(this.state.endDate)}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
                 {this.renderErrorMessage('Date')}
-                {this.renderCountry()}
-                {this.renderErrorMessage('Country')}
-                {this.renderState()}
-                {this.renderErrorMessage('State')}
-                {this.renderCity()}
-                {this.renderErrorMessage('City')}
                 {this.renderType()}
                 {this.renderPrivateAccount()}
                 <TouchableOpacity
@@ -750,24 +938,20 @@ export default class Eventregistration extends EventregistrationController {
                 <TouchableOpacity
                   onPress={this.handleNavigationToItineraryScreen}
                   testID="searchBtn"
-                  style={[
-                    styles.buttonStyle,
-                    {backgroundColor: '#EDEDFF', marginTop: 15},
-                  ]}>
+                  style={[styles.buttonStyle, styles.searchBtn]}>
                   <Text style={styles.serachText}>Search</Text>
                 </TouchableOpacity>
 
+                {this.renderTopCitiesThisWeek()}
+
                 <View style={[styles.itineraryView]}>
-                  <Text
-                    style={[styles.text, {fontWeight: 'bold', fontSize: 16}]}>
-                    Itinerary
-                  </Text>
+                  <Text style={styles.savedTripsTitle}>MY SAVED TRIPS</Text>
                   <TouchableWithoutFeedback
                     testID="hideCardsBtn"
                     onPress={this.handleToogleArrowIcon}>
                     <Image
                       source={this.state.isClicked ? downArrow : upArrow}
-                      style={styles.iconSty}
+                      style={[styles.iconSty, {tintColor: theme.primary}]}
                     />
                   </TouchableWithoutFeedback>
                 </View>
@@ -775,6 +959,9 @@ export default class Eventregistration extends EventregistrationController {
                   if (!this.state.isClicked)
                     return this.ItineraryCard(cardInfo, index);
                 })}
+                {(!this.state.itineraryList ||
+                  this.state.itineraryList.length === 0) &&
+                  this.renderEmptySavedTrips()}
               </View>
             </TouchableWithoutFeedback>
           </>
@@ -786,38 +973,43 @@ export default class Eventregistration extends EventregistrationController {
         {this.renderStateModal()}
         {this.renderCityModal()}
         {this.datePicker()}
-      </>
+      </SafeAreaView>
     );
     // Merge Engine - render - End
     // Customizable Area End
   }
 }
 
-// Customizable Area Start
-const styles = StyleSheet.create({
+const createTravelStyles = (theme: TravelTheme) => StyleSheet.create({
   container: {
     flex: 1,
     marginLeft: 'auto',
     marginRight: 'auto',
     width: '100%',
     maxWidth: 650,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
   },
   content: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.background,
     paddingHorizontal: 16,
+    paddingBottom: 40,
   },
   headerContainer1: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingTop: 8,
-    paddingBottom: 16,
+    paddingBottom: 8,
   },
-
+  plannerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 8,
+  },
   rootContainer: {
     flex: 1,
-    backgroundColor: '#fcfcff',
+    backgroundColor: theme.background,
   },
   backArrowBtn: {
     width: 20,
@@ -830,15 +1022,16 @@ const styles = StyleSheet.create({
   },
   headerTitleTextSty: {
     fontFamily: 'OpenSans',
-    fontWeight: '700',
-    fontSize: 24,
-    color: '#0F172A',
-    paddingLeft: 24,
+    fontWeight: '800',
+    fontSize: 22,
+    color: theme.foreground,
+    paddingLeft: 10,
+    letterSpacing: 0.6,
   },
   text: {
     fontFamily: 'OpenSans',
     alignSelf: 'flex-start',
-    color: colors(false).text,
+    color: theme.foreground,
   },
   iconsContainSty: {
     flexDirection: 'row',
@@ -866,7 +1059,7 @@ const styles = StyleSheet.create({
     minWidth: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: '#F04438',
+    backgroundColor: theme.primary,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 4,
@@ -883,46 +1076,239 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#F04438',
+    backgroundColor: theme.primary,
   },
   textSty: {
     fontFamily: 'OpenSans',
     alignSelf: 'flex-start',
-    color: colors(false).text,
+    color: theme.muted,
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 18,
+  },
+  destinationCard: {
+    backgroundColor: theme.card,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: theme.border,
+    padding: 14,
+    marginBottom: 16,
+  },
+  destinationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  destinationTitle: {
+    fontFamily: 'OpenSans',
+    fontWeight: '600',
+    fontSize: 16,
+    color: theme.muted,
+    marginLeft: 8,
+    flex: 1,
+  },
+  emptySavedTrips: {
+    minHeight: 168,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: theme.border,
+    backgroundColor: theme.card,
+    marginBottom: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+  },
+  emptySavedTripsText: {
+    color: theme.muted,
+    fontSize: 14,
+    fontFamily: 'OpenSans',
+    marginTop: 10,
+    marginBottom: 16,
+  },
+  planTripBtn: {
+    backgroundColor: 'rgba(255, 45, 107, 0.16)',
+    borderRadius: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+  },
+  planTripBtnText: {
+    color: theme.primary,
+    fontSize: 14,
+    fontWeight: '700',
+    fontFamily: 'OpenSans',
+  },
+  topCitiesSection: {
+    marginTop: 8,
+  },
+  topCitiesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginTop: 12,
+  },
+  topCityCard: {
+    width: '48.5%',
+    height: 132,
+    borderRadius: 14,
+    overflow: 'hidden',
+    marginBottom: 12,
+    backgroundColor: theme.card,
+  },
+  topCityImage: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  topCityImageInner: {
+    borderRadius: 14,
+  },
+  topCityOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 76,
+    backgroundColor: 'rgba(8, 8, 15, 0.55)',
+  },
+  topCityTextWrap: {
+    paddingHorizontal: 12,
+    paddingBottom: 12,
+    zIndex: 1,
+  },
+  topCityName: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+    fontFamily: 'OpenSans',
+    letterSpacing: 0.4,
+  },
+  topCityShows: {
+    color: theme.primary,
+    fontSize: 12,
+    fontWeight: '700',
+    fontFamily: 'OpenSans',
+    marginTop: 2,
+  },
+  sheetContainer: {
+    backgroundColor: theme.card,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 10,
+    paddingBottom: 28,
+    paddingHorizontal: 16,
+    maxHeight: '62%',
+    borderWidth: 1,
+    borderColor: theme.border,
+  },
+  sheetHandle: {
+    alignSelf: 'center',
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: theme.muted,
+    opacity: 0.5,
+    marginBottom: 14,
+  },
+  sheetTitle: {
+    fontFamily: 'OpenSans',
+    fontWeight: '700',
+    fontSize: 18,
+    color: theme.primary,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  sheetList: {
+    maxHeight: 340,
+  },
+  sheetOption: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    marginBottom: 8,
+    backgroundColor: theme.input,
+    borderWidth: 1,
+    borderColor: theme.border,
+  },
+  sheetOptionSelected: {
+    backgroundColor: theme.primarySoft,
+    borderColor: theme.primary,
+  },
+  sheetOptionText: {
+    fontFamily: 'OpenSans',
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.foreground,
+    textAlign: 'center',
+  },
+  sheetOptionTextSelected: {
+    color: theme.primary,
+  },
+  hiddenPicker: {
+    height: 0,
+    width: 0,
+    opacity: 0,
+    position: 'absolute',
+  },
+  dateRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  dateCard: {
+    width: '48%',
+    backgroundColor: theme.card,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: theme.border,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+  },
+  dateCardLabel: {
+    color: theme.muted,
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 6,
+    fontFamily: 'OpenSans',
+  },
+  dateCardValue: {
+    color: theme.foreground,
+    fontSize: 18,
+    fontWeight: '700',
+    fontFamily: 'OpenSans',
   },
   dateSelectorBtn: {
     width: '100%',
     paddingHorizontal: 10,
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#C5C5FF',
-    color: colors(false).text,
+    borderColor: theme.border,
+    color: theme.foreground,
     justifyContent: 'space-between',
     alignItems: 'center',
     flexDirection: 'row',
     height: 50,
-    backgroundColor: '#FFF',
+    backgroundColor: theme.input,
   },
   textStyle: {
     fontFamily: 'OpenSans',
     alignSelf: 'flex-start',
-    color: colors(false).white,
+    color: '#FFFFFF',
     fontWeight: 'bold',
   },
   dateSelectorButtonTextSty: {
     alignSelf: 'center',
   },
-
   datePickerContainer: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(8,8,15,0.78)',
     flex: 1,
     elevation: 2,
   },
   selectedDateSty: {
-    backgroundColor: '#3333cc',
+    backgroundColor: theme.primary,
   },
   cancelDateSelectionBtn: {
     position: 'absolute',
@@ -930,42 +1316,45 @@ const styles = StyleSheet.create({
     right: 20,
     width: 50,
     height: 50,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.card,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 25,
   },
   textDate: {
     fontFamily: 'OpenSans',
-    color: colors(false).text,
+    color: theme.foreground,
   },
   textDateSty: {
     fontFamily: 'OpenSans',
-    color: colors(false).text,
+    color: theme.foreground,
     marginTop: 20,
   },
   textInputLabelSty: {
     fontWeight: 'bold',
     marginBottom: 5,
+    color: theme.foreground,
   },
   textInputLabel: {
     fontWeight: 'bold',
-    marginTop: 20,
-    marginBottom: 10,
+    marginTop: 16,
+    marginBottom: 8,
+    color: theme.foreground,
   },
   textInputSty: {
     width: '100%',
-    paddingHorizontal: 10,
-    borderRadius: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#C5C5FF',
-    color: colors(false).text,
+    borderColor: theme.border,
+    backgroundColor: theme.input,
+    color: theme.foreground,
     height: 50,
   },
   selectorSty: {
     height: 50,
     justifyContent: 'center',
-    backgroundColor: '#FFF',
+    backgroundColor: theme.input,
     fontFamily: 'OpenSans',
   },
   downArrowSty: {
@@ -975,38 +1364,39 @@ const styles = StyleSheet.create({
     width: 8,
     transform: [{rotate: '-90deg'}],
     resizeMode: 'contain',
-    tintColor: '#4949EE',
+    tintColor: theme.muted,
+    backgroundColor: 'transparent',
   },
   modalViewSty: {
     height: '30%',
     justifyContent: 'space-between',
-    backgroundColor: 'white',
+    backgroundColor: theme.card,
     borderTopEndRadius: 20,
     padding: 35,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 100,
   },
-  selectorTextSty: {},
+  selectorTextSty: {
+    color: theme.foreground,
+  },
   centeredViewSty: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: '#33415580',
+    backgroundColor: 'rgba(8, 8, 15, 0.72)',
   },
   itinerarybtn: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 10,
-    backgroundColor: '#3333CC',
-    height: 44,
+    borderRadius: 14,
+    backgroundColor: theme.primary,
+    height: 48,
+    marginTop: 8,
   },
   textItinerarybtn: {
-    color: colors(false).white,
+    color: '#FFFFFF',
     fontWeight: 'bold',
     fontSize: 18,
     alignSelf: 'center',
@@ -1014,20 +1404,41 @@ const styles = StyleSheet.create({
   buttonStyle: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 10,
-    backgroundColor: '#EDEDFF',
+    borderRadius: 14,
+    backgroundColor: theme.card,
     height: 44,
   },
+  searchBtn: {
+    marginTop: 15,
+    borderWidth: 1,
+    borderColor: theme.border,
+  },
   dividerSty: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: theme.divider,
     height: 1,
   },
   rowViewSty: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 15,
-    marginBottom: 30,
+    marginTop: 16,
+    marginBottom: 20,
+    backgroundColor: theme.card,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: theme.border,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
+  preferenceTitle: {
+    fontWeight: '700',
+    fontSize: 15,
+    color: theme.foreground,
+  },
+  preferenceSubtitle: {
+    color: theme.muted,
+    fontSize: 12,
+    marginTop: 4,
   },
   switchContainerSty: {
     width: 50,
@@ -1046,14 +1457,16 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     height: 15,
     width: 15,
-    tintColor: '#334155',
+    tintColor: theme.muted,
   },
   subView: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    flex: 1,
+    paddingRight: 12,
   },
   soldoutViewSty: {
-    backgroundColor: '#3333CC',
+    backgroundColor: theme.primary,
     width: 4,
     borderTopLeftRadius: 8,
     borderBottomLeftRadius: 8,
@@ -1063,33 +1476,26 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   soldoutTextSty: {
-    color: '#334155',
+    color: theme.foreground,
     fontSize: 16,
     fontWeight: 'bold',
   },
   soldoutContainerSty: {
     flexDirection: 'row',
-    borderRadius: 8,
-    backgroundColor: '#FFF',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: {width: 0, height: 2},
-    shadowRadius: 4,
-    elevation: 4,
+    borderRadius: 14,
+    backgroundColor: theme.card,
+    borderWidth: 1,
+    borderColor: theme.border,
     margin: 10,
     marginBottom: 30,
     width: '99%',
     alignSelf: 'center',
+    overflow: 'hidden',
   },
   container1: {
     flexDirection: 'row',
-    backgroundColor: 'white',
+    backgroundColor: theme.card,
     borderRadius: 8,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
   },
   contentContainer: {
     flex: 1,
@@ -1100,10 +1506,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 8,
+    color: theme.foreground,
   },
   date: {
     fontSize: 16,
-    color: '#666',
+    color: theme.muted,
   },
   imageContainer: {
     paddingVertical: 16,
@@ -1112,19 +1519,26 @@ const styles = StyleSheet.create({
   imageWrapper: {
     width: 327,
     height: 80,
-    backgroundColor: '#F2F2F2',
+    backgroundColor: theme.input,
     justifyContent: 'center',
     alignItems: 'center',
   },
   imageSize: {
     fontSize: 16,
-    color: '#666',
+    color: theme.muted,
   },
   itineraryView: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 20,
     alignItems: 'center',
+  },
+  savedTripsTitle: {
+    fontFamily: 'OpenSans',
+    fontWeight: '800',
+    fontSize: 13,
+    color: theme.muted,
+    letterSpacing: 1,
   },
   itineraryHeader: {
     flexDirection: 'row',
@@ -1134,21 +1548,21 @@ const styles = StyleSheet.create({
   },
   itineraryCardTitle: {
     fontSize: 16,
-    color: '#000000',
+    color: theme.foreground,
     fontWeight: '700',
   },
   itineraryCardDescription: {
-    color: '#4949EE',
+    color: theme.primary,
     fontSize: 16,
     fontWeight: 'bold',
   },
   serachText: {
     fontWeight: '700',
     fontSize: 16,
-    color: '#4949EE',
+    color: theme.primary,
   },
   label: {
-    color: '#6B7280',
+    color: theme.muted,
     fontSize: 14,
     lineHeight: 22,
     maxWidth: 275,
@@ -1166,7 +1580,7 @@ const styles = StyleSheet.create({
   removeIcon: {
     height: 20,
     width: 20,
-    tintColor: '#334155',
+    tintColor: theme.muted,
   },
   cancelDateSelectionButtonSty: {
     position: 'absolute',
@@ -1174,14 +1588,14 @@ const styles = StyleSheet.create({
     right: 20,
     width: 50,
     height: 50,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.card,
     zIndex: 2147483647,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 25,
   },
   acceptCardView: {
-    backgroundColor: '#7676FF',
+    backgroundColor: theme.primary,
     paddingVertical: 8,
     paddingHorizontal: 16,
     flexDirection: 'row',
@@ -1193,19 +1607,19 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   acceptBtn: {
-    color: '#3333CC',
+    color: theme.primary,
     fontSize: 14,
     fontWeight: '700',
   },
   acceptBtnView: {
-    backgroundColor: '#EDEDFF',
+    backgroundColor: '#FFFFFF',
     alignSelf: 'flex-end',
     paddingHorizontal: 10,
     borderRadius: 8,
     paddingVertical: 6,
   },
   searchItineraryText: {
-    color: colors(false).white,
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '400',
   },
@@ -1217,29 +1631,29 @@ const styles = StyleSheet.create({
   centeredView: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: '#33415580',
+    backgroundColor: 'rgba(8, 8, 15, 0.72)',
   },
   modalView: {
-    height: 320,
-    backgroundColor: 'white',
-    borderTopEndRadius: 20,
+    maxHeight: '55%',
+    backgroundColor: theme.card,
+    borderTopEndRadius: 24,
+    borderTopStartRadius: 24,
     justifyContent: 'space-between',
-    padding: 35,
+    padding: 24,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 100,
+    borderWidth: 1,
+    borderColor: theme.border,
   },
   textOutsideCountry: {
     fontWeight: '700',
     fontSize: 26,
     lineHeight: 28,
     marginVertical: 10,
-    color: '#0F172A',
+    color: theme.foreground,
   },
   deleteModalTextContainer: {
     display: 'flex',
@@ -1250,26 +1664,27 @@ const styles = StyleSheet.create({
     fontSize: 20,
     lineHeight: 28,
     marginVertical: 10,
-    color: '#0F172A',
+    color: theme.foreground,
   },
   textOnlySupportCountry: {
     fontSize: 18,
+    color: theme.muted,
   },
   continueBtn: {
-    backgroundColor: '#3333CC',
+    backgroundColor: theme.primary,
     width: '100%',
     padding: 16,
-    borderRadius: 10,
+    borderRadius: 12,
     marginVertical: 10,
   },
   textContinueBtn: {
-    color: colors(false).white,
+    color: '#FFFFFF',
     fontWeight: '700',
     fontSize: 18,
     alignSelf: 'center',
   },
   errorTextMsg: {
-    color: 'red',
+    color: theme.primary,
     fontSize: 13,
     paddingTop: 2,
   },
@@ -1281,7 +1696,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 18,
     alignSelf: 'center',
-    color: '#4949EE',
+    color: theme.primary,
   },
   overlayModalStyle: {
     position: 'absolute',

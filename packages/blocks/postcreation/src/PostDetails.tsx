@@ -1832,3 +1832,4 @@ const createPostDetailStyles = (theme: DetailTheme) =>
 const darkPostDetailStyles = createPostDetailStyles(redesignTheme);
 const lightPostDetailStyles = createPostDetailStyles(lightTheme);
 // Customizable Area End
+                                                                                 

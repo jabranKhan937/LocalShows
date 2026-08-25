@@ -11,8 +11,14 @@ import { CommonActions } from '@react-navigation/native';
 import { getStorageData } from "../../../framework/src/Utilities";
 import { imgPasswordInVisible, imgPasswordVisible } from "./assets";
 import moment from "moment";
-import { ScrollView } from "react-native";
+import { DeviceEventEmitter, ScrollView } from "react-native";
 import { createRef } from "react";
+import {
+  lightTheme,
+  PROFILE_THEME_CHANGED_EVENT,
+  PROFILE_THEME_STORAGE_KEY,
+  redesignTheme,
+} from "../../utilities/src/Colors";
 export interface ItineraryProps {
     id ?: string;
     cityName: string;
@@ -25,6 +31,53 @@ export interface ItineraryProps {
     categoryId?: string;
     hasAcceptButton ?: boolean
 }
+export interface TopCityItem {
+  id: string;
+  name: string;
+  state: string;
+  countryCode: string;
+  imageUri: string;
+  showCount: number | null;
+}
+
+export const TOP_CITIES_THIS_WEEK: TopCityItem[] = [
+  {
+    id: 'los-angeles',
+    name: 'Los Angeles',
+    state: 'California',
+    countryCode: 'US',
+    imageUri:
+      'https://images.unsplash.com/photo-1580655653885-65763b259551?auto=format&fit=crop&w=800&q=80',
+    showCount: null,
+  },
+  {
+    id: 'new-york',
+    name: 'New York',
+    state: 'New York',
+    countryCode: 'US',
+    imageUri:
+      'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=800&q=80',
+    showCount: null,
+  },
+  {
+    id: 'chicago',
+    name: 'Chicago',
+    state: 'Illinois',
+    countryCode: 'US',
+    imageUri:
+      'https://images.unsplash.com/photo-1494522855154-9297ac14b55f?auto=format&fit=crop&w=800&q=80',
+    showCount: null,
+  },
+  {
+    id: 'austin',
+    name: 'Austin',
+    state: 'Texas',
+    countryCode: 'US',
+    imageUri:
+      'https://images.unsplash.com/photo-1531218150217-54595bc2b934?auto=format&fit=crop&w=800&q=80',
+    showCount: null,
+  },
+];
 interface Category {
   
   id: string,
@@ -99,6 +152,8 @@ interface S {
   itineraryList: ItineraryProps[]
   unreadNotificationCount: number;
   newNotification: boolean;
+  isDarkMode: boolean;
+  topCities: TopCityItem[];
   // Customizable Area End
 }
 
@@ -123,6 +178,8 @@ export default class EventregistrationController extends BlockComponent<
   getCategoriesListAPICallID: string = "";
   getTravelsItineraryListAPICallID: string = "";
   checkUnreadNotificationsApiCallId: string = "";
+  topCityShowsCallIds: { [callId: string]: string } = {};
+  topCitiesCountsRequested: boolean = false;
   scrollRef: React.RefObject<ScrollView> = createRef<ScrollView>();
   // Customizable Area End
 
@@ -172,6 +229,8 @@ export default class EventregistrationController extends BlockComponent<
       itineraryList: [],
       unreadNotificationCount: 0,
       newNotification: false,
+      isDarkMode: true,
+      topCities: TOP_CITIES_THIS_WEEK.map(city => ({ ...city })),
 
       // Customizable Area End
     };
@@ -258,6 +317,7 @@ export default class EventregistrationController extends BlockComponent<
   // Customizable Area Start
   async componentDidMount(){
     this.handleComponentDidMount();
+    this.loadTravelTheme();
     
     if (this.isPlatformWeb() === false) {
       const unsubscribe = this.props.navigation.addListener('focus', () => {
@@ -273,7 +333,35 @@ export default class EventregistrationController extends BlockComponent<
     this.getCountryList();
     this.getItineraryList();
     this.getUnreadNotificationsCount();
+    this.fetchTopCitiesShowCounts();
   }
+
+  profileThemeListener: any = null;
+
+  async componentWillUnmount(): Promise<void> {
+    if (this.profileThemeListener) {
+      this.profileThemeListener.remove();
+      this.profileThemeListener = null;
+    }
+    await super.componentWillUnmount();
+  }
+
+  loadTravelTheme = async () => {
+    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
+    this.setState({ isDarkMode: savedTheme !== 'false' });
+    if (!this.profileThemeListener) {
+      this.profileThemeListener = DeviceEventEmitter.addListener(
+        PROFILE_THEME_CHANGED_EVENT,
+        (isDarkMode: boolean) => {
+          this.setState({ isDarkMode });
+        },
+      );
+    }
+  };
+
+  getTravelTheme = () => {
+    return this.state.isDarkMode ? redesignTheme : lightTheme;
+  };
   handleRestAPIResponseMessage = (message: Message) => {
     const errorResponse = message.getData(getName(MessageEnum.RestAPIResponceErrorMessage));
     const successResponse = message.getData(getName(MessageEnum.RestAPIResponceSuccessMessage));
@@ -281,11 +369,17 @@ export default class EventregistrationController extends BlockComponent<
     const apiRequestCallId = message.getData(getName(MessageEnum.RestAPIResponceDataMessage)); 
     if (apiRequestCallId && successResponse) {
       this.handleSuccessfulAPIResponse(apiRequestCallId, successResponse);
+    } else if (apiRequestCallId && this.topCityShowsCallIds[apiRequestCallId]) {
+      return;
     } else {
       this.handleErrorResponse(errorResponse);
     }
   };
   handleSuccessfulAPIResponse = (apiRequestCallID: string, responseJson: any) => {
+    const topCityId = this.topCityShowsCallIds[apiRequestCallID];
+    if (topCityId) {
+      return this.handleTopCityShowsResponse(topCityId, responseJson);
+    }
     switch (apiRequestCallID) {
       case this.getTravelsItineraryListAPICallID:
           return this.handleAllTravelsItinerariesAPIResponse(responseJson);
@@ -414,7 +508,87 @@ export default class EventregistrationController extends BlockComponent<
     } else {
       this.parseApiErrorResponse(responseJson);
     }
-  } 
+  }
+  getTopCityShowCount = (responseJson: any) => {
+    if (!responseJson || responseJson.errors) {
+      return null;
+    }
+    if (typeof responseJson.meta?.total === 'number') {
+      return responseJson.meta.total;
+    }
+    if (typeof responseJson.meta?.count === 'number') {
+      return responseJson.meta.count;
+    }
+    if (typeof responseJson.show_count === 'number') {
+      return responseJson.show_count;
+    }
+    if (Array.isArray(responseJson.data)) {
+      return responseJson.data.length;
+    }
+    return null;
+  };
+  handleTopCityShowsResponse = (cityId: string, responseJson: any) => {
+    const showCount = this.getTopCityShowCount(responseJson);
+    this.setState(prev => ({
+      topCities: prev.topCities.map(city =>
+        city.id === cityId ? { ...city, showCount } : city,
+      ),
+    }));
+  };
+  fetchTopCitiesShowCounts = async () => {
+    if (this.topCitiesCountsRequested) {
+      return;
+    }
+    this.topCitiesCountsRequested = true;
+    const token = await getStorageData('authToken');
+    if (!token) {
+      return;
+    }
+    const weekStart = moment().startOf('week').format('YYYY-MM-DD');
+    const weekEnd = moment().endOf('week').format('YYYY-MM-DD');
+    this.state.topCities.forEach(city => {
+      const requestMessage = new Message(
+        getName(MessageEnum.RestAPIRequestMessage),
+      );
+      this.topCityShowsCallIds[requestMessage.messageId] = city.id;
+      const endPointParams =
+        `start_date=${weekStart}&end_date=${weekEnd}` +
+        `&country=${city.countryCode}` +
+        `&state=${encodeURIComponent(city.state)}` +
+        `&city=${encodeURIComponent(city.name)}` +
+        `&category_id=`;
+      requestMessage.addData(
+        getName(MessageEnum.RestAPIResponceEndPointMessage),
+        configJSON.getShowsEndPoint + endPointParams,
+      );
+      requestMessage.addData(
+        getName(MessageEnum.RestAPIRequestHeaderMessage),
+        JSON.stringify({
+          'Content-Type': configJSON.validationApiContentType,
+          token,
+        }),
+      );
+      requestMessage.addData(
+        getName(MessageEnum.RestAPIRequestMethodMessage),
+        configJSON.validationApiMethodType,
+      );
+      runEngine.sendMessage(requestMessage.id, requestMessage);
+    });
+  };
+  handleSelectTopCity = (city: TopCityItem) => {
+    this.setState({
+      selectedCountry: 'United States',
+      selectedState: city.state,
+      selectedCity: city.name,
+      fieldNameBlank: '',
+    });
+    this.getStateList('US');
+    this.getCityList(city.state);
+    this.scrollRef.current?.scrollTo({ y: 0, animated: true });
+  };
+  handlePlanATripPress = () => {
+    this.scrollRef.current?.scrollTo({ y: 0, animated: true });
+  };
   handleErrorResponse = (errorResponse: any) => {
     this.setState({ isLoading: false });
     this.parseApiErrorResponse(errorResponse);

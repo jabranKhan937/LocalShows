@@ -9,7 +9,13 @@ import {runEngine} from '../../../framework/src/RunEngine';
 import {CommonActions} from '@react-navigation/native';
 import {getStorageData, setStorageData} from '../../../framework/src/Utilities';
 import moment from 'moment';
-import {Linking} from 'react-native';
+import {DeviceEventEmitter, Linking} from 'react-native';
+import {
+  lightTheme,
+  PROFILE_THEME_CHANGED_EVENT,
+  PROFILE_THEME_STORAGE_KEY,
+  redesignTheme,
+} from '../../utilities/src/Colors';
 interface Types {
   id: string;
   type: string;
@@ -154,6 +160,7 @@ interface S {
   replyId: string;
   commentWithReply: any;
   commentsList: CommentProps[];
+  isDarkMode: boolean;
   // Customizable Area End
 }
 
@@ -229,6 +236,7 @@ export default class ItineraryDetailsController extends BlockComponent<
       commentId: '',
       replyId: '',
       commentWithReply: undefined,
+      isDarkMode: true,
 
       // Customizable Area End
     };
@@ -256,10 +264,38 @@ export default class ItineraryDetailsController extends BlockComponent<
 
   // Customizable Area Start
   async componentDidMount(): Promise<void> {
+    this.loadTravelResultsTheme();
     await this.handleGetUserInformation().then(() => {
       this.handleGetCategories();
     });
   }
+
+  profileThemeListener: any = null;
+
+  async componentWillUnmount(): Promise<void> {
+    if (this.profileThemeListener) {
+      this.profileThemeListener.remove();
+      this.profileThemeListener = null;
+    }
+    await super.componentWillUnmount();
+  }
+
+  loadTravelResultsTheme = async () => {
+    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
+    this.setState({ isDarkMode: savedTheme !== 'false' });
+    if (!this.profileThemeListener) {
+      this.profileThemeListener = DeviceEventEmitter.addListener(
+        PROFILE_THEME_CHANGED_EVENT,
+        (isDarkMode: boolean) => {
+          this.setState({ isDarkMode });
+        },
+      );
+    }
+  };
+
+  getTravelResultsTheme = () => {
+    return this.state.isDarkMode ? redesignTheme : lightTheme;
+  };
   handleGetUserInformation = async () => {
     const id = await getStorageData('user_id');
     const token = await getStorageData('authToken');

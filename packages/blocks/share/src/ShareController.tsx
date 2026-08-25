@@ -7,7 +7,14 @@ import MessageEnum, {
 import { runEngine } from "../../../framework/src/RunEngine";
 
 // Customizable Area Start
+import { DeviceEventEmitter } from "react-native";
 import { getStorageData, setStorageData } from "../../../framework/src/Utilities";
+import {
+  lightTheme,
+  redesignTheme,
+  PROFILE_THEME_CHANGED_EVENT,
+  PROFILE_THEME_STORAGE_KEY,
+} from "../../utilities/src/Colors";
 
 const frameworkConfig = require("../../../framework/src/config");
 
@@ -32,6 +39,7 @@ interface S {
   showId: string;
   fetching: boolean;
   eventType?: string;
+  isDarkMode: boolean;
   // Customizable Area End
 }
 
@@ -45,6 +53,7 @@ export default class ShareController extends BlockComponent<Props, S, SS> {
   // Customizable Area Start
   getUsersListAPICallId: string;
   shareEventAPICallID: string = "";
+  profileThemeListener: { remove: () => void } | null = null;
   // Customizable Area End
 
   constructor(props: Props) {
@@ -68,7 +77,8 @@ export default class ShareController extends BlockComponent<Props, S, SS> {
       filteredList: [],
       showId: "",
       fetching: false,
-      eventType : 'show'
+      eventType : 'show',
+      isDarkMode: true,
       // Customizable Area End
     };
     runEngine.attachBuildingBlock(this as IBlock, this.subScribedMessages);
@@ -96,8 +106,34 @@ export default class ShareController extends BlockComponent<Props, S, SS> {
 
   // Customizable Area Start
   componentDidMount = async () => {
+    await this.loadShareTheme();
     if (this.isPlatformWeb() === false)
       this.getUsersList();
+  };
+
+  async componentWillUnmount() {
+    if (this.profileThemeListener) {
+      this.profileThemeListener.remove();
+      this.profileThemeListener = null;
+    }
+    await super.componentWillUnmount();
+  }
+
+  loadShareTheme = async () => {
+    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
+    this.setState({ isDarkMode: savedTheme !== "false" });
+    if (!this.profileThemeListener) {
+      this.profileThemeListener = DeviceEventEmitter.addListener(
+        PROFILE_THEME_CHANGED_EVENT,
+        (isDarkMode: boolean) => {
+          this.setState({ isDarkMode });
+        },
+      );
+    }
+  };
+
+  getShareTheme = () => {
+    return this.state.isDarkMode ? redesignTheme : lightTheme;
   };
 
   handleRestAPIResponse = async (message: Message) => {

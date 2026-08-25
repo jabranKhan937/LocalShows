@@ -1072,7 +1072,7 @@ export default class AllEventScreen extends AllEventController {
                     testID="closeCommentsPopupButton"
                     onPress={this.handleCloseCommentPopup}
                   >
-                    <Icon name="x" size={25} />
+                    <Icon name="x" size={25} color={this.getHomeTheme().foreground} />
                   </TouchableOpacity>
                 </View>
                 <View style={this.styles.horizontalRuler} />
@@ -2442,14 +2442,41 @@ export default class AllEventScreen extends AllEventController {
           testID="hideStateModal"
           onPress={this.hideModalState}
         >
-          <View style={this.styles.centeredView}>
+          <View style={this.styles.pickerSheetOverlay}>
             <TouchableWithoutFeedback>
-              <View
-                style={[
-                  this.styles.modalView,
-                  { borderTopStartRadius: 20, padding: 15, height: '30%' },
-                ]}
-              >
+              <View style={this.styles.pickerSheetContainer}>
+                <View style={this.styles.pickerSheetHandle} />
+                <Text style={this.styles.pickerSheetTitle}>Select area</Text>
+                <ScrollView
+                  style={this.styles.pickerSheetList}
+                  keyboardShouldPersistTaps="always"
+                  showsVerticalScrollIndicator={false}
+                >
+                  {list.map((name: string, i: number) => {
+                    const selected = name === pickerSelected;
+                    const label = name === 'All' ? 'All areas' : name;
+                    return (
+                      <TouchableOpacity
+                        key={`state-option-${i}-${name}`}
+                        style={[
+                          this.styles.pickerSheetOption,
+                          selected && this.styles.pickerSheetOptionSelected,
+                        ]}
+                        onPress={() => this.handleStateValueChangeIOS(name)}
+                        activeOpacity={0.7}
+                      >
+                        <Text
+                          style={[
+                            this.styles.pickerSheetOptionText,
+                            selected && this.styles.pickerSheetOptionTextSelected,
+                          ]}
+                        >
+                          {label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
                 <Picker
                   testID="statePickerModal"
                   selectedValue={pickerSelected}
@@ -2458,11 +2485,12 @@ export default class AllEventScreen extends AllEventController {
                     this.handleStateValueChangeIOS(selectedState)
                   }
                   mode="dropdown"
+                  style={this.styles.hiddenPicker}
                 >
                   {list.map((name: string, i: number) => (
                     <Picker.Item
                       key={`state-modal-${i}-${name}`}
-                      label={name}
+                      label={name === 'All' ? 'All areas' : name}
                       value={name}
                     />
                   ))}
@@ -3040,7 +3068,7 @@ export default class AllEventScreen extends AllEventController {
                     testID="closeReplyPopupButton"
                     onPress={this.closeReplyPopup}
                   >
-                    <Icon name="x" size={25} />
+                    <Icon name="x" size={25} color={this.getHomeTheme().foreground} />
                   </TouchableOpacity>
                 </View>
                 <View style={this.styles.horizontalRuler} />

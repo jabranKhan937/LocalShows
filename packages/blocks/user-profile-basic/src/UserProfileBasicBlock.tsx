@@ -10,7 +10,6 @@ import {
   TouchableWithoutFeedback,
   KeyboardAvoidingView,
   StatusBar,
-  SafeAreaView,
   FlatList,
   Dimensions,
   ActivityIndicator,
@@ -43,6 +42,7 @@ import {
 import { IEvent } from './UserProfileBasicController';
 import { leftArrow } from '../../events/src/assets';
 import FastImage from '../../../components/src/SafeFastImage';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import {
   getStorageData,
@@ -216,19 +216,20 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
   };
 
   renderCategories = ({ item }: { item: any }) => {
+    const textColor = this.getProfileTheme().foreground;
     return (
       <View style={this.styles.categoryContainer}>
-        <Text style={[this.styles.text, this.styles.categoryName]}>
+        <Text style={[this.styles.text, this.styles.categoryName, { color: textColor }]}>
           {item.name ? item.name : item.attributes.name}
         </Text>
         {item.user_sub_categories ? (
-          <Text style={[this.styles.text, this.styles.categoryElems]}>
+          <Text style={[this.styles.text, this.styles.categoryElems, { color: textColor }]}>
             {item.user_sub_categories
               .map((subcat: any) => subcat.name)
               .join(', ')}
           </Text>
         ) : (
-          <Text style={[this.styles.text, this.styles.categoryElems]}>
+          <Text style={[this.styles.text, this.styles.categoryElems, { color: textColor }]}>
             {'No data available'}
           </Text>
         )}
@@ -897,6 +898,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
           <FlatList
             testID="categoriesFlatList"
             data={categories}
+            extraData={this.state.isDarkMode}
             renderItem={this.renderCategories}
             scrollEnabled={false}
           />
@@ -952,7 +954,11 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
 
   renderHeader = () => {
     return (
-      <View style={this.styles.bannerOverlay} pointerEvents="box-none">
+      <SafeAreaView
+        edges={['top']}
+        style={this.styles.bannerOverlay}
+        pointerEvents="box-none"
+      >
         <View style={this.styles.bannerOverlayInner} pointerEvents="box-none">
           <TouchableOpacity
             testID="navigationBackButton"
@@ -998,7 +1004,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
             </TouchableOpacity>
           </View>
         </View>
-      </View>
+      </SafeAreaView>
     );
   };
 
@@ -1740,7 +1746,8 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
           contentInsetAdjustmentBehavior="never"
         >
           <StatusBar
-            backgroundColor={this.getProfileTheme().background}
+            translucent
+            backgroundColor="transparent"
             barStyle="light-content"
           />
           <View style={this.styles.container}>
@@ -1805,6 +1812,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                               <FlatList
                                 testID="calendarEventFlatList"
                                 data={this.calendarEventsData()}
+                                extraData={this.state.isDarkMode}
                                 renderItem={this.renderEvents}
                                 scrollEnabled={false}
                                 style={{ flexGrow: 0 }}
@@ -1851,6 +1859,7 @@ export default class UserProfileBasicBlock extends UserProfileBasicController {
                               <FlatList
                                 testID="likedEventFlatList"
                                 data={this.likedEventsData()}
+                                extraData={this.state.isDarkMode}
                                 renderItem={this.renderEvents}
                                 scrollEnabled={false}
                                 style={{ flexGrow: 0 }}
@@ -2087,14 +2096,13 @@ const createProfileStyles = (theme: typeof redesignTheme) =>
     top: 0,
     left: 0,
     right: 0,
-    paddingTop: Platform.OS === 'ios' ? 48 : 16,
   },
   bannerOverlayInner: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingTop: Platform.OS === 'ios' ? 12 : 8,
+    paddingTop: 8,
     paddingBottom: 12,
   },
   overlayCircleBtn: {
@@ -2470,10 +2478,12 @@ const createProfileStyles = (theme: typeof redesignTheme) =>
     width: '40%',
     fontWeight: 'bold',
     fontSize: 16,
+    color: theme.foreground,
   },
   categoryElems: {
     width: '60%',
     fontSize: 16,
+    color: theme.foreground,
   },
   dateBanner: {
     position: 'absolute',

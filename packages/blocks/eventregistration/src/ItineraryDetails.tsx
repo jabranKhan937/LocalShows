@@ -7,8 +7,9 @@ import ItineraryDetailsController, {
 } from "./ItineraryDetailsController";
 import Icon from "react-native-vector-icons/Feather";
 import { SwipeListView } from 'react-native-swipe-list-view';
-import {  ActivityIndicator,TouchableOpacity,  View, Text, Image,  StyleSheet, FlatList, RefreshControl, SafeAreaView, Pressable, Modal, KeyboardAvoidingView, TextInput, TouchableWithoutFeedback } from "react-native";
-import { colors } from "../../utilities/src/Colors";
+import {  ActivityIndicator,TouchableOpacity,  View, Text, Image,  StyleSheet, FlatList, RefreshControl, Pressable, Modal, KeyboardAvoidingView, TextInput, TouchableWithoutFeedback, StatusBar } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { redesignTheme } from "../../utilities/src/Colors";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import { 
   calendarIcon,
@@ -35,8 +36,14 @@ export default class ItineraryDetails extends ItineraryDetailsController {
     // Customizable Area End
   }
 
+  get styles() {
+    return createItineraryDetailsStyles(this.getTravelResultsTheme());
+  }
+
   // Customizable Area Start
   renderAcceptBtn = () => {
+    const styles = this.styles;
+    const theme = this.getTravelResultsTheme();
       return (
         <View style={styles.acceptCardView}>
           <Text style={styles.searchItineraryText}>{configJSON.acceptButtonDescription}</Text>
@@ -47,26 +54,40 @@ export default class ItineraryDetails extends ItineraryDetailsController {
       )
     }
   renderHeader = () => {
+    const styles = this.styles;
+    const theme = this.getTravelResultsTheme();
     return (
       <View style={styles.headerContainer1}>
-        <TouchableOpacity
-          testID="navigationBackButton"
-          style={styles.backArrowIconSty}
-          onPress={this.handleBackNavigationPress}>
-          <Image source={leftArrow} style={styles.backArrowSty} />
-        </TouchableOpacity>
-        <Text style={[styles.text, styles.headerTitleText]}>{configJSON.headerTitle}</Text>
+        <View style={styles.headerTitleRow}>
+          <TouchableOpacity
+            testID="navigationBackButton"
+            style={styles.backCircleBtn}
+            onPress={this.handleBackNavigationPress}
+            activeOpacity={0.8}
+            hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+            <Icon name="arrow-left" size={18} color={theme.foreground} />
+          </TouchableOpacity>
+          <Text style={[styles.text, styles.headerTitleText]} numberOfLines={1}>
+            {configJSON.headerTitle}
+          </Text>
+        </View>
         <View style={styles.iconsContain}>
-        
-          <TouchableOpacity testID="hamburgerBtn" onPress={() => this.props.navigation.openDrawer()}>
-            <Image style={styles.hamburgerIconSty}
-              source={menuIcon} />
+          <TouchableOpacity
+            testID="hamburgerBtn"
+            onPress={() => this.props.navigation.openDrawer()}
+            hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+            <Image
+              style={[styles.hamburgerIconSty, {tintColor: theme.foreground}]}
+              source={menuIcon}
+            />
           </TouchableOpacity>
         </View>
       </View>
     )
   }
   renderShow = () => {
+    const styles = this.styles;
+    const theme = this.getTravelResultsTheme();
     const {startDate, endDate , selectedCity, selectedState , selectedCountryCode, selectedType} = this.state.selectedParams
     const cityValue = selectedCity ? `${selectedCity}, ` : '';
     const stateValue = selectedState ? `${selectedState}, ` : '';
@@ -76,17 +97,17 @@ export default class ItineraryDetails extends ItineraryDetailsController {
         <Text style={styles.countShows}>{this.state.eventsData.length} {configJSON.searchShowsTitle}</Text>
         <View style={styles.cardView}>
           <View style={styles.row}>
-          <Image source={calendarIcon} style={styles.image} />
+          <Image source={calendarIcon} style={[styles.image, {tintColor: theme.primary}]} />
             <Text style={styles.date}>{`${startDate} - ${endDate}`}</Text>
           </View>
 
           <View style={styles.row}>
-            <Image source={location} style={styles.image} />
+            <Image source={location} style={[styles.image, {tintColor: theme.primary}]} />
             <Text style={styles.date}>{`${cityValue}${stateValue}${selectedCountryCode}`}</Text>
           </View>
 
           <View style={styles.row}>
-            <Image source={Theater} style={styles.image} />
+            <Image source={Theater} style={[styles.image, {tintColor: theme.primary}]} />
             <Text style={styles.date}>{selectedType ? `Show type : ${selectedType.attributes.name}` : 'Show type : All'}</Text>
           </View>
         </View>
@@ -94,6 +115,8 @@ export default class ItineraryDetails extends ItineraryDetailsController {
     )
   }
   editBtn = () => {
+    const styles = this.styles;
+    const theme = this.getTravelResultsTheme();
     return (
       <TouchableOpacity testID="searchBtn" onPress={this.handleEditSearchBtn} activeOpacity={0.7} style={styles.editBtn}>
         <Text style={styles.editTextSty}>{configJSON.editTextButton}</Text>
@@ -101,6 +124,8 @@ export default class ItineraryDetails extends ItineraryDetailsController {
     )
   }
   renderEventList = (item : EventData) => {
+    const styles = this.styles;
+    const theme = this.getTravelResultsTheme();
     return (
       <View style={styles.flex1}>
         <Text style={styles.countShows}>{item.date} </Text>
@@ -117,7 +142,7 @@ export default class ItineraryDetails extends ItineraryDetailsController {
               <Text style={styles.nameText}>{item.name}</Text>
 
               <TouchableOpacity testID="locationBtn" onPress={this.openGoogleMaps.bind(this,item.location)} style={styles.locationContainer}>
-                <Image source={location} style={styles.location} />
+                <Image source={location} style={[styles.location, {tintColor: theme.primary}]} />
                 <Text style={styles.eventLocationTitle}>{item.location} </Text>
                 <Text style={styles.locationLinkText}>location</Text>
               </TouchableOpacity>
@@ -134,19 +159,19 @@ export default class ItineraryDetails extends ItineraryDetailsController {
                 onPress={() => this.handleToogleLikeEvent(item)}
                 >
 
-                  <Image source={item.post.likeByMe ? favoriteFilled : favoriteOutfilled} style={[styles.imageSty, {tintColor: '#4949EE'}]} />
+                  <Image source={item.post.likeByMe ? favoriteFilled : favoriteOutfilled} style={[styles.imageSty, {tintColor: theme.primary}]} />
 
 
               </TouchableOpacity>
 
               <TouchableOpacity testID="commentIcon" style={{marginHorizontal: 7}} onPress={() => this.handleToogleModalShowComments(item)}>
-                <Image source={chat} style={styles.imageSty} />
+                <Image source={chat} style={[styles.imageSty, {tintColor: theme.foreground}]} />
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={this.handleShare.bind(this,item.id,item.type)}
                 testID="share">
-                <Image source={share} style={styles.imageSty} />
+                <Image source={share} style={[styles.imageSty, {tintColor: theme.foreground}]} />
               </TouchableOpacity>
 
             </View>
@@ -191,6 +216,8 @@ export default class ItineraryDetails extends ItineraryDetailsController {
   }
 
   handleCommentsRendering = () => {
+    const styles = this.styles;
+    const theme = this.getTravelResultsTheme();
       return (
         <>
           {
@@ -243,7 +270,7 @@ export default class ItineraryDetails extends ItineraryDetailsController {
               </View>
               :
               <View style={styles.noCommentsContainer}>
-                <Icon name="message-square" size={60} color="#0F172A" />
+                <Icon name="message-square" size={60} color={theme.foreground} />
                 <Text style={styles.commentsHeadingText}>No comments yet</Text>
                 <Text style={styles.startConversationTextMargin}>Start the conversation</Text>
               </View>
@@ -256,13 +283,15 @@ export default class ItineraryDetails extends ItineraryDetailsController {
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <ActivityIndicator size="large" color="#4949EE" />
+              <ActivityIndicator size="large" color={theme.primary} />
             </View>
           }
         </>
       )
     }
     renderCommentItem = ({ item }: { item: any }) => {
+    const styles = this.styles;
+    const theme = this.getTravelResultsTheme();
       return (
         <View style={styles.rowFront}>
           <TouchableOpacity
@@ -319,7 +348,7 @@ export default class ItineraryDetails extends ItineraryDetailsController {
               <FontAwesome
                 name={item.attributes.like_by_me ? "heart" : "heart-o"}
                 size={15}
-                color={item.attributes.like_by_me ? "#DC2626" : "#94A3B8"}
+                color={item.attributes.like_by_me ? theme.primary : theme.muted}
               />
             </TouchableOpacity>
             <Text style={styles.likesCountText}>{item.attributes.likes_count}</Text>
@@ -327,7 +356,10 @@ export default class ItineraryDetails extends ItineraryDetailsController {
         </View>
       )
     }
-  renderCommentsHiddenItem = (data: any, rowMap: any) => (
+  renderCommentsHiddenItem = (data: any, rowMap: any) => {
+    const styles = this.styles;
+    const theme = this.getTravelResultsTheme();
+    return (
       <>
         {this.state.userInfo.id === (data.item.attributes.account_id).toString() && <View style={styles.rowBack}>
           <TouchableOpacity
@@ -349,9 +381,12 @@ export default class ItineraryDetails extends ItineraryDetailsController {
           </TouchableOpacity>
         </View>}
       </>
-    )
+    );
+  }
 
   renderCommentsModal = () => {
+    const styles = this.styles;
+    const theme = this.getTravelResultsTheme();
     return (
           <Modal
             animationType="none"
@@ -371,7 +406,7 @@ export default class ItineraryDetails extends ItineraryDetailsController {
                         testID="closeCommentsPopupButton"
                         onPress={this.handleCloseCommentPopup}
                       >
-                        <Icon name="x" size={25} />
+                        <Icon name="x" size={25} color={theme.foreground} />
                       </TouchableOpacity>
                     </View>
                     <View style={styles.horizontalRuler} />
@@ -390,6 +425,8 @@ export default class ItineraryDetails extends ItineraryDetailsController {
     )
   }
   renderRepliesModal = () => {
+    const styles = this.styles;
+    const theme = this.getTravelResultsTheme();
     return (
       <Modal
         animationType="none"
@@ -407,14 +444,14 @@ export default class ItineraryDetails extends ItineraryDetailsController {
               }} testID="repliesModalClick" onPress={() => this.hideKeyboard()} >
                 <View style={styles.commentsHeader}>
                   <TouchableOpacity testID="replyModalBackBtn" onPress={this.handleReplyBackNav}>
-                    <Image source={leftArrow} style={{ width: 12, left: 0, resizeMode: "contain", tintColor: "#94A3B8" }} />
+                    <Image source={leftArrow} style={{ width: 12, left: 0, resizeMode: "contain", tintColor: theme.muted }} />
                   </TouchableOpacity>
                   <Text style={styles.commentsHeadingText}>Replies</Text>
                   <TouchableOpacity
                     testID="closeReplyPopupButton"
                     onPress={this.closeReplyPopup}
                   >
-                    <Icon name="x" size={25} />
+                    <Icon name="x" size={25} color={theme.foreground} />
                   </TouchableOpacity>
                 </View>
                 <View style={styles.horizontalRuler} />
@@ -433,6 +470,8 @@ export default class ItineraryDetails extends ItineraryDetailsController {
     )
   }
   renderEmojiFormInput = (type : string) => {
+    const styles = this.styles;
+    const theme = this.getTravelResultsTheme();
     return (
     <View style={styles.emojiSelectionBar}>
       {this.defaultEmojisForSelectionBar.map((emoji: string, index) => (
@@ -443,6 +482,8 @@ export default class ItineraryDetails extends ItineraryDetailsController {
     </View>)
   }
   renderCommentFormSection = (type : string) => {
+    const styles = this.styles;
+    const theme = this.getTravelResultsTheme();
     const replyProps = {
       textInput : {
         testIdValue : 'replyTextInput',
@@ -487,6 +528,7 @@ export default class ItineraryDetails extends ItineraryDetailsController {
             onChangeText={(commentText) => this.handleCommentTextChange(commentText)}
             style={styles.commentTextInput}
             placeholder={formProps.textInput.placeHolder}
+            placeholderTextColor={theme.muted}
             multiline={true}
           />
           <TouchableOpacity
@@ -494,12 +536,14 @@ export default class ItineraryDetails extends ItineraryDetailsController {
             style={styles.emojiButton}
             onPress={this.handleSubmitEditing}
           >
-            <MaterialCommunityIcons name="send" color="#64748B" size={30} />
+            <MaterialCommunityIcons name="send" color={theme.primary} size={30} />
           </TouchableOpacity>
       </View>
     )
   }
   renderReplies = () => {
+    const styles = this.styles;
+    const theme = this.getTravelResultsTheme();
     const {commentWithReply} = this.state
     if(commentWithReply)
     return (
@@ -586,13 +630,16 @@ export default class ItineraryDetails extends ItineraryDetailsController {
             alignItems: 'center',
             justifyContent: 'center'
           }}>
-            <ActivityIndicator size="large" color="#4949EE" />
+            <ActivityIndicator size="large" color={theme.primary} />
           </View>
         }
       </>
     )
   }
-  renderRepliesHiddenItem = (data: any, rowMap: any) => (
+  renderRepliesHiddenItem = (data: any, rowMap: any) => {
+    const styles = this.styles;
+    const theme = this.getTravelResultsTheme();
+    return (
       <>
         {this.state.userInfo.id === (data.item.account_id).toString() && <View style={styles.rowBack}>
           <TouchableOpacity
@@ -611,9 +658,12 @@ export default class ItineraryDetails extends ItineraryDetailsController {
           </TouchableOpacity>
         </View>}
       </>
-    )
+    );
+  }
 
   renderRepliesItem = ({ item }: { item: any }) => {
+    const styles = this.styles;
+    const theme = this.getTravelResultsTheme();
     return (
       <View style={[styles.rowFront, {
         width: "95%",
@@ -654,18 +704,33 @@ export default class ItineraryDetails extends ItineraryDetailsController {
 
   render() {
     // Customizable Area Start
+    const styles = this.styles;
+    const theme = this.getTravelResultsTheme();
    if(this.state.isLoading){
     return(
-      <View style={styles.loadingContainer}>
-          <ActivityIndicator size={'large'} color="black" />
+      <View style={[styles.screen, {backgroundColor: theme.background}]}>
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
+          <StatusBar
+            barStyle={this.state.isDarkMode ? 'light-content' : 'dark-content'}
+            backgroundColor={theme.background}
+          />
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size={'large'} color={theme.primary} />
+          </View>
+        </SafeAreaView>
       </View>
     )
    }
     // Merge Engine - render - Start
     return (
-      <SafeAreaView style={styles.container} >
-          <View>
-            {this.renderHeader()}
+      <View style={[styles.screen, {backgroundColor: theme.background}]}>
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
+          <StatusBar
+            barStyle={this.state.isDarkMode ? 'light-content' : 'dark-content'}
+            backgroundColor={theme.background}
+          />
+          {this.renderHeader()}
+          <View style={styles.content}>
             {this.renderShow()}
             {this.editBtn()}
           </View>
@@ -676,17 +741,18 @@ export default class ItineraryDetails extends ItineraryDetailsController {
               renderItem={({item}) => this.renderEventList(item)}
               showsVerticalScrollIndicator={false}
               scrollEnabled
-              contentContainerStyle={{ marginBottom:30}}
+              style={styles.list}
+              contentContainerStyle={styles.listContent}
               refreshControl={
                 <RefreshControl
                   refreshing={false}
-                  tintColor="#4285f4"
+                  tintColor={theme.primary}
                 />
               }
               ListEmptyComponent={() => {
                 return (
-                  <View style={{justifyContent: 'center', alignItems: 'center', backgroundColor: 'white', paddingTop: 50, height: deviceHeight - 400}}>
-                    <Text style={{ fontSize: 14, fontWeight: '400', color: "#334155" }}>{"No record(s) found"}</Text>
+                  <View style={{justifyContent: 'center', alignItems: 'center', backgroundColor: theme.background, paddingTop: 50, height: deviceHeight - 400}}>
+                    <Text style={{ fontSize: 14, fontWeight: '400', color: theme.muted }}>{"No record(s) found"}</Text>
                   </View>
                 )
               }}
@@ -694,44 +760,91 @@ export default class ItineraryDetails extends ItineraryDetailsController {
             {this.state.showAcceptBtn && this.renderAcceptBtn()}
             {this.renderCommentsModal()}
             {this.renderRepliesModal()}
-      </SafeAreaView>
+        </SafeAreaView>
+      </View>
     );
     // Merge Engine - render - End
     // Customizable Area End
   }
 }
 
-// Customizable Area Start
-const styles = StyleSheet.create({
+type TravelResultsTheme = typeof redesignTheme;
+
+const createItineraryDetailsStyles = (theme: TravelResultsTheme) => StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: theme.background,
+  },
+  safeArea: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 650,
+    alignSelf: 'center',
+    backgroundColor: theme.background,
+  },
+  content: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  list: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  listContent: {
+    paddingBottom: 40,
+  },
   container: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingHorizontal: 16,
     maxWidth: 650,
-    backgroundColor: "#ffffffff",
+    backgroundColor: theme.background,
   },
   headerContainer1: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingBottom: 10,
+    paddingHorizontal: 16,
+    height: 56,
+    backgroundColor: theme.background,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: theme.border,
+  },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    paddingRight: 8,
+  },
+  backCircleBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: theme.input,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
   },
   backArrowIconSty: {
     width: 20
   },
   backArrowSty: {
-    width: 12,
+    width: 16,
     left: 0,
     resizeMode: "contain",
   },
   headerTitleText: {
-    fontWeight: "700",
-    fontSize: 24,
-    color: '#334155',
+    fontWeight: "900",
+    fontSize: 18,
+    letterSpacing: 0.6,
+    color: theme.foreground,
+    textTransform: 'uppercase',
+    flexShrink: 1,
   },
   text: {
     fontFamily: "OpenSans",
-    color: colors(false).text,
+    color: theme.foreground,
   },
   iconsContain: {
     flexDirection: 'row',
@@ -745,13 +858,13 @@ const styles = StyleSheet.create({
   },
 
   date: {
-    fontSize: 14, lineHeight: 22, color: "#334155", fontFamily: "OpenSans",
+    fontSize: 14, lineHeight: 22, color: theme.foreground, fontFamily: "OpenSans",
   },
   countShows: {
     fontSize: 16,
      lineHeight: 26,
      fontWeight: "bold",
-     color: "black",
+     color: theme.foreground,
      fontFamily: "OpenSans",
      paddingVertical: 10,
      
@@ -760,7 +873,11 @@ const styles = StyleSheet.create({
     flexDirection: "row", alignItems: "center", marginBottom: 8
   },
   cardView: {
-    padding: 10, backgroundColor: "#F1F5F9", borderRadius: 8
+    padding: 12,
+    backgroundColor: theme.card,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.border,
   },
   image: {
     marginRight: 10, width: 20, height: 20
@@ -769,7 +886,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
      lineHeight: 22,
      fontWeight: "400",
-     color: "#4949EE",
+     color: theme.primary,
      fontFamily: "OpenSans"
 
   },
@@ -780,11 +897,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 12,
     lineHeight: 18,
-    color: '#334155',
+    color: theme.foreground,
    
   },
   commentSty: {
-    color: '#4949EE',
+    color: theme.primary,
     fontWeight: '400',
     lineHeight: 18,
     fontSize: 12,
@@ -794,21 +911,21 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     fontSize: 14,
     lineHeight: 18,
-    color: '#334155',
+    color: theme.foreground,
     
   },
   eventTitle: {
     fontWeight: '700',
     fontSize: 14,
     lineHeight: 18,
-    color: '#334155',
+    color: theme.foreground,
     
   },
   likeText: {
     fontWeight: '400',
     fontSize: 14,
     lineHeight: 22,
-    color: '#334155',
+    color: theme.foreground,
   },
   commentContainer: {
     flexDirection: 'row',
@@ -817,10 +934,10 @@ const styles = StyleSheet.create({
   },
   countSty: {
     fontWeight: '700',
-    color: '#4949EE'
+    color: theme.primary
   },
   calendar: {
-    color: "#4949EE",
+    color: theme.primary,
     fontWeight: '400',
     lineHeight: 18,
   },
@@ -865,12 +982,12 @@ const styles = StyleSheet.create({
     resizeMode: 'contain'
   },
   locationLinkText: {
-    color: "#4949EE",
+    color: theme.primary,
     fontSize: 12,
     fontWeight: "400"
   },
   nameText: {
-    fontWeight: '700', fontSize: 14, lineHeight: 22, color: '#334155'
+    fontWeight: '700', fontSize: 14, lineHeight: 22, color: theme.foreground
   },
   profileImg: {
      width: 44,
@@ -880,7 +997,7 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#ffffffdd',
+    backgroundColor: theme.background,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -891,13 +1008,13 @@ const styles = StyleSheet.create({
     marginLeft: 16 
   },
   eventLocationTitle: {
-    color: colors(false).text
+    color: theme.foreground
   },
   flex1: {
     flexGrow: 1
   },
   acceptCardView: {
-    backgroundColor: "#7676FF",
+    backgroundColor: theme.primary,
     paddingVertical: 8,
     paddingHorizontal: 16,
     flexDirection: "row",
@@ -912,25 +1029,25 @@ const styles = StyleSheet.create({
 
   },
   acceptBtn: {
-    color: '#3333CC', fontSize: 14, fontWeight: '700'
+    color: theme.primary, fontSize: 14, fontWeight: '700'
   },
   acceptBtnView: {
-    backgroundColor: "#EDEDFF", alignSelf: "flex-end", paddingHorizontal: 10, borderRadius: 8, paddingVertical: 6
+    backgroundColor: "#FFFFFF", alignSelf: "flex-end", paddingHorizontal: 10, borderRadius: 8, paddingVertical: 6
   },
   searchItineraryText: {
-    color: colors(false).white, fontSize: 16, fontWeight: '400'
+    color: '#FFFFFF', fontSize: 16, fontWeight: '400'
   },
   centeredView: {
     flex: 1,
     justifyContent: 'flex-end',
   },
   commentsParentView: {
-    backgroundColor: '#33415580',
+    backgroundColor: "rgba(8, 8, 15, 0.72)",
   },
   modalView: {
     height: '40%',
     justifyContent: 'space-between',
-    backgroundColor: 'white',
+    backgroundColor: theme.card,
     borderTopEndRadius: 20,
     padding: 35,
     shadowColor: '#000',
@@ -955,11 +1072,12 @@ const styles = StyleSheet.create({
   commentsHeadingText: {
     fontSize: 24,
     fontWeight: 'bold',
+    color: theme.foreground,
   },
   horizontalRuler: {
     width: '100%',
     height: 1,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: theme.divider,
     marginVertical: 15,
   },
   noCommentsContainer: {
@@ -983,7 +1101,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center'
   },
   userAvatarContainer: {
-    backgroundColor: "#FCFCFF",
+    backgroundColor: theme.input,
     width: 42,
     height: 42,
     borderRadius: 80,
@@ -991,7 +1109,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: '#C5C5FF',
+    borderColor: theme.border,
     marginRight: 10,
   },
   userAvatar: {
@@ -1002,17 +1120,20 @@ const styles = StyleSheet.create({
   commentTextInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#C5C5FF",
+    borderColor: theme.border,
     borderRadius: 10,
     paddingHorizontal: 10,
     paddingRight: 50,
     paddingTop: 12,
     height: '100%',
     fontSize: 16,
-    textAlignVertical: 'center'
+    textAlignVertical: 'center',
+    color: theme.foreground,
+    backgroundColor: theme.input,
   },
   commentText: {
-    fontSize: 14
+    fontSize: 14,
+    color: theme.foreground,
   },
   emojiButton: {
     position: 'absolute',
@@ -1021,7 +1142,8 @@ const styles = StyleSheet.create({
     width: 30,
   },
   startConversationTextMargin: {
-    marginTop: 5
+    marginTop: 5,
+    color: theme.muted,
   },
   rowBack: {
     alignItems: 'center',
@@ -1039,7 +1161,7 @@ const styles = StyleSheet.create({
     width: 60,
   },
   backRightBtnLeft: {
-    backgroundColor: '#33415580',
+    backgroundColor: "rgba(8, 8, 15, 0.72)",
     right: 60,
   },
   backRightBtnRight: {
@@ -1048,7 +1170,7 @@ const styles = StyleSheet.create({
   },
   rowFront: {
     alignItems: 'center',
-    backgroundColor: '#FFF',
+    backgroundColor: theme.card,
     width: '100%',
     flexDirection: "row",
     justifyContent: "space-between",
@@ -1058,6 +1180,7 @@ const styles = StyleSheet.create({
   commenterName: {
     fontSize: 16,
     fontWeight: "bold",
+    color: theme.foreground,
   },
   replyButton: {
     alignSelf: "flex-start",
@@ -1065,7 +1188,7 @@ const styles = StyleSheet.create({
   replyButtonText: {
     fontWeight: "bold",
     fontSize: 14,
-    color: "#94A3B8",
+    color: theme.muted,
   },
   showReplyButton: {
     flexDirection: "row",
@@ -1076,11 +1199,11 @@ const styles = StyleSheet.create({
     height: 1,
     width: 20,
     marginRight: 10,
-    backgroundColor: "#94A3B8",
+    backgroundColor: theme.muted,
   },
   showReplyButtonText: {
     fontSize: 14,
-    color: "#94A3B8"
+    color: theme.muted
   },
   likeContainer: {
     alignSelf: "flex-start",
@@ -1088,11 +1211,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   likesCountText: {
-    color: "#94A3B8",
+    color: theme.muted,
     textAlign: "center",
   },
   replyText: {
     marginTop: 10,
+    color: theme.foreground,
   },
 });
 // Customizable Area End

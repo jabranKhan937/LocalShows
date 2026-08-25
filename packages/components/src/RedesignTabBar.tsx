@@ -2,7 +2,7 @@ import React from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   StyleSheet,
   Platform,
   DeviceEventEmitter,
@@ -47,6 +47,20 @@ function isPostRoute(routeName: string, label: string): boolean {
   );
 }
 
+const SELECTED_CHIP_RADIUS = 14;
+
+const darkItemRipple = {
+  color: 'rgba(255, 45, 107, 0.18)',
+  borderless: true,
+  radius: 22,
+};
+
+const lightItemRipple = {
+  color: lightTheme.primarySoft,
+  borderless: true,
+  radius: 22,
+};
+
 /**
  * Floating dark pill tab bar matching localshows-redesign.
  * Light theme uses a full-width white bar like the profile mockup.
@@ -62,6 +76,7 @@ export default function RedesignTabBar({
   const [isDarkMode, setIsDarkMode] = React.useState(true);
   const styles = isDarkMode ? darkStyles : lightStyles;
   const theme = isDarkMode ? redesignTheme : lightTheme;
+  const itemRipple = isDarkMode ? darkItemRipple : lightItemRipple;
 
   React.useEffect(() => {
     let mounted = true;
@@ -122,7 +137,7 @@ export default function RedesignTabBar({
 
           if (post) {
             return (
-              <TouchableOpacity
+              <Pressable
                 key={route.key}
                 accessibilityRole="button"
                 accessibilityState={focused ? { selected: true } : {}}
@@ -130,7 +145,7 @@ export default function RedesignTabBar({
                 testID={options.tabBarTestID}
                 onPress={onPress}
                 onLongPress={onLongPress}
-                activeOpacity={0.85}
+                android_ripple={undefined}
                 style={styles.item}
               >
                 <View style={styles.postGlow}>
@@ -139,12 +154,12 @@ export default function RedesignTabBar({
                   </View>
                 </View>
                 <Text style={[styles.label, styles.postLabel]}>{label}</Text>
-              </TouchableOpacity>
+              </Pressable>
             );
           }
 
           return (
-            <TouchableOpacity
+            <Pressable
               key={route.key}
               accessibilityRole="button"
               accessibilityState={focused ? { selected: true } : {}}
@@ -152,21 +167,18 @@ export default function RedesignTabBar({
               testID={options.tabBarTestID}
               onPress={onPress}
               onLongPress={onLongPress}
-              activeOpacity={0.85}
+              android_ripple={itemRipple}
               style={styles.item}
             >
               <View
-                style={[styles.iconSlot, focused && styles.iconSlotActive]}
+                collapsable={false}
+                style={[styles.itemChip, focused && styles.itemChipActive]}
               >
-                <Icon
-                  name={iconName}
-                  size={18}
-                  color={color}
-                  style={focused ? styles.iconActiveStroke : undefined}
-                />
+                {focused ? <View style={styles.itemChipActiveFill} /> : null}
+                <Icon name={iconName} size={18} color={color} />
+                <Text style={[styles.label, { color }]}>{label}</Text>
               </View>
-              <Text style={[styles.label, { color }]}>{label}</Text>
-            </TouchableOpacity>
+            </Pressable>
           );
         })}
       </View>
@@ -210,36 +222,33 @@ const darkStyles = StyleSheet.create({
   item: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
     minHeight: 52,
   },
-  iconSlot: {
-    width: 40,
-    height: 32,
-    borderRadius: 12,
+  itemChip: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 2,
+    alignSelf: 'center',
+    paddingHorizontal: 10,
+    paddingTop: 6,
+    paddingBottom: 5,
+    borderRadius: SELECTED_CHIP_RADIUS,
+    overflow: 'hidden',
   },
-  iconSlotActive: {
-    backgroundColor: 'rgba(255, 45, 107, 0.18)',
-    ...Platform.select({
-      ios: {
-        shadowColor: redesignTheme.primary,
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.55,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 0,
-      },
-    }),
+  itemChipActive: {
+    borderRadius: SELECTED_CHIP_RADIUS,
+    overflow: 'hidden',
   },
-  iconActiveStroke: {},
+  itemChipActiveFill: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: redesignTheme.tabActive,
+    borderRadius: SELECTED_CHIP_RADIUS,
+  },
   label: {
     fontSize: 10,
     fontWeight: '600',
     marginTop: 2,
+    lineHeight: 12,
   },
   postGlow: {
     marginBottom: 2,
@@ -306,25 +315,33 @@ const lightStyles = StyleSheet.create({
   item: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
     minHeight: 52,
   },
-  iconSlot: {
-    width: 40,
-    height: 32,
-    borderRadius: 10,
+  itemChip: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 2,
+    alignSelf: 'center',
+    paddingHorizontal: 10,
+    paddingTop: 6,
+    paddingBottom: 5,
+    borderRadius: SELECTED_CHIP_RADIUS,
+    overflow: 'hidden',
   },
-  iconSlotActive: {
+  itemChipActive: {
+    borderRadius: SELECTED_CHIP_RADIUS,
+    overflow: 'hidden',
+  },
+  itemChipActiveFill: {
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: lightTheme.primarySoft,
+    borderRadius: SELECTED_CHIP_RADIUS,
   },
-  iconActiveStroke: {},
   label: {
     fontSize: 10,
     fontWeight: '600',
     marginTop: 2,
+    lineHeight: 12,
   },
   postGlow: {
     marginBottom: 2,

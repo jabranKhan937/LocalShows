@@ -1527,7 +1527,7 @@ export default class AllEventDetailScreen extends AllEventController {
                     testID="closeCommentsPopupButton"
                     onPress={this.handleCloseCommentPopup}
                   >
-                    <Icon name="x" size={25} />
+                    <Icon name="x" size={25} color={this.getHomeTheme().foreground} />
                   </TouchableOpacity>
                 </View>
                 <View style={this.styles.horizontalRuler} />
@@ -1827,7 +1827,7 @@ export default class AllEventDetailScreen extends AllEventController {
                     testID="closeReplyPopupButton"
                     onPress={this.closeReplyPopup}
                   >
-                    <Icon name="x" size={25} />
+                    <Icon name="x" size={25} color={this.getHomeTheme().foreground} />
                   </TouchableOpacity>
                 </View>
                 <View style={this.styles.horizontalRuler} />

@@ -1,6 +1,21 @@
 pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
 plugins { id("com.facebook.react.settings") }
-extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
+
+def rnProjectRoot = new File(rootDir, "..").canonicalFile
+def autolinkingFile = new File(rootDir, "build/generated/autolinking/autolinking.json")
+if (autolinkingFile.exists()) {
+  def autolinkingText = autolinkingFile.getText("UTF-8")
+  if (!autolinkingText.contains(rnProjectRoot.path)) {
+    autolinkingFile.delete()
+  }
+}
+
+extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
+  ex.autolinkLibrariesFromCommand(
+    ["npx", "@react-native-community/cli", "config"],
+    rnProjectRoot
+  )
+}
 rootProject.name = 'localshows'
 include ':app'
 includeBuild('../node_modules/@react-native/gradle-plugin')
