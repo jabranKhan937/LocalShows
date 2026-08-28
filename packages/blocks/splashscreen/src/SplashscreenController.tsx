@@ -7,6 +7,14 @@ import MessageEnum, {
 import { runEngine } from "../../../framework/src/RunEngine";
 
 // Customizable Area Start
+import { DeviceEventEmitter } from "react-native";
+import { getStorageData } from "../../../framework/src/Utilities";
+import {
+  lightTheme,
+  PROFILE_THEME_CHANGED_EVENT,
+  PROFILE_THEME_STORAGE_KEY,
+  redesignTheme,
+} from "../../utilities/src/Colors";
 // Customizable Area End
 
 export const configJSON = require("./config");
@@ -22,6 +30,7 @@ interface S {
   // Customizable Area Start
   timeout: any;
   spin: number;
+  isDarkMode: boolean;
   // Customizable Area End
 }
 
@@ -38,6 +47,7 @@ export default class SplashscreenController extends BlockComponent<
 > {
   // Customizable Area Start
   interval: any = null;
+  profileThemeListener: { remove: () => void } | null = null;
   // Customizable Area End
 
   constructor(props: Props) {
@@ -48,7 +58,8 @@ export default class SplashscreenController extends BlockComponent<
     this.state = {
       // Customizable Area Start
       timeout: configJSON.timeout,
-      spin: 0
+      spin: 0,
+      isDarkMode: true,
       // Customizable Area End
     };
 
@@ -67,6 +78,7 @@ export default class SplashscreenController extends BlockComponent<
   async componentDidMount() {
     super.componentDidMount();
     // Customizable Area Start
+    await this.loadSplashTheme();
     setTimeout(() => {
       this.goToHome();
     }, this.state.timeout);
@@ -83,9 +95,30 @@ export default class SplashscreenController extends BlockComponent<
 
   // Customizable Area Start
   async componentWillUnmount() {
+    if (this.profileThemeListener) {
+      this.profileThemeListener.remove();
+      this.profileThemeListener = null;
+    }
     clearInterval(this.interval);
     super.componentWillUnmount();
   }
+
+  loadSplashTheme = async () => {
+    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
+    this.setState({ isDarkMode: savedTheme !== "false" });
+    if (!this.profileThemeListener) {
+      this.profileThemeListener = DeviceEventEmitter.addListener(
+        PROFILE_THEME_CHANGED_EVENT,
+        (isDarkMode: boolean) => {
+          this.setState({ isDarkMode });
+        },
+      );
+    }
+  };
+
+  getSplashTheme = () => {
+    return this.state.isDarkMode ? redesignTheme : lightTheme;
+  };
 
   goToHome() {
     if (this.state.timeout > 0) {

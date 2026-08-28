@@ -1,23 +1,22 @@
 import React from "react";
 import {
-  Dimensions,
   View,
   Text,
   StyleSheet,
-  Image,
-  ImageBackground,
-  StatusBar
+  StatusBar,
+  ActivityIndicator,
+  Dimensions,
 } from "react-native";
 import MergeEngineUtilities from "../../utilities/src/MergeEngineUtilities";
+import Icon from "react-native-vector-icons/Feather";
+import { lightTheme, redesignTheme } from "../../utilities/src/Colors";
 
-// Import assets (make sure these are valid!)
-import { imgSplash, imgloader } from "./assets";
-
-// Artboard original dimensions
 let artBoardHeightOrg = 667;
 let artBoardWidthOrg = 375;
 
 import SplashscreenController, { Props } from "./SplashscreenController";
+
+type SplashTheme = typeof redesignTheme;
 
 export default class Splashscreen extends SplashscreenController {
   private dimSubscription: any;
@@ -25,13 +24,11 @@ export default class Splashscreen extends SplashscreenController {
   constructor(props: Props) {
     super(props);
 
-    // Ensure spin is defined to avoid crashes
     this.state = {
       ...this.state,
-      spin: this.state?.spin ?? 0
+      spin: this.state?.spin ?? 0,
     };
 
-    // Listen for orientation/size changes
     this.dimSubscription = Dimensions.addEventListener("change", () => {
       try {
         MergeEngineUtilities.init(
@@ -47,73 +44,150 @@ export default class Splashscreen extends SplashscreenController {
     });
   }
 
-  componentWillUnmount() {
-    // Remove Dimensions listener
+  async componentWillUnmount() {
     if (this.dimSubscription?.remove) {
-      this.dimSubscription?.remove();
+      this.dimSubscription.remove();
     } else {
-      Dimensions?.removeEventListener?.("change", this.dimSubscription);
+      Dimensions.removeEventListener?.("change", this.dimSubscription);
     }
+    await super.componentWillUnmount();
+  }
+
+  get styles() {
+    return this.state.isDarkMode ? darkSplashStyles : lightSplashStyles;
   }
 
   render() {
-    const styles = StyleSheet.create({
-      container: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center"
-      },
-      image_loaderImage: {
-        width: 60,
-        height: 60,
-        resizeMode: "contain",
-        marginTop: 40
-      },
-      text: {
-        fontFamily: "OpenSans",
-        textAlign: "center",
-        color: "rgba(255, 255, 255, 1)"
-      },
-      text_greeting: {
-        fontSize: 28
-      },
-      text_title: {
-        fontSize: 60,
-        fontWeight: "bold"
-      },
-      text_subtitle: {
-        fontSize: 16,
-        marginTop: 20
-      }
-    });
+    const theme = this.getSplashTheme();
+    const styles = this.styles;
 
     return (
-      <ImageBackground
-        source={imgSplash || { uri: "https://via.placeholder.com/375x667" }}
-        style={{ width: "100%", height: "100%" }}
-      >
+      <View style={styles.screen}>
         <StatusBar
-          backgroundColor="#00000000"
-          translucent={true}
-          barStyle="light-content"
+          translucent
+          backgroundColor="transparent"
+          barStyle={this.state.isDarkMode ? "light-content" : "dark-content"}
         />
-        <View style={styles.container}>
-          <Text style={[styles.text, styles.text_greeting]}>Welcome to</Text>
-          <Text style={[styles.text, styles.text_title]}>
-            {"Local\nShows"}
-          </Text>
-          <Text style={[styles.text, styles.text_subtitle]}>
-            {"Taking you to find the last events\nof your favorite artists ..."}
-          </Text>
-          <Image
-            style={[
-              styles.image_loaderImage,
-              { transform: [{ rotate: `${this.state?.spin ?? 0}deg` }] }
-            ]}
-            source={imgloader || { uri: "https://via.placeholder.com/60" }}
+        <View pointerEvents="none" style={styles.glowPink} />
+        <View pointerEvents="none" style={styles.glowCyan} />
+        <View pointerEvents="none" style={styles.glowYellow} />
+
+        <View style={styles.center}>
+          <View style={styles.logoGlow}>
+            <View style={styles.logoMark}>
+              <Icon name="music" size={34} color="#FFFFFF" />
+            </View>
+          </View>
+          <Text style={styles.wordmarkLocal}>LOCAL</Text>
+          <Text style={styles.wordmarkShows}>SHOWS</Text>
+          <Text style={styles.tagline}>Live music, art & culture near you</Text>
+          <ActivityIndicator
+            style={styles.loader}
+            size="small"
+            color={theme.primary}
           />
         </View>
-      </ImageBackground>
+
+        <Text style={styles.footer}>FIND YOUR NEXT NIGHT OUT</Text>
+      </View>
     );
   }
 }
+
+const createSplashStyles = (theme: SplashTheme) =>
+  StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: theme.background,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    glowPink: {
+      position: "absolute",
+      top: -80,
+      right: -60,
+      width: 260,
+      height: 260,
+      borderRadius: 130,
+      backgroundColor: theme.primary,
+      opacity: 0.18,
+    },
+    glowCyan: {
+      position: "absolute",
+      left: -90,
+      top: 180,
+      width: 220,
+      height: 220,
+      borderRadius: 110,
+      backgroundColor: theme.featuredTime,
+      opacity: 0.12,
+    },
+    glowYellow: {
+      position: "absolute",
+      bottom: 40,
+      right: -40,
+      width: 180,
+      height: 180,
+      borderRadius: 90,
+      backgroundColor: theme.accent,
+      opacity: 0.1,
+    },
+    center: {
+      alignItems: "center",
+      paddingHorizontal: 32,
+    },
+    logoGlow: {
+      marginBottom: 28,
+      shadowColor: theme.primary,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.7,
+      shadowRadius: 18,
+      elevation: 12,
+    },
+    logoMark: {
+      width: 88,
+      height: 88,
+      borderRadius: 24,
+      backgroundColor: theme.primary,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    wordmarkLocal: {
+      fontFamily: "OpenSans",
+      fontSize: 18,
+      fontWeight: "800",
+      letterSpacing: 8,
+      color: theme.foreground,
+    },
+    wordmarkShows: {
+      fontFamily: "OpenSans",
+      fontSize: 44,
+      fontWeight: "900",
+      letterSpacing: 4,
+      color: theme.primary,
+      marginTop: 2,
+    },
+    tagline: {
+      fontFamily: "OpenSans",
+      fontSize: 14,
+      fontWeight: "500",
+      color: theme.muted,
+      marginTop: 12,
+      textAlign: "center",
+    },
+    loader: {
+      marginTop: 36,
+    },
+    footer: {
+      position: "absolute",
+      bottom: 48,
+      fontFamily: "OpenSans",
+      fontSize: 11,
+      fontWeight: "700",
+      letterSpacing: 2.4,
+      color: theme.muted,
+    },
+  });
+
+const darkSplashStyles = createSplashStyles(redesignTheme);
+const lightSplashStyles = createSplashStyles(lightTheme);
