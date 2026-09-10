@@ -2,22 +2,22 @@ import React from "react";
 
 // Customizable Area Start
 import {
-  SafeAreaView,
   View,
   Text,
   FlatList,
   StyleSheet,
   TouchableOpacity,
-  Image,
   TextInput,
   TouchableWithoutFeedback,
   StatusBar,
   ActivityIndicator,
   Modal,
+  Platform,
 } from "react-native";
-import { hamburger, leftArrow } from "../../events/src/assets";
-import { colors } from "../../utilities/src/Colors";
-import { defaultProfile } from "../../notifications/src/assets";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Icon from "react-native-vector-icons/Feather";
+import { DrawerActions } from "@react-navigation/native";
+import { lightTheme, redesignTheme } from "../../utilities/src/Colors";
 import Svg, { Path } from "react-native-svg";
 import FastImage from "../../../components/src/SafeFastImage"
 
@@ -33,6 +33,8 @@ import Likeapost2Controller, {
   configJSON,
 } from "./Likeapost2Controller";
 
+type LikesTheme = typeof redesignTheme;
+
 export default class Likeapost2 extends Likeapost2Controller {
   constructor(props: Props) {
     super(props);
@@ -41,19 +43,22 @@ export default class Likeapost2 extends Likeapost2Controller {
   }
 
   // Customizable Area Start
+  get styles() {
+    return this.state.isDarkMode ? darkLikesStyles : lightLikesStyles;
+  }
+
   renderLoading = () => {
+    const theme = this.getLikesTheme();
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size={'large'} color="black" />
+      <View style={this.styles.loadingContainer}>
+        <ActivityIndicator size={'large'} color={theme.primary} />
       </View>
     )
   }
 
   renderContent() {
-    const list = this.getListToRender();
-
     return (
-      <View style={{ paddingHorizontal: 16, flex: 1 }}>
+      <View style={this.styles.content}>
         {this.renderHeader()}
         {this.renderSearch()}
         <FlatList
@@ -62,6 +67,8 @@ export default class Likeapost2 extends Likeapost2Controller {
           renderItem={this.renderListItem}
           keyExtractor={item => item.id}
           ListEmptyComponent={this.renderEmptyListComponent}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={this.styles.listContent}
         />
       </View>
     );
@@ -72,51 +79,57 @@ export default class Likeapost2 extends Likeapost2Controller {
   }
 
   renderListItem = ({ item }: { item: any }) => {
-    const name = item.attributes.first_name || "";
+    const name = item.attributes.first_name || item.attributes.name || "";
     const { follow, profile_image, account_type, photo } = item.attributes;
-    const img = account_type === 'Band' || account_type === 'Artist' ? photo : profile_image
+    const img = (account_type === 'Band' || account_type === 'Artist' ? photo : profile_image) || "";
     const followFollowingText = follow === true ? configJSON.unfollow : configJSON.follow;
-    const followBgColor = follow ? '#EDEDFF' : '#3333CC';
-    const followTxtColor = follow ? "#3333CC" : '#EDEDFF';
 
     return (
-      <View style={{ flexDirection: "row", justifyContent: 'space-between', marginBottom: 15, padding: 7 }}>
-        <View
-          style={{ flexDirection: "row", alignItems: 'center' }}
-        >
+      <View style={this.styles.item}>
+        <View style={this.styles.profileRow}>
           <TouchableOpacity
             activeOpacity={1}
             onPress={() => {
               this.handleNavigationUserProfile(item)
             }}
             testID="profile"
-            style={styles.profileView}>
-            <FastImage
-              source={img.trim() ? {
-                uri: img,
-                priority: FastImage.priority.high
-              } :
-                defaultProfile
-              }
-              style={styles.profileImage}
-              resizeMode={FastImage.resizeMode.cover}
-            />
+            style={this.styles.profileView}>
+            {img.trim() ? (
+              <FastImage
+                source={{
+                  uri: img,
+                  priority: FastImage.priority.high
+                }}
+                style={this.styles.profileImage}
+                resizeMode={FastImage.resizeMode.cover}
+              />
+            ) : (
+              <Icon name="user" size={20} color={this.getLikesTheme().muted} />
+            )}
           </TouchableOpacity>
-          <Text style={{ fontSize: 14, fontWeight: '700', color: colors(false).text, marginLeft: 15, }}>{name}</Text>
+          <Text style={this.styles.nameTxt}>{name}</Text>
         </View>
-        {item.id !== this.state.userID && this.renderFollowButton(item, followBgColor, followTxtColor, followFollowingText)}
+        {item.id !== this.state.userID && this.renderFollowButton(item, followFollowingText, follow)}
       </View>
     );
   }
 
-  renderFollowButton(item: any, followBgColor: any, followTxtColor: any, followFollowingText: any) {
+  renderFollowButton(item: any, followFollowingText: any, follow: boolean) {
     return (
       <TouchableOpacity
         testID="followBtn"
-        style={[styles.followButton, { backgroundColor: followBgColor }]}
+        style={[
+          this.styles.followButton,
+          follow ? this.styles.unfollowButton : this.styles.followButtonActive,
+        ]}
         onPress={() => this.handleFollowPress(item)}
       >
-        <Text style={[styles.followButtonText, { color: followTxtColor }]}>
+        <Text
+          style={[
+            this.styles.followButtonText,
+            follow ? this.styles.unfollowButtonText : this.styles.followButtonActiveText,
+          ]}
+        >
           {followFollowingText}
         </Text>
       </TouchableOpacity>
@@ -124,20 +137,31 @@ export default class Likeapost2 extends Likeapost2Controller {
   }
 
   renderHeader() {
+    const theme = this.getLikesTheme();
     return (
-      <View style={styles.headerView}>
-        <Text style={styles.likeTitle}>{configJSON.likesTitle}</Text>
+      <View style={this.styles.headerView}>
         <TouchableOpacity
           testID="backBtn"
-          onPress={() => this.props.navigation.goBack()}>
-          <Image source={leftArrow} style={{ width: 12, resizeMode: 'contain' }} />
+          style={this.styles.headerCircleBtn}
+          onPress={() => this.props.navigation.goBack()}
+          activeOpacity={0.8}
+        >
+          <Icon name="arrow-left" size={18} color={theme.foreground} />
         </TouchableOpacity>
-
+        <Text style={this.styles.likeTitle}>{configJSON.likesTitle}</Text>
         <TouchableOpacity
           testID="hamburgerBtn"
-          onPress={() => this.props.navigation.openDrawer()}>
-          <Image style={{ height: 20, width: 20, resizeMode: 'contain' }}
-            source={require('../../../mobile/assets/images/Vector.png')} />
+          style={this.styles.headerCircleBtn}
+          onPress={() => {
+            if (this.props.navigation.openDrawer) {
+              this.props.navigation.openDrawer();
+            } else {
+              this.props.navigation.dispatch(DrawerActions.openDrawer());
+            }
+          }}
+          activeOpacity={0.8}
+        >
+          <Icon name="menu" size={18} color={theme.foreground} />
         </TouchableOpacity>
       </View>
     );
@@ -145,16 +169,15 @@ export default class Likeapost2 extends Likeapost2Controller {
 
   renderSearch() {
     const { searchUserText } = this.state;
+    const theme = this.getLikesTheme();
 
     return (
-      <View style={styles.searchContainer}>
-        <Image
-          source={require('../../../mobile/assets/images/image_search.png')}
-          style={styles.backORHamburgerBtn} />
+      <View style={this.styles.searchContainer}>
+        <Icon name="search" size={16} color={theme.muted} />
         <TextInput
           testID="searchTxt"
-          style={styles.searchInput}
-          placeholderTextColor="#334166"
+          style={this.styles.searchInput}
+          placeholderTextColor={theme.muted}
           placeholder="Search"
           value={searchUserText}
           onChangeText={(searchUserText) => this.handleSearchTextChange(searchUserText)} />
@@ -162,10 +185,10 @@ export default class Likeapost2 extends Likeapost2Controller {
     );
   }
 
-  renderEmptyListComponent() {
+  renderEmptyListComponent = () => {
     return (
-      <View style={styles.emptyComponentView}>
-        <Text style={styles.emptyComponentText}>
+      <View style={this.styles.emptyComponentView}>
+        <Text style={this.styles.emptyComponentText}>
           {configJSON.noRecordFoundText}
         </Text>
       </View>
@@ -179,23 +202,27 @@ export default class Likeapost2 extends Likeapost2Controller {
       <Modal
         animationType="slide"
         transparent={true}
-        visible={loginPopup}>
-        <View style={styles.centeredViewModal}>
-          <View style={styles.viewModal}>
+        visible={loginPopup}
+        onRequestClose={this.hideLoginPopup}>
+        <View style={this.styles.centeredViewModal}>
+          <TouchableWithoutFeedback onPress={this.hideLoginPopup}>
+            <View style={{ flex: 1 }} />
+          </TouchableWithoutFeedback>
+          <View style={this.styles.viewModal}>
             {this.renderCloseButton()}
-            <Text style={styles.welcomeToModal}>{configJSON.welcomeTo}</Text>
-            <Text style={styles.localShowsModal}>{configJSON.localShows}</Text>
-            <Text style={styles.loginFirstModal}>{configJSON.loginFirst}</Text>
+            <Text style={this.styles.welcomeToModal}>{configJSON.welcomeTo}</Text>
+            <Text style={this.styles.localShowsModal}>{configJSON.localShows}</Text>
+            <Text style={this.styles.loginFirstModal}>{configJSON.loginFirst}</Text>
             <TouchableOpacity
               testID="createAccountBtn"
               onPress={() => { this.navigateToLoginScreen("signup") }} >
-              <Text style={styles.createAccountModal}>{configJSON.createAccount}</Text>
+              <Text style={this.styles.createAccountModal}>{configJSON.createAccount}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               testID="loginBtn"
-              style={styles.loginBtnModal}
+              style={this.styles.loginBtnModal}
               onPress={() => { this.navigateToLoginScreen("login") }} >
-              <Text style={styles.loginTxtModal}>{configJSON.login}</Text>
+              <Text style={this.styles.loginTxtModal}>{configJSON.login}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -204,26 +231,21 @@ export default class Likeapost2 extends Likeapost2Controller {
   }
 
   renderCloseButton() {
+    const theme = this.getLikesTheme();
     return (
       <TouchableWithoutFeedback
         testID="popupCloseButton"
         onPress={this.hideLoginPopup}>
         <Svg
-          style={{
-            position: 'absolute',
-            top: 20,
-            right: 20,
-            width: 20,
-            height: 20,
-          }}
+          style={this.styles.closeBtn}
           width={14}
           height={14}
           viewBox="0 0 14 14"
-          fill="#0F172A"
+          fill={theme.foreground}
         >
           <Path
             d="M13.3.71a.996.996 0 00-1.41 0L7 5.59 2.11.7A.996.996 0 10.7 2.11L5.59 7 .7 11.89a.996.996 0 101.41 1.41L7 8.41l4.89 4.89a.996.996 0 101.41-1.41L8.41 7l4.89-4.89c.38-.38.38-1.02 0-1.4z"
-            fill="#0F172A"
+            fill={theme.foreground}
           />
         </Svg>
       </TouchableWithoutFeedback>
@@ -234,16 +256,19 @@ export default class Likeapost2 extends Likeapost2Controller {
   render() {
     // Customizable Area Start
     // Merge Engine - render - Start
-    const { isLoading, loginPopup } = this.state;
-    const statusBarColor = loginPopup ? "#33415580" : "white";
+    const { isLoading } = this.state;
+    const theme = this.getLikesTheme();
 
     return (
       <TouchableWithoutFeedback
         testID="containerBtn"
         disabled={true}
         onPress={this.hideKeyboard}>
-        <SafeAreaView style={styles.container}>
-          <StatusBar backgroundColor={statusBarColor} barStyle="light-content" />
+        <SafeAreaView style={this.styles.container} edges={["top"]}>
+          <StatusBar
+            backgroundColor={theme.background}
+            barStyle={this.state.isDarkMode ? "light-content" : "dark-content"}
+          />
           {isLoading ? this.renderLoading() : this.renderContent()}
           {this.renderLoginPopup()}
         </SafeAreaView>
@@ -255,154 +280,249 @@ export default class Likeapost2 extends Likeapost2Controller {
 }
 
 // Customizable Area Start
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#ffffffff",
-    paddingBottom: 16,
-    paddingTop: 5
-  },
-  headerView: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  backORHamburgerBtn: {
-    height: 20,
-    width: 20,
-    resizeMode: 'contain',
-  },
-  likeTitle: {
-    fontWeight: '700',
-    fontSize: 24,
-    color: '#334155',
-    position: 'absolute',
-    width: '100%',
-    textAlign: 'center',
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 15,
-    paddingVertical: 2,
-    paddingHorizontal: 8,
-    marginVertical: 20,
-    backgroundColor: '#E2E8F0',
-  },
-  searchInput: {
-    flex: 1,
-    height: 47,
-    fontSize: 18,
-    marginLeft: 10,
-    color: '#334166',
-  },
-  profileView: {
-    width: 50,
-    height: 50,
-    borderRadius: 50,
-    overflow: 'hidden',
-    borderColor: '#C5C5FF',
-    borderWidth: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  profileImage: {
-    width: 50,
-    height: 50,
-  },
-  emptyComponentView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 200,
-  },
-  emptyComponentText: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: "#334155",
-  },
-  followButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 10,
-    width: '32%',
-    height: 40,
-    alignSelf: 'center',
-  },
-  followButtonText: {
-    fontWeight: '700',
-    fontSize: 14,
-    textAlign: 'center'
-  },
-  loadingContainer: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#ffffffdd',
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  centeredViewModal: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    paddingTop: 22,
-    backgroundColor: '#33415580',
-  },
-  viewModal: {
-    height: '40%',
-    justifyContent: 'space-between',
-    backgroundColor: 'white',
-    borderTopEndRadius: 20,
-    padding: 35,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
+const createLikesStyles = (theme: LikesTheme) => {
+  const isLightTheme = theme.background === lightTheme.background;
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      width: "100%",
+      maxWidth: 650,
+      alignSelf: "center",
+      backgroundColor: theme.background,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  welcomeToModal: {
-    textAlign: 'center',
-    fontSize: 20,
-    lineHeight: 28,
-    marginTop: 10,
-    color: "#334166",
-  },
-  localShowsModal: {
-    fontWeight: '700',
-    fontSize: 28,
-    lineHeight: 32,
-    bottom: '5%',
-    textAlign: 'center',
-    color: '#3333CC',
-  },
-  loginFirstModal: {
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: '5%',
-    fontWeight: '400',
-    fontSize: 16,
-    color: '#334166',
-  },
-  createAccountModal: {
-    color: '#3333CC',
-    fontWeight: '700',
-    lineHeight: 24,
-    marginBottom: '4%',
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  loginBtnModal: {
-    backgroundColor: '#3333CC',
-    borderRadius: 8,
-    height: 56,
-    justifyContent: 'center',
-  },
-  loginTxtModal: {
-    color: 'white',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    fontSize: 16,
-  },
-});
+    content: {
+      flex: 1,
+    },
+    headerView: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      height: 56,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.border,
+      backgroundColor: theme.background,
+    },
+    headerCircleBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: theme.input,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    likeTitle: {
+      fontWeight: '900',
+      fontSize: 16,
+      letterSpacing: 0.5,
+      color: theme.foreground,
+      textTransform: 'uppercase',
+      flex: 1,
+      textAlign: 'center',
+      paddingHorizontal: 8,
+    },
+    searchContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderRadius: 16,
+      paddingVertical: 4,
+      paddingHorizontal: 12,
+      marginHorizontal: 16,
+      marginTop: 16,
+      marginBottom: 8,
+      backgroundColor: theme.input,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+    },
+    searchInput: {
+      flex: 1,
+      height: 44,
+      fontSize: 16,
+      marginLeft: 10,
+      color: theme.foreground,
+    },
+    profileView: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      overflow: 'hidden',
+      borderColor: theme.primary,
+      borderWidth: 2,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: isLightTheme ? theme.input : theme.card,
+    },
+    profileImage: {
+      width: 44,
+      height: 44,
+    },
+    profileRow: {
+      flexDirection: "row",
+      flex: 1,
+      alignItems: "center",
+      paddingRight: 12,
+    },
+    nameTxt: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: theme.foreground,
+      marginLeft: 12,
+      flexShrink: 1,
+    },
+    item: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      backgroundColor: theme.card,
+      borderRadius: 16,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      padding: 14,
+      marginBottom: 12,
+      ...Platform.select({
+        ios: {
+          shadowColor: isLightTheme ? "#000000" : "#FFFFFF",
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: isLightTheme ? 0.1 : 0.08,
+          shadowRadius: 12,
+        },
+        android: {
+          elevation: isLightTheme ? 4 : 3,
+        },
+      }),
+    },
+    listContent: {
+      paddingHorizontal: 16,
+      paddingBottom: 36,
+      paddingTop: 8,
+    },
+    emptyComponentView: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingTop: 48,
+    },
+    emptyComponentText: {
+      fontSize: 14,
+      fontWeight: '400',
+      color: theme.muted,
+    },
+    followButton: {
+      paddingVertical: 8,
+      paddingHorizontal: 14,
+      borderRadius: 10,
+      minWidth: 96,
+      height: 40,
+      alignSelf: 'center',
+      justifyContent: 'center',
+    },
+    followButtonActive: {
+      backgroundColor: theme.primary,
+    },
+    unfollowButton: {
+      backgroundColor: theme.primarySoft,
+    },
+    followButtonText: {
+      fontWeight: '700',
+      fontSize: 14,
+      textAlign: 'center',
+    },
+    followButtonActiveText: {
+      color: '#FFFFFF',
+    },
+    unfollowButtonText: {
+      color: theme.primary,
+    },
+    loadingContainer: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: isLightTheme
+        ? "rgba(255, 255, 255, 0.72)"
+        : "rgba(8, 8, 15, 0.72)",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    centeredViewModal: {
+      flex: 1,
+      justifyContent: 'flex-end',
+      backgroundColor: 'rgba(8, 8, 15, 0.72)',
+    },
+    viewModal: {
+      justifyContent: 'flex-start',
+      backgroundColor: theme.card,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      paddingTop: 20,
+      paddingHorizontal: 24,
+      paddingBottom: 32,
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: -2,
+      },
+      shadowOpacity: 0.25,
+      shadowRadius: 8,
+      elevation: 8,
+    },
+    closeBtn: {
+      position: 'absolute',
+      top: 20,
+      right: 20,
+      width: 20,
+      height: 20,
+    },
+    welcomeToModal: {
+      textAlign: 'center',
+      fontSize: 16,
+      lineHeight: 22,
+      marginTop: 28,
+      color: theme.muted,
+    },
+    localShowsModal: {
+      fontWeight: '800',
+      fontSize: 32,
+      lineHeight: 38,
+      textAlign: 'center',
+      color: theme.primary,
+      marginTop: 4,
+      marginBottom: 12,
+    },
+    loginFirstModal: {
+      textAlign: 'center',
+      lineHeight: 22,
+      marginBottom: 20,
+      fontWeight: '400',
+      fontSize: 15,
+      color: theme.muted,
+      paddingHorizontal: 12,
+    },
+    createAccountModal: {
+      color: theme.primary,
+      fontWeight: '700',
+      lineHeight: 24,
+      marginBottom: 20,
+      fontSize: 16,
+      textAlign: 'center',
+    },
+    loginBtnModal: {
+      backgroundColor: theme.primary,
+      borderRadius: 10,
+      height: 56,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    loginTxtModal: {
+      color: '#FFFFFF',
+      fontWeight: '700',
+      textAlign: 'center',
+      fontSize: 16,
+    },
+  });
+};
+
+const darkLikesStyles = createLikesStyles(redesignTheme);
+const lightLikesStyles = createLikesStyles(lightTheme);
 // Customizable Area End

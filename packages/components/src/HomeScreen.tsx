@@ -115,6 +115,7 @@ import Geofence from '../../blocks/geofence/src/Geofence';
 import Blockedusers from '../../blocks/blockedusers/src/Blockedusers';
 import Eventregistration from '../../blocks/eventregistration/src/Eventregistration';
 import ItineraryDetails from '../../blocks/eventregistration/src/ItineraryDetails';
+import TopCitiesThisWeek from '../../blocks/eventregistration/src/TopCitiesThisWeek';
 import { PERMISSIONS, request } from 'react-native-permissions';
 export const baseURL = require('../../framework/src/config.js').baseURL;
 //Assembler generated adapters start
@@ -770,6 +771,12 @@ const TravelStack = createStackNavigator({
   },
   ItineraryDetails: {
     screen: ItineraryDetails,
+    navigationOptions: {
+      header: null,
+    },
+  },
+  TopCitiesThisWeek: {
+    screen: TopCitiesThisWeek,
     navigationOptions: {
       header: null,
     },
@@ -1799,6 +1806,12 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
           },
           {
             id: 7,
+            title: 'Privacy Policy',
+            navigation: 'navigateTo',
+            icon: 'shield',
+          },
+          {
+            id: 8,
             title: 'Logout',
             navigation: 'navigateTo',
             icon: 'log-out',
@@ -1828,6 +1841,12 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
             title: 'Terms & Conditions',
             navigation: 'navigateTo',
             icon: 'info',
+          },
+          {
+            id: 5,
+            title: 'Privacy Policy',
+            navigation: 'navigateTo',
+            icon: 'shield',
           },
         ];
 
@@ -1912,6 +1931,8 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
           raiseMessage,
         );
         this.send(message);
+      } else if (item.title === 'Privacy Policy') {
+        props.navigation.navigate('PrivacyPolicy');
       } else if (item.title === 'About Local Shows') {
         props.navigation.navigate('AboutUs');
       } else if (item.title === 'Help Center') {

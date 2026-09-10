@@ -9,6 +9,13 @@ import { runEngine } from "../../../framework/src/RunEngine";
 // Customizable Area Start
 import { imgPasswordInVisible, imgPasswordVisible } from "./assets";
 import { getStorageData, setStorageData } from "../../../framework/src/Utilities";
+import { DeviceEventEmitter } from "react-native";
+import {
+  lightTheme,
+  redesignTheme,
+  PROFILE_THEME_CHANGED_EVENT,
+  PROFILE_THEME_STORAGE_KEY,
+} from "../../utilities/src/Colors";
 // Customizable Area End
 
 export const configJSON = require("./config");
@@ -17,6 +24,7 @@ export interface Props {
   navigation: any;
   id: string;
   // Customizable Area Start
+  route?: any;
   // Customizable Area End
 }
 
@@ -34,6 +42,7 @@ interface S {
   eventID: string;
   loginPopup: boolean;
   type:string
+  isDarkMode: boolean;
   // Customizable Area End
 }
 
@@ -51,6 +60,7 @@ export default class Likeapost2Controller extends BlockComponent<
   // Customizable Area Start
   getLikesListAPICallId: any
   postFollowAPICallId: any
+  profileThemeListener: { remove: () => void } | null = null
   // Customizable Area End
 
   constructor(props: Props) {
@@ -81,7 +91,8 @@ export default class Likeapost2Controller extends BlockComponent<
       authToken: "",
       eventID: "",
       loginPopup: false,
-      type:''
+      type:'',
+      isDarkMode: true,
       // Customizable Area End
     };
     runEngine.attachBuildingBlock(this as IBlock, this.subScribedMessages);
@@ -107,8 +118,12 @@ export default class Likeapost2Controller extends BlockComponent<
     // Customizable Area Start
     else if (getName(MessageEnum.NavigationPayLoadMessage) === message.id) {
       const payloadData = message.getData(getName(MessageEnum.HelpCentreMessageData));
-      if (payloadData?.eventID) {
-        this.setState({ eventID: payloadData.eventID,type:payloadData.type }, () => {
+      const eventID = payloadData?.eventID || payloadData?.eventId;
+      if (eventID) {
+        this.setState({
+          eventID: String(eventID),
+          type: payloadData.type || this.state.type || 'show',
+        }, () => {
           this.handleLikesListAPI()
         });
       }
@@ -184,14 +199,69 @@ export default class Likeapost2Controller extends BlockComponent<
   // Customizable Area Start
   async componentDidMount() {
     if (!this.isPlatformWeb()) {
+      this.loadLikesTheme();
       const userID = await getStorageData('user_id');
       const authToken = await getStorageData('authToken');
-      this.setState({ userID, authToken, }, () => {
-        this.handleLikesListAPI()
-
+      const { eventID, type } = this.getLikesNavParams();
+      this.setState({
+        userID,
+        authToken,
+        ...(eventID ? { eventID, type } : {}),
+      }, () => {
+        if (this.state.eventID) {
+          this.handleLikesListAPI();
+        } else {
+          this.setState({ isLoading: false });
+        }
       })
     }
   }
+
+  async componentWillUnmount() {
+    if (this.profileThemeListener) {
+      this.profileThemeListener.remove();
+      this.profileThemeListener = null;
+    }
+    await super.componentWillUnmount();
+  }
+
+  loadLikesTheme = async () => {
+    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
+    this.setState({ isDarkMode: savedTheme !== 'false' });
+    if (!this.profileThemeListener) {
+      this.profileThemeListener = DeviceEventEmitter.addListener(
+        PROFILE_THEME_CHANGED_EVENT,
+        (isDarkMode: boolean) => {
+          this.setState({ isDarkMode });
+        },
+      );
+    }
+  };
+
+  getLikesTheme = () => {
+    return this.state.isDarkMode ? redesignTheme : lightTheme;
+  };
+
+  getLikesNavParams = () => {
+    const routeParams = this.props.route?.params || {};
+    const navStateParams = this.props.navigation?.state?.params || {};
+    const getParam = this.props.navigation?.getParam;
+    const eventID =
+      routeParams.eventID ||
+      routeParams.eventId ||
+      navStateParams.eventID ||
+      navStateParams.eventId ||
+      (typeof getParam === 'function' ? getParam('eventID') || getParam('eventId') : undefined);
+    const type =
+      routeParams.type ||
+      navStateParams.type ||
+      (typeof getParam === 'function' ? getParam('type') : undefined) ||
+      'show';
+    return {
+      eventID: eventID ? String(eventID) : '',
+      type: type || 'show',
+    };
+  };
 
   handleLikesListApiResponse = (message: Message) => {
     const responseJson = message.getData(
@@ -200,7 +270,12 @@ export default class Likeapost2Controller extends BlockComponent<
 
     this.setState({ isLoading: false })
     if (responseJson != null && !responseJson.errors) {
-      this.setState({ likedUsersList: responseJson.data })
+      const likesData = Array.isArray(responseJson.data)
+        ? responseJson.data
+        : Array.isArray(responseJson)
+          ? responseJson
+          : [];
+      this.setState({ likedUsersList: likesData })
     } else {
       this.parseApiErrorResponse(responseJson);
     }
@@ -220,6 +295,10 @@ export default class Likeapost2Controller extends BlockComponent<
   }
 
   handleLikesListAPI = async () => {
+    if (!this.state.eventID) {
+      this.setState({ isLoading: false, likedUsersList: [] });
+      return;
+    }
 
     const authToken = await getStorageData('authToken');
 
@@ -295,9 +374,9 @@ export default class Likeapost2Controller extends BlockComponent<
       return []
     }
     const results = list.filter((item:any) => {
-      const { first_name } = item.attributes;
+      const firstName = item?.attributes?.first_name || item?.attributes?.name || "";
       return (
-        first_name.toLowerCase().includes(this.state.searchUserText.toLowerCase())
+        firstName.toLowerCase().includes(this.state.searchUserText.toLowerCase())
       );
     });
     return results

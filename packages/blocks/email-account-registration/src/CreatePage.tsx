@@ -92,7 +92,7 @@ export default class CreatePage extends CreatePageController {
       >
         <Picker
           testID="typePicker"
-          style={[styles.textInput, styles.selector, { color: theme.foreground }]}
+          style={{ width: "100%", height: 50, color: theme.foreground }}
           itemStyle={[styles.text]}
           dropdownIconColor={theme.muted}
           selectedValue={this.state.selectedType}
@@ -114,17 +114,15 @@ export default class CreatePage extends CreatePageController {
   }
 
 
-  renderError = (errorType: string) => {
+  renderError = (errorType?: string) => {
     const styles = this.styles;
-    const theme = this.getCreatePageTheme();
+    if (!errorType) {
+      return null;
+    }
     return (
-      <>
-        {errorType !== "" && (
-          <Text style={[styles.text, styles.errorTextMsg]}>
-            {errorType}
-          </Text>
-        )}
-      </>
+      <Text style={[styles.text, styles.errorTextMsg]}>
+        {errorType}
+      </Text>
     )
   }
 
@@ -187,6 +185,7 @@ export default class CreatePage extends CreatePageController {
         <View style={styles.passwordContainer}>
           <TextInput
             testID="txtInputPassword"
+            key={this.state.showPassword ? "password-visible" : "password-hidden"}
             placeholder="Enter your password"
             placeholderTextColor={theme.muted}
             style={styles.passwordInput}
@@ -196,6 +195,8 @@ export default class CreatePage extends CreatePageController {
             autoCapitalize="none"
             maxLength={16}
             autoCorrect={false}
+            textContentType="newPassword"
+            autoComplete="password-new"
           />
           <TouchableOpacity testID="passwordIcon" style={styles.passwordIconContainer} onPress={this.handlePasswordVisibility}>
             <Image source={require("../../../mobile/assets/images/password_eye.png")} style={[styles.passwordIcon, { tintColor: this.state.showPassword ? theme.muted : theme.primary }]} />
@@ -216,6 +217,11 @@ export default class CreatePage extends CreatePageController {
         <View style={styles.passwordContainer}>
           <TextInput
             testID="txtInputConfirmPassword"
+            key={
+              this.state.showConfirmPassword
+                ? "confirm-password-visible"
+                : "confirm-password-hidden"
+            }
             placeholder="Enter your password"
             placeholderTextColor={theme.muted}
             style={styles.passwordInput}
@@ -226,6 +232,8 @@ export default class CreatePage extends CreatePageController {
             secureTextEntry={!this.state.showConfirmPassword}
             autoCapitalize="none"
             autoCorrect={false}
+            textContentType="newPassword"
+            autoComplete="password-new"
           />
           <TouchableOpacity testID="confirmPasswordIcon" style={styles.passwordIconContainer} onPress={this.handleConfirmPasswordVisibility}>
             <Image source={require("../../../mobile/assets/images/password_eye.png")} style={[styles.passwordIcon, { tintColor: this.state.showConfirmPassword ? theme.muted : theme.primary }]} />
@@ -273,7 +281,7 @@ export default class CreatePage extends CreatePageController {
       <View style={[styles.textInput, styles.selector, { paddingHorizontal: 0 }]}>
         <Picker
           testID="countryPicker"
-          style={[styles.textInput, styles.selector, { color: theme.foreground }]}
+          style={{ width: "100%", height: 50, color: theme.foreground }}
           dropdownIconColor={theme.muted}
           selectedValue={this.state.selectedCountry}
           onValueChange={selectedCountry =>
@@ -358,7 +366,7 @@ export default class CreatePage extends CreatePageController {
       >
         <Picker
           testID="statePicker"
-          style={[styles.textInput, styles.selector, { color: theme.foreground }]}
+          style={{ width: "100%", height: 50, color: theme.foreground }}
           itemStyle={[styles.text]}
           dropdownIconColor={theme.muted}
           selectedValue={this.state.selectedState}
@@ -420,7 +428,7 @@ export default class CreatePage extends CreatePageController {
     const theme = this.getCreatePageTheme();
     return (
       <>
-        <Text style={[styles.text, styles.textInputHeader,{ marginTop: -3 }]}>
+        <Text style={[styles.text, styles.textInputHeader]}>
           Zip Code
         </Text>
         <TextInput
@@ -476,7 +484,7 @@ export default class CreatePage extends CreatePageController {
       ]}>
         <Picker
           testID="cityPicker"
-          style={[styles.textInput, styles.selector, { color: theme.foreground }]}
+          style={{ width: "100%", height: 50, color: theme.foreground }}
           itemStyle={[styles.text]}
           dropdownIconColor={theme.muted}
           selectedValue={this.state.selectedCity}
@@ -1027,18 +1035,22 @@ const createCreatePageStyles = (theme: CreatePageTheme) => StyleSheet.create({
   textInput: {
     width: "100%",
     paddingHorizontal: 14,
+    paddingVertical: 0,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: theme.border,
     backgroundColor: theme.input,
     color: theme.foreground,
     height: 50,
-    fontSize: 16
+    fontSize: 16,
+    marginTop: 0,
+    marginBottom: 0,
   },
   selector: {
     height: 50,
     justifyContent: "center",
-    paddingHorizontal: 0
+    paddingHorizontal: 0,
+    overflow: "hidden",
   },
   pickerItemStyle: {
     fontFamily: "OpenSans",
@@ -1224,11 +1236,17 @@ const createCreatePageStyles = (theme: CreatePageTheme) => StyleSheet.create({
     height: 50,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    overflow: 'visible',
   },
   passwordInput: {
+    flex: 1,
+    height: 50,
     color: theme.foreground,
     fontSize: 16,
-    width: '80%',
+    paddingVertical: 0,
+    margin: 0,
+    textAlignVertical: "center",
   },
   androidCountryCodeModal: {
     flex: 1,

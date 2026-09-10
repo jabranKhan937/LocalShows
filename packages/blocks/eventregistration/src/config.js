@@ -42,5 +42,6 @@ exports.getCurrentStateCityAPIEndPoint = "/bx_block_search/search_state";
 exports.getStatesEndpoint = "/account_block/show_states?country_name=";
 exports.getCitiesEndpoint = "/account_block/show_cities?country_name=US&state=";
 exports.getShowsEndPoint = "/bx_block_eventregistration/search_shows?";
+exports.getTopCitiesEndPoint = "/bx_block_eventregistration/top_cities";
 exports.checkUnreadNotificationsEndpoint = "/account_block/check_unread_notifications";
 // Customizable Area End

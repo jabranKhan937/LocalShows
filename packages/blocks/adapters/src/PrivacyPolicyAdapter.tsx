@@ -20,7 +20,7 @@ export default class PrivacyPolicyAdapter {
   convert = (from: Message): Message => {
     const to = new Message(getName(MessageEnum.NavigationMessage));
 
-    to.addData(getName(MessageEnum.NavigationTargetMessage), 'InfoPage');
+    to.addData(getName(MessageEnum.NavigationTargetMessage), 'PrivacyPolicy');
 
     to.addData(
       getName(MessageEnum.NavigationPropsMessage),

@@ -68,7 +68,7 @@ export interface S {
   selectedCity: string;
   cityClicked: boolean;
   cityError: string;
-  addressError?: string;
+  addressError: string;
   currentLatitude: number;
   currentLongitude: number;
   city: string;
@@ -142,6 +142,7 @@ export default class CreatePageController extends BlockComponent<Props, S, SS> {
       confirmPassword: '',
       phoneNumber: '',
       address: '',
+      addressError: '',
       zipCode: '',
       zipCodeError: '',
       tAndC: false,
@@ -606,7 +607,19 @@ export default class CreatePageController extends BlockComponent<Props, S, SS> {
       },
     ];
 
-    const errorState: any = {};
+    const errorState: any = {
+      typeError: '',
+      nameError: '',
+      emailError: '',
+      passwordError: '',
+      confirmPswrdError: '',
+      countryError: '',
+      stateError: '',
+      cityError: '',
+      phoneError: '',
+      addressError: '',
+      zipCodeError: '',
+    };
 
     validations.forEach(({ condition, errorMsg, stateKey }) => {
       if (condition) {
@@ -765,6 +778,9 @@ export default class CreatePageController extends BlockComponent<Props, S, SS> {
       {
         stateClicked: false,
         selectedState,
+        stateError: '',
+        cityError: '',
+        selectedCity: '',
       },
       () => this.handleCityListAPI(),
     );
@@ -815,6 +831,7 @@ export default class CreatePageController extends BlockComponent<Props, S, SS> {
     this.setState({
       typeClicked: false,
       selectedType,
+      typeError: '',
     });
   };
   handleCountryCodeSelectionIOS = (selectedCountryCode: any) => {
@@ -825,30 +842,30 @@ export default class CreatePageController extends BlockComponent<Props, S, SS> {
   };
 
   handleName = (name: string) => {
-    this.setState({ name: name.replace(/ {2}/g, ' ') });
+    this.setState({ name: name.replace(/ {2}/g, ' '), nameError: '' });
   };
 
   handleEmail = (email: string) => {
-    this.setState({ email });
+    this.setState({ email, emailError: '' });
   };
 
   handlePassword = (text: string) => {
-    this.setState({ password: text.replace('  ', ' ') });
+    this.setState({ password: text.replace('  ', ' '), passwordError: '' });
   };
 
   handleConfirmPassword = (confirmPassword: string) => {
-    this.setState({ confirmPassword });
+    this.setState({ confirmPassword, confirmPswrdError: '' });
   };
 
   handlePhoneNumber = (phoneNumber: string) => {
     if (phoneNumber && !/^\d+$/.test(phoneNumber)) {
       return;
     }
-    this.setState({ phoneNumber });
+    this.setState({ phoneNumber, phoneError: '' });
   };
 
   handleAddress = async (address: string) => {
-    this.setState({ address });
+    this.setState({ address, addressError: '' });
     if (address) {
       await setStorageData('user_address', address);
     }
@@ -858,7 +875,7 @@ export default class CreatePageController extends BlockComponent<Props, S, SS> {
     if (zipCode && !/^\d+$/.test(zipCode)) {
       return;
     }
-    this.setState({ zipCode });
+    this.setState({ zipCode, zipCodeError: '' });
     if (zipCode) {
       await setStorageData('user_zip_code', zipCode);
     }
@@ -1028,10 +1045,13 @@ export default class CreatePageController extends BlockComponent<Props, S, SS> {
       {
         countryClicked: false,
         selectedCountry: country,
+        countryError: '',
         stateList: [],
         selectedState: '',
+        stateError: '',
         cityList: [],
         selectedCity: '',
+        cityError: '',
       },
       () => {
         if (selectedCountryCode === 'US') {
@@ -1089,7 +1109,7 @@ export default class CreatePageController extends BlockComponent<Props, S, SS> {
   };
 
   handleCityValueChange = (selectedCity: string) => {
-    this.setState({ cityClicked: false, selectedCity });
+    this.setState({ cityClicked: false, selectedCity, cityError: '' });
   };
   handlePasswordVisibility = () => {
     this.setState({ showPassword: !this.state.showPassword });

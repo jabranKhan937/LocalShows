@@ -40,44 +40,64 @@ export interface TopCityItem {
   showCount: number | null;
 }
 
-export const TOP_CITIES_THIS_WEEK: TopCityItem[] = [
-  {
-    id: 'los-angeles',
-    name: 'Los Angeles',
-    state: 'California',
-    countryCode: 'US',
-    imageUri:
-      'https://images.unsplash.com/photo-1580655653885-65763b259551?auto=format&fit=crop&w=800&q=80',
-    showCount: null,
-  },
-  {
-    id: 'new-york',
-    name: 'New York',
-    state: 'New York',
-    countryCode: 'US',
-    imageUri:
-      'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=800&q=80',
-    showCount: null,
-  },
-  {
-    id: 'chicago',
-    name: 'Chicago',
-    state: 'Illinois',
-    countryCode: 'US',
-    imageUri:
-      'https://images.unsplash.com/photo-1494522855154-9297ac14b55f?auto=format&fit=crop&w=800&q=80',
-    showCount: null,
-  },
-  {
-    id: 'austin',
-    name: 'Austin',
-    state: 'Texas',
-    countryCode: 'US',
-    imageUri:
-      'https://images.unsplash.com/photo-1531218150217-54595bc2b934?auto=format&fit=crop&w=800&q=80',
-    showCount: null,
-  },
+type TopCityApiItem = {
+  city: string;
+  state: string;
+  country: string;
+  show_count: number;
+};
+
+export const TOP_CITY_IMAGES: { [cityName: string]: string } = {
+  'los angeles':
+    'https://images.unsplash.com/photo-1444723121867-7a2415777008?auto=format&fit=crop&w=800&q=80',
+  'new york':
+    'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=800&q=80',
+  chicago:
+    'https://images.unsplash.com/photo-1494522855154-9297ac14b55f?auto=format&fit=crop&w=800&q=80',
+  austin:
+    'https://images.unsplash.com/photo-1531218150217-54595bc2b934?auto=format&fit=crop&w=800&q=80',
+  pomona:
+    'https://images.unsplash.com/photo-1444084316824-dc26d6657664?auto=format&fit=crop&w=800&q=80',
+  'west hollywood':
+    'https://images.unsplash.com/photo-1544413660-299165566b1d?auto=format&fit=crop&w=800&q=80',
+  albany:
+    'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=800&q=80',
+  anaheim:
+    'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?auto=format&fit=crop&w=800&q=80',
+  'garden grove':
+    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80',
+  washington:
+    'https://images.unsplash.com/photo-1501466044933-677292648418?auto=format&fit=crop&w=800&q=80',
+  'santa ana':
+    'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=800&q=80',
+};
+
+export const TOP_CITY_IMAGE_POOL: string[] = [
+  'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1444723121867-7a2415777008?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1534430480872-3498386e7856?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1501466044933-677292648418?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1544413660-299165566b1d?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1514924013411-cbf25faa35bb?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1444084316824-dc26d6657664?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1494522358652-f30e61a60313?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1515542622106-78bda8ba0e5b?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=800&q=80',
 ];
+
+export const DEFAULT_TOP_CITY_IMAGE = TOP_CITY_IMAGE_POOL[0];
+export const TOP_CITIES_PREVIEW_COUNT = 4;
+export const TOP_CITY_SELECTED_EVENT = 'TOP_CITY_SELECTED';
 interface Category {
   
   id: string,
@@ -178,8 +198,7 @@ export default class EventregistrationController extends BlockComponent<
   getCategoriesListAPICallID: string = "";
   getTravelsItineraryListAPICallID: string = "";
   checkUnreadNotificationsApiCallId: string = "";
-  topCityShowsCallIds: { [callId: string]: string } = {};
-  topCitiesCountsRequested: boolean = false;
+  getTopCitiesAPICallID: string = "";
   scrollRef: React.RefObject<ScrollView> = createRef<ScrollView>();
   // Customizable Area End
 
@@ -230,7 +249,7 @@ export default class EventregistrationController extends BlockComponent<
       unreadNotificationCount: 0,
       newNotification: false,
       isDarkMode: true,
-      topCities: TOP_CITIES_THIS_WEEK.map(city => ({ ...city })),
+      topCities: [],
 
       // Customizable Area End
     };
@@ -333,15 +352,20 @@ export default class EventregistrationController extends BlockComponent<
     this.getCountryList();
     this.getItineraryList();
     this.getUnreadNotificationsCount();
-    this.fetchTopCitiesShowCounts();
+    this.fetchTopCitiesThisWeek();
   }
 
   profileThemeListener: any = null;
+  topCitySelectedListener: any = null;
 
   async componentWillUnmount(): Promise<void> {
     if (this.profileThemeListener) {
       this.profileThemeListener.remove();
       this.profileThemeListener = null;
+    }
+    if (this.topCitySelectedListener) {
+      this.topCitySelectedListener.remove();
+      this.topCitySelectedListener = null;
     }
     await super.componentWillUnmount();
   }
@@ -357,6 +381,16 @@ export default class EventregistrationController extends BlockComponent<
         },
       );
     }
+    if (!this.topCitySelectedListener) {
+      this.topCitySelectedListener = DeviceEventEmitter.addListener(
+        TOP_CITY_SELECTED_EVENT,
+        (city: TopCityItem) => {
+          if (city) {
+            this.handleSelectTopCity(city);
+          }
+        },
+      );
+    }
   };
 
   getTravelTheme = () => {
@@ -369,17 +403,11 @@ export default class EventregistrationController extends BlockComponent<
     const apiRequestCallId = message.getData(getName(MessageEnum.RestAPIResponceDataMessage)); 
     if (apiRequestCallId && successResponse) {
       this.handleSuccessfulAPIResponse(apiRequestCallId, successResponse);
-    } else if (apiRequestCallId && this.topCityShowsCallIds[apiRequestCallId]) {
-      return;
     } else {
       this.handleErrorResponse(errorResponse);
     }
   };
   handleSuccessfulAPIResponse = (apiRequestCallID: string, responseJson: any) => {
-    const topCityId = this.topCityShowsCallIds[apiRequestCallID];
-    if (topCityId) {
-      return this.handleTopCityShowsResponse(topCityId, responseJson);
-    }
     switch (apiRequestCallID) {
       case this.getTravelsItineraryListAPICallID:
           return this.handleAllTravelsItinerariesAPIResponse(responseJson);
@@ -397,6 +425,8 @@ export default class EventregistrationController extends BlockComponent<
         return this.handleItineraryDeleteResponse(responseJson);
       case this.checkUnreadNotificationsApiCallId:
         return this.handleUnreadNotificationsApiResponse(responseJson);
+      case this.getTopCitiesAPICallID:
+        return this.handleTopCitiesResponse(responseJson);
     }
   }
   handleItineraryDeleteResponse = (responseJson: any) => {
@@ -509,71 +539,82 @@ export default class EventregistrationController extends BlockComponent<
       this.parseApiErrorResponse(responseJson);
     }
   }
-  getTopCityShowCount = (responseJson: any) => {
-    if (!responseJson || responseJson.errors) {
-      return null;
+  getTopCityImage = (
+    cityName: string,
+    index: number,
+    usedImages: Set<string>,
+  ) => {
+    const namedImage = TOP_CITY_IMAGES[cityName.toLowerCase().trim()];
+    if (namedImage && !usedImages.has(namedImage)) {
+      return namedImage;
     }
-    if (typeof responseJson.meta?.total === 'number') {
-      return responseJson.meta.total;
+    for (let offset = 0; offset < TOP_CITY_IMAGE_POOL.length; offset++) {
+      const candidate =
+        TOP_CITY_IMAGE_POOL[(index + offset) % TOP_CITY_IMAGE_POOL.length];
+      if (!usedImages.has(candidate)) {
+        return candidate;
+      }
     }
-    if (typeof responseJson.meta?.count === 'number') {
-      return responseJson.meta.count;
-    }
-    if (typeof responseJson.show_count === 'number') {
-      return responseJson.show_count;
-    }
-    if (Array.isArray(responseJson.data)) {
-      return responseJson.data.length;
-    }
-    return null;
+    return DEFAULT_TOP_CITY_IMAGE;
   };
-  handleTopCityShowsResponse = (cityId: string, responseJson: any) => {
-    const showCount = this.getTopCityShowCount(responseJson);
-    this.setState(prev => ({
-      topCities: prev.topCities.map(city =>
-        city.id === cityId ? { ...city, showCount } : city,
-      ),
-    }));
+  mapTopCityItem = (
+    item: TopCityApiItem,
+    index: number,
+    usedImages: Set<string>,
+  ): TopCityItem => {
+    const cityName = item.city || '';
+    const imageUri = this.getTopCityImage(cityName, index, usedImages);
+    usedImages.add(imageUri);
+    return {
+      id: `${cityName}-${item.state || ''}`
+        .toLowerCase()
+        .replace(/\s+/g, '-'),
+      name: cityName,
+      state: item.state || '',
+      countryCode: item.country || 'US',
+      imageUri,
+      showCount: typeof item.show_count === 'number' ? item.show_count : 0,
+    };
   };
-  fetchTopCitiesShowCounts = async () => {
-    if (this.topCitiesCountsRequested) {
+  handleTopCitiesResponse = (responseJson: any) => {
+    if (!responseJson || responseJson.errors || !Array.isArray(responseJson.data)) {
+      this.setState({ topCities: [] });
       return;
     }
-    this.topCitiesCountsRequested = true;
+    const usedImages = new Set<string>();
+    this.setState({
+      topCities: responseJson.data.map((item: TopCityApiItem, index: number) =>
+        this.mapTopCityItem(item, index, usedImages),
+      ),
+    });
+  };
+  fetchTopCitiesThisWeek = async () => {
     const token = await getStorageData('authToken');
     if (!token) {
       return;
     }
     const weekStart = moment().startOf('week').format('YYYY-MM-DD');
     const weekEnd = moment().endOf('week').format('YYYY-MM-DD');
-    this.state.topCities.forEach(city => {
-      const requestMessage = new Message(
-        getName(MessageEnum.RestAPIRequestMessage),
-      );
-      this.topCityShowsCallIds[requestMessage.messageId] = city.id;
-      const endPointParams =
-        `start_date=${weekStart}&end_date=${weekEnd}` +
-        `&country=${city.countryCode}` +
-        `&state=${encodeURIComponent(city.state)}` +
-        `&city=${encodeURIComponent(city.name)}` +
-        `&category_id=`;
-      requestMessage.addData(
-        getName(MessageEnum.RestAPIResponceEndPointMessage),
-        configJSON.getShowsEndPoint + endPointParams,
-      );
-      requestMessage.addData(
-        getName(MessageEnum.RestAPIRequestHeaderMessage),
-        JSON.stringify({
-          'Content-Type': configJSON.validationApiContentType,
-          token,
-        }),
-      );
-      requestMessage.addData(
-        getName(MessageEnum.RestAPIRequestMethodMessage),
-        configJSON.validationApiMethodType,
-      );
-      runEngine.sendMessage(requestMessage.id, requestMessage);
-    });
+    const requestMessage = new Message(
+      getName(MessageEnum.RestAPIRequestMessage),
+    );
+    this.getTopCitiesAPICallID = requestMessage.messageId;
+    requestMessage.addData(
+      getName(MessageEnum.RestAPIResponceEndPointMessage),
+      `${configJSON.getTopCitiesEndPoint}?start_date=${weekStart}&end_date=${weekEnd}`,
+    );
+    requestMessage.addData(
+      getName(MessageEnum.RestAPIRequestHeaderMessage),
+      JSON.stringify({
+        'Content-Type': configJSON.validationApiContentType,
+        token,
+      }),
+    );
+    requestMessage.addData(
+      getName(MessageEnum.RestAPIRequestMethodMessage),
+      configJSON.validationApiMethodType,
+    );
+    runEngine.sendMessage(requestMessage.id, requestMessage);
   };
   handleSelectTopCity = (city: TopCityItem) => {
     this.setState({
@@ -585,6 +626,15 @@ export default class EventregistrationController extends BlockComponent<
     this.getStateList('US');
     this.getCityList(city.state);
     this.scrollRef.current?.scrollTo({ y: 0, animated: true });
+  };
+  handleShowMoreTopCities = () => {
+    if (typeof this.props.navigation?.navigate !== 'function') {
+      return;
+    }
+    this.props.navigation.navigate('TopCitiesThisWeek', {
+      topCities: this.state.topCities,
+      isDarkMode: this.state.isDarkMode,
+    });
   };
   handlePlanATripPress = () => {
     this.scrollRef.current?.scrollTo({ y: 0, animated: true });

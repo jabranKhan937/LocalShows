@@ -53,6 +53,7 @@ import ForgotPassword from '../blocks/forgot-password/src/ForgotPassword';
 import ForgotPasswordOTP from '../blocks/forgot-password/src/ForgotPasswordOTP';
 import NewPassword from '../blocks/forgot-password/src/NewPassword';
 import TermsConditions from '../blocks/termsconditions/src/TermsConditions';
+import PrivacyPolicy from '../blocks/termsconditions/src/PrivacyPolicy';
 import TermsConditionsDetail from '../blocks/termsconditions/src/TermsConditionsDetail';
 import TermsConditionsUsers from '../blocks/termsconditions/src/TermsConditionsUsers';
 import BulkUploading from '../blocks/bulkuploading/src/BulkUploading';
@@ -326,6 +327,11 @@ function HomeStack() {
         name="TermsConditions"
         component={TermsConditions}
         options={{headerShown: false, title: 'TermsConditions'}}
+      />
+      <Stack.Screen
+        name="PrivacyPolicy"
+        component={PrivacyPolicy}
+        options={{headerShown: false, title: 'PrivacyPolicy'}}
       />
       <Stack.Screen
         name="TermsConditionsDetail"

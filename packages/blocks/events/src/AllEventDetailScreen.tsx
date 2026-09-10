@@ -27,7 +27,7 @@ import {
   tick_circle_black,
   leftArrow,
 } from "./assets";
-import Svg, { Path } from "react-native-svg";
+import Svg, { Path, Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import FastImage from "../../../components/src/SafeFastImage";
 import Icon from "react-native-vector-icons/Feather";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
@@ -41,6 +41,10 @@ import moment from "moment-timezone";
 import AllEventController, { Props } from "./AllEventController";
 
 export default class AllEventDetailScreen extends AllEventController {
+  detailHeroAspectRatio: number | null = null;
+  lastHeroImageUri: string | null = null;
+  hasAutoOpenedHeroImageModal = false;
+
   constructor(props: Props) {
     super(props);
     // Customizable Area Start
@@ -65,7 +69,14 @@ export default class AllEventDetailScreen extends AllEventController {
       });
       this.navigationListeners.push(focusListener);
     }
-    this.setState({ showFullText: true });
+    this.setState({ showFullText: true }, this.maybeAutoOpenHeroImageModal);
+  }
+
+  componentDidUpdate(_prevProps: Props, prevState: { selectedEventId?: string }) {
+    if (prevState.selectedEventId !== this.state.selectedEventId) {
+      this.hasAutoOpenedHeroImageModal = false;
+    }
+    this.maybeAutoOpenHeroImageModal();
   }
 
   // Customizable Area Start
@@ -101,24 +112,56 @@ export default class AllEventDetailScreen extends AllEventController {
 
   getDetailAttributes = () => this.state.eventDetail?.attributes || {};
 
-  formatGenreLabel = (genre: any): string => {
-    if (!genre) return "";
+  formatGenreLabel = (genre: any, separator = " - "): string => {
+    if (genre == null || genre === false) return "";
+    if (typeof genre === "number") return String(genre);
     if (typeof genre === "string") return genre.trim();
-    if (!Array.isArray(genre) || genre.length === 0) return "";
-    const names = genre
-      .map((item: any) => {
-        if (typeof item === "string") return item.trim();
-        return String(item?.name ?? item?.title ?? item?.genre ?? "").trim();
-      })
-      .filter((name: string) => name);
-    return names.join(" - ");
+    if (Array.isArray(genre)) {
+      const names = genre
+        .map((item: any) => this.formatGenreLabel(item, separator))
+        .filter((name: string) => name);
+      return names.join(separator);
+    }
+    if (typeof genre === "object") {
+      const direct =
+        genre.name ??
+        genre.title ??
+        genre.genre ??
+        genre.label ??
+        genre.attributes?.name ??
+        genre.attributes?.title;
+      if (direct != null && direct !== "") {
+        return this.formatGenreLabel(direct, separator);
+      }
+      if (genre.data != null) {
+        return this.formatGenreLabel(genre.data, separator);
+      }
+    }
+    return "";
+  };
+
+  getShowTypeDisplay = () => {
+    const attributes = this.getDetailAttributes();
+    return this.formatGenreLabel(
+      attributes?.type_of_show ??
+        attributes?.show_type ??
+        attributes?.show_types,
+      ", ",
+    );
+  };
+
+  getGenreRowDisplay = () => {
+    const attributes = this.getDetailAttributes();
+    return this.formatGenreLabel(
+      attributes?.genre ?? attributes?.genres,
+      ", ",
+    );
   };
 
   getGenreDisplay = () => {
-    const attributes = this.getDetailAttributes();
-    const genre = this.formatGenreLabel(attributes?.genre);
+    const genre = this.getGenreRowDisplay();
     if (genre) return genre;
-    return this.formatGenreLabel(attributes?.type_of_show);
+    return this.getShowTypeDisplay();
   };
 
   getTicketPriceLabel = () => {
@@ -207,12 +250,16 @@ export default class AllEventDetailScreen extends AllEventController {
   };
 
   renderItem = ({ item }: { item: any }) => {
+    const content = this.renderSwitchItems(item.type);
+    if (!content) {
+      return null;
+    }
     return (
       <TouchableWithoutFeedback
         testID="wholeUI"
         onPress={this.handleEntireScreen}
       >
-        {this.renderSwitchItems(item.type)}
+        {content}
       </TouchableWithoutFeedback>
     );
   };
@@ -316,13 +363,102 @@ export default class AllEventDetailScreen extends AllEventController {
     );
   };
 
-  renderHeroFade = () => null;
+  getDetailHeroHeight = () => {
+    const { width, height } = Dimensions.get("window");
+    const maxHeight = Math.round(height * 0.62);
+    const uri = this.state.eventDetail?.attributes?.profile_image || null;
+    const ratio =
+      uri && uri === this.lastHeroImageUri
+        ? this.detailHeroAspectRatio
+        : null;
+    if (ratio && ratio > 0) {
+      return Math.min(Math.round(width * ratio), maxHeight);
+    }
+    return Math.min(Math.round(width * (5 / 4)), maxHeight);
+  };
+
+  handleDetailHeroLoad = (event: any) => {
+    const imageWidth = Number(event?.nativeEvent?.width);
+    const imageHeight = Number(event?.nativeEvent?.height);
+    if (!imageWidth || !imageHeight) {
+      return;
+    }
+    const ratio = imageHeight / imageWidth;
+    const uri = this.state.eventDetail?.attributes?.profile_image || null;
+    if (
+      uri === this.lastHeroImageUri &&
+      this.detailHeroAspectRatio === ratio
+    ) {
+      return;
+    }
+    this.lastHeroImageUri = uri;
+    this.detailHeroAspectRatio = ratio;
+    this.forceUpdate();
+  };
+
+  getHeroLocationLabel = () => {
+    const attributes = this.getDetailAttributes();
+    const venue =
+      attributes?.location != null ? String(attributes.location).trim() : "";
+    const cityState = [attributes?.city, attributes?.state]
+      .map((part) => (part == null ? "" : String(part).trim()))
+      .filter((part) => part)
+      .join(", ");
+    if (venue && cityState) {
+      return `${venue}, ${cityState}`;
+    }
+    return venue || cityState;
+  };
+
+  renderHeroFade = () => (
+    <View
+      pointerEvents="none"
+      style={[
+        this.styles.detailHeroFadeWrap,
+        { height: Math.round(this.getDetailHeroHeight() * 0.82) },
+      ]}
+    >
+      <Svg
+        width="100%"
+        height="100%"
+        preserveAspectRatio="none"
+        viewBox="0 0 100 100"
+      >
+        <Defs>
+          <LinearGradient
+            id="allEventDetailHeroFade"
+            x1="0"
+            y1="0"
+            x2="0"
+            y2="1"
+          >
+            <Stop offset="0" stopColor="#08080f" stopOpacity="0" />
+            <Stop offset="0.35" stopColor="#08080f" stopOpacity="0.55" />
+            <Stop offset="1" stopColor="#08080f" stopOpacity="0.92" />
+          </LinearGradient>
+        </Defs>
+        <Rect
+          x="0"
+          y="0"
+          width="100"
+          height="100"
+          fill="url(#allEventDetailHeroFade)"
+        />
+      </Svg>
+    </View>
+  );
 
   renderEventImage = () => {
     const attributes = this.getDetailAttributes();
+    const locationLabel = this.getHeroLocationLabel();
     return (
       <View style={this.state.showMenu ? { zIndex: 50, elevation: 50 } : undefined}>
-        <View style={this.styles.detailHeroWrap}>
+        <View
+          style={[
+            this.styles.detailHeroWrap,
+            { height: this.getDetailHeroHeight() },
+          ]}
+        >
           {attributes?.profile_image
             ? this.renderEventImageWithData()
             : this.renderEventImageWithoutData()}
@@ -345,7 +481,7 @@ export default class AllEventDetailScreen extends AllEventController {
                 {`Shows in ${attributes.state}`}
               </Text>
             ) : null}
-            <Text style={this.styles.detailHeroTitle} numberOfLines={4}>
+            <Text style={this.styles.detailHeroTitle} numberOfLines={3}>
               {attributes?.event_title || ""}
             </Text>
             <View style={this.styles.detailHeroMetaRow}>
@@ -362,6 +498,11 @@ export default class AllEventDetailScreen extends AllEventController {
                 </Text>
               ) : null}
             </View>
+            {locationLabel ? (
+              <Text style={this.styles.detailHeroLocation} numberOfLines={2}>
+                {locationLabel}
+              </Text>
+            ) : null}
           </View>
         </View>
         {this.renderMenuPopup()}
@@ -396,14 +537,113 @@ export default class AllEventDetailScreen extends AllEventController {
 
   renderEventImageWithData = () => {
     return (
-      <FastImage
+      <Pressable
+        testID="detailHeroImageBtn"
+        onPress={this.openHeroImageModal}
         style={this.styles.detailHeroImage}
-        source={{
-          uri: this.state.eventDetail.attributes.profile_image,
-          priority: FastImage.priority.high,
-        }}
-        resizeMode={FastImage.resizeMode.cover}
-      />
+      >
+        <FastImage
+          style={this.styles.detailHeroImage}
+          source={{
+            uri: this.state.eventDetail.attributes.profile_image,
+            priority: FastImage.priority.high,
+          }}
+          resizeMode={FastImage.resizeMode.contain}
+          onLoad={this.handleDetailHeroLoad}
+        />
+      </Pressable>
+    );
+  };
+
+  openHeroImageModal = () => {
+    if (!this.state.eventDetail?.attributes?.profile_image) {
+      return;
+    }
+    this.setState({ showHeroImageModal: true });
+  };
+
+  closeHeroImageModal = () => {
+    this.hasAutoOpenedHeroImageModal = true;
+    this.setState({ showHeroImageModal: false });
+  };
+
+  maybeAutoOpenHeroImageModal = () => {
+    if (this.hasAutoOpenedHeroImageModal || this.state.showHeroImageModal) {
+      return;
+    }
+    if (this.state.detailsLoading || !this.hasValidEventDetail()) {
+      return;
+    }
+    const imageUri = this.state.eventDetail?.attributes?.profile_image;
+    if (!imageUri) {
+      return;
+    }
+    this.hasAutoOpenedHeroImageModal = true;
+    this.setState({ showHeroImageModal: true });
+  };
+
+  getHeroImageModalSize = () => {
+    const { width, height } = Dimensions.get("window");
+    const maxWidth = width - 48;
+    const maxHeight = height - 160;
+    const ratio =
+      this.detailHeroAspectRatio && this.detailHeroAspectRatio > 0
+        ? this.detailHeroAspectRatio
+        : 5 / 4;
+    let imageWidth = maxWidth;
+    let imageHeight = Math.round(imageWidth * ratio);
+    if (imageHeight > maxHeight) {
+      imageHeight = maxHeight;
+      imageWidth = Math.round(imageHeight / ratio);
+    }
+    return { width: imageWidth, height: imageHeight };
+  };
+
+  renderHeroImageModal = () => {
+    const imageUri = this.state.eventDetail?.attributes?.profile_image;
+    const imageSize = this.getHeroImageModalSize();
+    return (
+      <Modal
+        visible={this.state.showHeroImageModal}
+        transparent
+        animationType="fade"
+        onRequestClose={this.closeHeroImageModal}
+        statusBarTranslucent
+      >
+        <Pressable
+          testID="heroImageModalBackdrop"
+          style={this.styles.detailHeroImageModalBackdrop}
+          onPress={this.closeHeroImageModal}
+        >
+          {imageUri ? (
+            <Pressable
+              onPress={() => undefined}
+              style={[this.styles.detailHeroImageModalImageWrap, imageSize]}
+            >
+              <FastImage
+                style={this.styles.detailHeroImageModalImage}
+                source={{
+                  uri: imageUri,
+                  priority: FastImage.priority.high,
+                }}
+                resizeMode={FastImage.resizeMode.contain}
+              />
+              <TouchableOpacity
+                testID="closeHeroImageModal"
+                style={[
+                  this.styles.detailCircleBtn,
+                  this.styles.detailHeroImageModalCloseBtn,
+                ]}
+                onPress={this.closeHeroImageModal}
+                activeOpacity={0.8}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Icon name="x" size={18} color="#FFFFFF" />
+              </TouchableOpacity>
+            </Pressable>
+          ) : null}
+        </Pressable>
+      </Modal>
     );
   };
 
@@ -543,24 +783,10 @@ export default class AllEventDetailScreen extends AllEventController {
         value: attributes?.line_ups?.length === 0 ? "" : attributes?.line_ups,
         onPress: null,
       },
-      {
-        icon: "music",
-        label: "Show type",
-        value: attributes?.type_of_show,
-        onPress: null,
-      },
-      {
-        icon: "music",
-        label: "Genre",
-        value: this.formatGenreLabel(attributes?.genre),
-        onPress: null,
-      },
     ];
 
     const lineupDetail = details.find((d) => d.label === "Line up");
     const addressDetail = details.find((d) => d.label === "Address");
-    const showTypeDetail = details.find((d) => d.label === "Show type");
-    const genreDetail = details.find((d) => d.label === "Genre");
     const websiteDetail = details.find((d) => d.label === "Website");
 
     return (
@@ -604,12 +830,18 @@ export default class AllEventDetailScreen extends AllEventController {
           ? this.renderClickableItem(addressDetail, 3)
           : null}
         {this.renderEventCreatorCategoryRow()}
-        {showTypeDetail
-          ? this.renderClickableItem(showTypeDetail, 6)
-          : null}
-        {genreDetail
-          ? this.renderClickableItem(genreDetail, 7)
-          : null}
+        {this.renderDetailMetaRow(
+          "music",
+          "Show type",
+          this.getShowTypeDisplay(),
+          "typeOfShowFlatlist",
+        )}
+        {this.renderDetailMetaRow(
+          "music",
+          "Genre",
+          this.getGenreRowDisplay(),
+          "genreFlatlist",
+        )}
         {websiteDetail?.value
           ? this.renderClickableItem(websiteDetail, 4)
           : null}
@@ -646,6 +878,33 @@ export default class AllEventDetailScreen extends AllEventController {
           </View>
           <Icon name="external-link" size={16} color={this.getHomeTheme().muted} />
         </TouchableOpacity>
+      </View>
+    );
+  };
+
+  renderDetailMetaRow = (
+    icon: string,
+    label: string,
+    value: string,
+    testID?: string,
+  ) => {
+    if (!value) return null;
+    return (
+      <View style={this.styles.detailWebsiteRow}>
+        <View
+          style={[this.styles.eventDetails, { alignItems: "center", flex: 0 }]}
+        >
+          <Icon name={icon} size={16} color={this.getHomeTheme().primary} />
+          <Text style={[this.styles.detailMetaLabel, { marginLeft: 8 }]}>
+            {label}
+          </Text>
+        </View>
+        <Text
+          testID={testID}
+          style={[this.styles.detailMetaValue, { flex: 1, flexShrink: 1 }]}
+        >
+          {value}
+        </Text>
       </View>
     );
   };
@@ -762,12 +1021,9 @@ export default class AllEventDetailScreen extends AllEventController {
   };
 
   renderClickableTextWithoutPress = (detail: any) => {
-    const { label } = detail;
     return (
       <View style={{ flex: 1 }}>
-        {label === "Show type"
-          ? this.renderShowType(detail)
-          : this.renderLineUpAndOthers(detail)}
+        {this.renderLineUpAndOthers(detail)}
       </View>
     );
   };
@@ -820,7 +1076,9 @@ export default class AllEventDetailScreen extends AllEventController {
 
   renderRulesRegulations = () => {
     const items = this.getRulesItems();
-    const hasRules = items.length > 0;
+    if (items.length === 0) {
+      return null;
+    }
     const expanded = this.state.showFullText;
     const maxInline = 5;
     const displayedInline = items.slice(0, maxInline);
@@ -833,7 +1091,7 @@ export default class AllEventDetailScreen extends AllEventController {
         <TouchableOpacity
           style={[
             this.styles.detailRulesHeader,
-            expanded && hasRules ? this.styles.detailRulesHeaderOpen : null,
+            expanded ? this.styles.detailRulesHeaderOpen : null,
           ]}
           onPress={this.toggleRulesAccordion}
           activeOpacity={0.8}
@@ -849,53 +1107,45 @@ export default class AllEventDetailScreen extends AllEventController {
         </TouchableOpacity>
         {expanded ? (
           <View style={this.styles.detailRulesBody}>
-            {hasRules ? (
-              <>
-                {visibleItems.map(
-                  (
-                    item: { title: string; description: string },
-                    index: number
-                  ) => (
-                    <View key={index} style={this.styles.detailRuleRow}>
-                      <Icon
-                        name="check-circle"
-                        size={16}
-                        color={this.getHomeTheme().primary}
-                        style={this.styles.detailRuleIcon}
-                      />
-                      <View style={{ flex: 1 }}>
-                        <Text style={this.styles.detailRuleTitle}>{item.title}</Text>
-                        {item.description ? (
-                          <Text style={this.styles.detailRuleText}>
-                            {item.description}
-                          </Text>
-                        ) : null}
-                      </View>
-                    </View>
-                  )
-                )}
-                {hasMoreRules && !expanded ? (
-                  <TouchableOpacity
-                    testID="showMoreRulesBtn"
-                    onPress={() => this.setState({ showRulesMoreModal: true })}
-                    style={{ marginTop: 8 }}
-                  >
-                    <Text
-                      style={[
-                        this.styles.detailRuleTitle,
-                        { color: this.getHomeTheme().primary, fontWeight: "700" },
-                      ]}
-                    >
-                      Show more
-                    </Text>
-                  </TouchableOpacity>
-                ) : null}
-              </>
-            ) : (
-              <Text style={[this.styles.detailRuleText, { marginTop: 8 }]}>
-                No rules specified.
-              </Text>
+            {visibleItems.map(
+              (
+                item: { title: string; description: string },
+                index: number
+              ) => (
+                <View key={index} style={this.styles.detailRuleRow}>
+                  <Icon
+                    name="check-circle"
+                    size={16}
+                    color={this.getHomeTheme().primary}
+                    style={this.styles.detailRuleIcon}
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text style={this.styles.detailRuleTitle}>{item.title}</Text>
+                    {item.description ? (
+                      <Text style={this.styles.detailRuleText}>
+                        {item.description}
+                      </Text>
+                    ) : null}
+                  </View>
+                </View>
+              )
             )}
+            {hasMoreRules && !expanded ? (
+              <TouchableOpacity
+                testID="showMoreRulesBtn"
+                onPress={() => this.setState({ showRulesMoreModal: true })}
+                style={{ marginTop: 8 }}
+              >
+                <Text
+                  style={[
+                    this.styles.detailRuleTitle,
+                    { color: this.getHomeTheme().primary, fontWeight: "700" },
+                  ]}
+                >
+                  Show more
+                </Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
         ) : null}
         {hasMoreRules ? (
@@ -1040,41 +1290,6 @@ export default class AllEventDetailScreen extends AllEventController {
           </View>
         )}
       </>
-    );
-  };
-
-  renderShowType = (detail: any) => {
-    const { value } = detail;
-    if (!Array.isArray(value)) {
-      const text =
-        typeof value === "string" ? value : this.formatGenreLabel(value);
-      if (!text) return null;
-      return (
-        <Text style={[this.styles.detailMetaValue, { color: this.getHomeTheme().foreground }]}>
-          {text}
-        </Text>
-      );
-    }
-    return (
-      <FlatList
-        testID="typeOfShowFlatlist"
-        numColumns={20}
-        columnWrapperStyle={{ flexWrap: "wrap" }}
-        data={value}
-        keyExtractor={(item: any, index) => item?.id ?? index.toString()}
-        renderItem={({ item, index }) => {
-          const displayName =
-            item?.name ??
-            (typeof item === "string" ? item : "N/A");
-          const isLast = index === value?.length - 1;
-
-          return (
-            <Text style={[this.styles.detailMetaValue, { color: this.getHomeTheme().foreground }]}>
-              {isLast ? displayName : `${displayName}, `}
-            </Text>
-          );
-        }}
-      />
     );
   };
 
@@ -1311,34 +1526,45 @@ export default class AllEventDetailScreen extends AllEventController {
         animationType="slide"
         transparent={true}
         visible={this.state.loginPopup}
+        onRequestClose={this.handleCloseBtn}
       >
-        <View style={[this.styles.centeredView, { backgroundColor: "rgba(8, 8, 15, 0.72)" }]}>
-          <View style={[this.styles.modalView]}>
+        <View
+          style={[
+            this.styles.centeredView,
+            { backgroundColor: "rgba(8, 8, 15, 0.72)" },
+          ]}
+        >
+          <TouchableWithoutFeedback onPress={this.handleCloseBtn}>
+            <View style={{ flex: 1 }} />
+          </TouchableWithoutFeedback>
+          <View style={this.styles.loginSheet}>
             {this.renderCloseButton()}
-            <Text style={this.styles.welcomeToPopupText}>{"Welcome to"}</Text>
-            <Text style={this.styles.localShowsPopupText}>{"Local Shows"}</Text>
-            <Text style={this.styles.loginFirstPopupText}>
-              {"You have to Log in first to access the events."}
-            </Text>
-            <TouchableOpacity
-              testID="createAccountBtn"
-              onPress={() => {
-                this.moveToLoginScreen("signup");
-              }}
-            >
-              <Text style={this.styles.createAccountPopupText}>
-                {"Create new account"}
+            <SafeAreaView edges={["bottom"]}>
+              <Text style={this.styles.welcomeToPopupText}>{"Welcome to"}</Text>
+              <Text style={this.styles.localShowsPopupText}>{"Local Shows"}</Text>
+              <Text style={this.styles.loginFirstPopupText}>
+                {"You have to Log in first to access the events."}
               </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              testID="loginBtn"
-              style={this.styles.loginBtnPopupText}
-              onPress={() => {
-                this.moveToLoginScreen("login");
-              }}
-            >
-              <Text style={this.styles.loginTxtPopupText}>{"Log in"}</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                testID="createAccountBtn"
+                onPress={() => {
+                  this.moveToLoginScreen("signup");
+                }}
+              >
+                <Text style={this.styles.createAccountPopupText}>
+                  {"Create new account"}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                testID="loginBtn"
+                style={this.styles.loginBtnPopupText}
+                onPress={() => {
+                  this.moveToLoginScreen("login");
+                }}
+              >
+                <Text style={this.styles.loginTxtPopupText}>{"Log in"}</Text>
+              </TouchableOpacity>
+            </SafeAreaView>
           </View>
         </View>
       </Modal>
@@ -2115,6 +2341,7 @@ export default class AllEventDetailScreen extends AllEventController {
             {this.renderRulesMoreModal()}
             {this.renderCommentsModal()}
             {this.renderRepliesModal()}
+            {this.renderHeroImageModal()}
           </>
         )}
       </SafeAreaView>

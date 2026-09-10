@@ -1,7 +1,7 @@
 import React from 'react';
 
 // Customizable Area Start
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import {
   ScrollView,
   StatusBar,
@@ -123,23 +123,65 @@ export default class PostDetails extends PostCreationController {
       : `Shows in ${this.state.selectedState || ''}`;
   };
 
-  getItemName = (item: any) => {
-    if (!item) return '';
-    if (typeof item === 'string') return item;
-    return item.name || item.attributes?.name || item.first_name || '';
+  getItemName = (item: any): string => {
+    if (item == null || item === false) return '';
+    if (typeof item === 'number') return String(item);
+    if (typeof item === 'string') return item.trim();
+    if (Array.isArray(item)) {
+      return item
+        .map((entry: any) => this.getItemName(entry))
+        .filter((name: string) => name)
+        .join(', ');
+    }
+    if (typeof item === 'object') {
+      const direct =
+        item.name ??
+        item.title ??
+        item.genre ??
+        item.label ??
+        item.attributes?.name ??
+        item.attributes?.title ??
+        item.first_name;
+      if (direct != null && direct !== '') {
+        return this.getItemName(direct);
+      }
+      if (item.data != null) {
+        return this.getItemName(item.data);
+      }
+    }
+    return '';
+  };
+
+  formatNamedList = (items: any): string => {
+    if (!items) return '';
+    if (typeof items === 'string') return items.trim();
+    if (!Array.isArray(items)) return this.getItemName(items);
+    return items
+      .map((item: any) => this.getItemName(item))
+      .filter((name: string) => name)
+      .join(', ');
+  };
+
+  getShowTypeDisplay = () => {
+    const fromState = this.formatNamedList(this.state.selectedTypeOfShows);
+    if (fromState) return fromState;
+    const attributes = this.state.eventDetail?.attributes;
+    return this.formatNamedList(
+      attributes?.type_of_show ?? attributes?.show_type ?? attributes?.show_types,
+    );
+  };
+
+  getGenreRowDisplay = () => {
+    const fromState = this.formatNamedList(this.state.selectedGenres);
+    if (fromState) return fromState;
+    const attributes = this.state.eventDetail?.attributes;
+    return this.formatNamedList(attributes?.genre ?? attributes?.genres);
   };
 
   getGenreDisplay = () => {
-    const genres = this.state.selectedGenres || [];
-    const names = genres
-      .map((item: any) => this.getItemName(item))
-      .filter((name: string) => name);
-    if (names.length > 0) return names.join(' - ');
-    const types = this.state.selectedTypeOfShows || [];
-    return types
-      .map((item: any) => this.getItemName(item))
-      .filter((name: string) => name)
-      .join(' - ');
+    const genre = this.getGenreRowDisplay().replace(/, /g, ' - ');
+    if (genre) return genre;
+    return this.getShowTypeDisplay().replace(/, /g, ' - ');
   };
 
   getImageUri = () => {
@@ -248,7 +290,37 @@ export default class PostDetails extends PostCreationController {
     );
   };
 
-  renderHeroFade = () => null;
+  renderHeroFade = () => (
+    <View pointerEvents="none" style={this.eventStyles.detailHeroFadeWrap}>
+      <Svg
+        width="100%"
+        height="100%"
+        preserveAspectRatio="none"
+        viewBox="0 0 100 100"
+      >
+        <Defs>
+          <LinearGradient
+            id="postDetailHeroFade"
+            x1="0"
+            y1="0"
+            x2="0"
+            y2="1"
+          >
+            <Stop offset="0" stopColor="#08080f" stopOpacity="0" />
+            <Stop offset="0.35" stopColor="#08080f" stopOpacity="0.55" />
+            <Stop offset="1" stopColor="#08080f" stopOpacity="0.92" />
+          </LinearGradient>
+        </Defs>
+        <Rect
+          x="0"
+          y="0"
+          width="100"
+          height="100"
+          fill="url(#postDetailHeroFade)"
+        />
+      </Svg>
+    </View>
+  );
 
   renderEventImage = () => {
     const imageUri = this.getImageUri();
@@ -436,14 +508,19 @@ export default class PostDetails extends PostCreationController {
     return this.renderMetaRow('clock', 'Time', value);
   };
 
-  renderMetaRow = (icon: string, label: string, value: string) => {
+  renderMetaRow = (
+    icon: string,
+    label: string,
+    value: string,
+    testID?: string,
+  ) => {
     if (!value) return null;
     return (
       <View style={this.eventStyles.detailWebsiteRow}>
         <View
           style={[
             this.eventStyles.eventDetails,
-            { alignItems: 'flex-start', flex: 0, paddingTop: 2 },
+            { alignItems: 'center', flex: 0 },
           ]}
         >
           <Icon name={icon} size={16} color={this.getDetailTheme().primary} />
@@ -452,9 +529,10 @@ export default class PostDetails extends PostCreationController {
           </Text>
         </View>
         <Text
+          testID={testID}
           style={[
             this.eventStyles.detailMetaValue,
-            { color: this.getDetailTheme().foreground, flex: 1 },
+            { flex: 1, flexShrink: 1 },
           ]}
         >
           {value}
@@ -603,95 +681,15 @@ export default class PostDetails extends PostCreationController {
   };
 
   renderShowType = () => {
-    if (
-      this.state.selectedTypeOfShows === null ||
-      this.state.selectedTypeOfShows.length === 0
-    ) {
-      return null;
-    }
-    return (
-      <View style={this.eventStyles.detailWebsiteRow}>
-        <View
-          style={[
-            this.eventStyles.eventDetails,
-            { alignItems: 'flex-start', flex: 0, paddingTop: 2 },
-          ]}
-        >
-          <Icon name="music" size={16} color={this.getDetailTheme().primary} />
-          <Text style={[this.eventStyles.detailMetaLabel, { marginLeft: 8 }]}>
-            Show type
-          </Text>
-        </View>
-        <View style={{ flex: 1 }}>
-          <FlatList
-            testID="typeOfShowFlatlist"
-            numColumns={20}
-            columnWrapperStyle={{ flexWrap: 'wrap' }}
-            data={this.state.selectedTypeOfShows}
-            contentContainerStyle={this.localStyles.showTypeFlatlist}
-            keyExtractor={(item: any) => item.id}
-            renderItem={({ item, index }) => {
-              const name = this.getItemName(item);
-              return (
-                <Text
-                  style={[this.eventStyles.detailMetaValue, { color: this.getDetailTheme().foreground }]}
-                >
-                  {index === this.state.selectedTypeOfShows.length - 1
-                    ? `${name}`
-                    : `${name}, `}
-                </Text>
-              );
-            }}
-          />
-        </View>
-      </View>
-    );
+    const value = this.getShowTypeDisplay();
+    if (!value) return null;
+    return this.renderMetaRow('music', 'Show type', value, 'typeOfShowFlatlist');
   };
 
   renderGenre = () => {
-    if (
-      this.state.selectedGenres === null ||
-      this.state.selectedGenres.length === 0
-    ) {
-      return null;
-    }
-    return (
-      <View style={this.eventStyles.detailWebsiteRow}>
-        <View
-          style={[
-            this.eventStyles.eventDetails,
-            { alignItems: 'flex-start', flex: 0, paddingTop: 2 },
-          ]}
-        >
-          <Icon name="music" size={16} color={this.getDetailTheme().primary} />
-          <Text style={[this.eventStyles.detailMetaLabel, { marginLeft: 8 }]}>
-            Genre
-          </Text>
-        </View>
-        <View style={{ flex: 1 }}>
-          <FlatList
-            testID="genreFlatlist"
-            numColumns={20}
-            columnWrapperStyle={{ flexWrap: 'wrap' }}
-            data={this.state.selectedGenres}
-            contentContainerStyle={this.localStyles.showTypeFlatlist}
-            keyExtractor={(item: any) => item.id}
-            renderItem={({ item, index }) => {
-              const name = this.getItemName(item);
-              return (
-                <Text
-                  style={[this.eventStyles.detailMetaValue, { color: this.getDetailTheme().foreground }]}
-                >
-                  {index === this.state.selectedGenres.length - 1
-                    ? `${name}`
-                    : `${name}, `}
-                </Text>
-              );
-            }}
-          />
-        </View>
-      </View>
-    );
+    const value = this.getGenreRowDisplay();
+    if (!value) return null;
+    return this.renderMetaRow('music', 'Genre', value, 'genreFlatlist');
   };
 
   renderDescription = () => {
@@ -795,6 +793,9 @@ export default class PostDetails extends PostCreationController {
         ? this.splitKnownAndOtherRules(postRules)
         : { knownRules: [], otherRules: [] };
     const hasRules = knownRules.length > 0 || otherRules.length > 0;
+    if (!hasRules) {
+      return null;
+    }
 
     return (
       <View style={{ marginTop: 8 }}>
@@ -821,43 +822,35 @@ export default class PostDetails extends PostCreationController {
         </TouchableOpacity>
         {expanded ? (
           <View style={this.eventStyles.detailRulesBody}>
-            {hasRules ? (
-              <>
-                {knownRules.map((item: any, index: number) => (
-                  <View
-                    key={item.id?.toString() || item.title || index.toString()}
-                    style={this.eventStyles.detailRuleRow}
-                  >
-                    <Icon
-                      name="check-circle"
-                      size={16}
-                      color={this.getDetailTheme().primary}
-                      style={this.eventStyles.detailRuleIcon}
-                    />
-                    <Text style={this.eventStyles.detailRuleTitle}>{item.title}</Text>
-                  </View>
-                ))}
-                {otherRules.length > 0 && (
-                  <TouchableOpacity
-                    testID="showMoreRulesBtn"
-                    onPress={() => this.setState({ showRulesMoreModal: true })}
-                    style={{ marginTop: 8 }}
-                  >
-                    <Text
-                      style={[
-                        this.eventStyles.detailRuleTitle,
-                        { color: this.getDetailTheme().primary, fontWeight: '700' },
-                      ]}
-                    >
-                      More info
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </>
-            ) : (
-              <Text style={[this.eventStyles.detailRuleText, { marginTop: 8 }]}>
-                No rules specified.
-              </Text>
+            {knownRules.map((item: any, index: number) => (
+              <View
+                key={item.id?.toString() || item.title || index.toString()}
+                style={this.eventStyles.detailRuleRow}
+              >
+                <Icon
+                  name="check-circle"
+                  size={16}
+                  color={this.getDetailTheme().primary}
+                  style={this.eventStyles.detailRuleIcon}
+                />
+                <Text style={this.eventStyles.detailRuleTitle}>{item.title}</Text>
+              </View>
+            ))}
+            {otherRules.length > 0 && (
+              <TouchableOpacity
+                testID="showMoreRulesBtn"
+                onPress={() => this.setState({ showRulesMoreModal: true })}
+                style={{ marginTop: 8 }}
+              >
+                <Text
+                  style={[
+                    this.eventStyles.detailRuleTitle,
+                    { color: this.getDetailTheme().primary, fontWeight: '700' },
+                  ]}
+                >
+                  More info
+                </Text>
+              </TouchableOpacity>
             )}
           </View>
         ) : otherRules.length > 0 ? (

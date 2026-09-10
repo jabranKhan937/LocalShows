@@ -154,6 +154,7 @@ interface S {
   isDarkMode: boolean;
   visibleShowsCount: number;
   guestSignupBannerDismissed: boolean;
+  showHeroImageModal: boolean;
   // Customizable Area End
 }
 
@@ -263,6 +264,7 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
       isDarkMode: true,
       visibleShowsCount: HOME_FEED_PAGE_SIZE,
       guestSignupBannerDismissed: false,
+      showHeroImageModal: false,
       // Customizable Area End
     };
 
@@ -3193,6 +3195,10 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
   }
 
   handleShareNavigation = async (shareId: string, eventType?: string) => {
+    if (!this.state.authToken) {
+      this.setState({ loginPopup: true, showMenu: false });
+      return;
+    }
     const message: Message = new Message(
       getName(MessageEnum.NavigationMessage),
     );
@@ -3382,9 +3388,19 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
 
   handleLikeTextPress = () => {
     if (this.state.authToken) {
+      const eventID = String(
+        this.state.selectedEventId ||
+          this.state.eventDetail?.data?.id ||
+          this.state.eventDetail?.id ||
+          '',
+      );
+      const type =
+        this.state.eventDetail?.data?.type ||
+        this.state.eventDetail?.type ||
+        'show';
       const info = {
-        eventID: this.state.selectedEventId.toString(),
-        type: this.state.eventDetail.data?.type,
+        eventID,
+        type,
       };
       this.handleNavigation(
         'Likeapost2',
@@ -3473,6 +3489,10 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
   };
 
   handleLike = async (eventId: string, type: string) => {
+    if (!this.state.authToken) {
+      this.setState({ loginPopup: true });
+      return;
+    }
     this.setState({ selectedEventId: eventId, from: 'list' }, () => {
       this.likeDislikeEventAPI(type);
     });

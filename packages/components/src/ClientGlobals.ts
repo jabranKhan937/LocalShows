@@ -6,14 +6,14 @@ import { heightFromPercentage } from '../../framework/src/Utilities';
 import i18n from "i18n-js";
 //@ts-ignore
 import * as RNLocalize from "react-native-localize";
-
+                                                                                                                                                                                                                                                                                                  
 export const CommonStyle = StyleSheet.create({
   container: {
     flex: 1,
     width: "100%",
     justifyContent: "flex-start",
     alignItems: "center"
-  },
+  },                                                                                                                                    
   wrapper: {
     flex: 1,
     width: "100%",

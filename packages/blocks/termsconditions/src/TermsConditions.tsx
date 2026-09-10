@@ -15,6 +15,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/Feather";
 import { lightTheme, redesignTheme } from "../../utilities/src/Colors";
 import { WebView } from "react-native-webview";
+import { TERMS_AND_CONDITIONS_HTML } from "./termsAndConditionsHtml";
+import { PRIVACY_POLICY_HTML } from "./privacyPolicyHtml";
 // Customizable Area End
 
 import TermsConditionsController, {
@@ -37,9 +39,16 @@ export default class TermsConditions extends TermsConditionsController {
     return this.state.isDarkMode ? darkTermsStyles : lightTermsStyles;
   }
 
+  isPrivacyPolicyScreen = () => false;
+
+  getLegalTitle = () =>
+    this.isPrivacyPolicyScreen() ? "Privacy Policy" : "Terms & Conditions";
+
   getThemedTermsHtml = () => {
     const theme = this.getTermsTheme();
-    const htmlBody = this.state.tAndCAPIData || "";
+    const htmlBody = this.isPrivacyPolicyScreen()
+      ? PRIVACY_POLICY_HTML
+      : TERMS_AND_CONDITIONS_HTML;
     return `<!DOCTYPE html>
 <html>
   <head>
@@ -57,7 +66,7 @@ export default class TermsConditions extends TermsConditionsController {
         -webkit-text-size-adjust: 100%;
       }
       body {
-        padding: 4px 2px 8px;
+        padding: 4px 2px 24px;
       }
       * {
         color: ${theme.foreground} !important;
@@ -72,6 +81,55 @@ export default class TermsConditions extends TermsConditionsController {
       h1, h2, h3, h4, h5, h6, strong, b {
         color: ${theme.foreground} !important;
         font-weight: 800;
+      }
+      h2 {
+        font-size: 18px;
+        margin: 28px 0 12px;
+      }
+      h3 {
+        font-size: 16px;
+        margin: 22px 0 10px;
+      }
+      ul, ol {
+        margin: 0 0 18px;
+        padding-left: 20px;
+      }
+      li {
+        margin-bottom: 8px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 8px 0 18px;
+      }
+      table, thead, tbody, tfoot, tr, th, td {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      tr {
+        margin-bottom: 12px;
+      }
+      th, td {
+        border: 1px solid ${theme.border} !important;
+        padding: 12px;
+        text-align: left;
+        vertical-align: top;
+        font-size: 14px;
+        line-height: 1.55;
+        word-break: normal;
+        overflow-wrap: break-word;
+        white-space: normal;
+      }
+      th {
+        font-weight: 800;
+      }
+      td ul, td ol {
+        margin: 8px 0 0;
+        padding-left: 18px;
+      }
+      td li {
+        margin-bottom: 6px;
       }
       em, i {
         font-style: italic;
@@ -105,7 +163,7 @@ export default class TermsConditions extends TermsConditionsController {
           <Icon name="arrow-left" size={18} color={theme.foreground} />
         </TouchableOpacity>
         <Text testID="testLabel" style={this.styles.headerTitle}>
-          Terms & Conditions
+          {this.getLegalTitle()}
         </Text>
         <View style={this.styles.headerSideSpacer} />
       </View>
@@ -195,7 +253,7 @@ export default class TermsConditions extends TermsConditionsController {
          window.ReactNativeWebView.postMessage(
            Math.max(document.body.scrollHeight, document.body.offsetHeight, document.documentElement.scrollHeight, document.documentElement.offsetHeight)
          );
-       }, 500);
+       }, 800);
      `}
         domStorageEnabled={true}
         useWebKit={true}
@@ -229,7 +287,8 @@ export default class TermsConditions extends TermsConditionsController {
             </View>
             {this.renderTncContent()}
           </View>
-          {this.state.isTermsCondsAccepted === "false" && (
+          {this.state.isTermsCondsAccepted === "false" &&
+            !this.isPrivacyPolicyScreen() && (
             <View style={this.styles.actionsCard}>
               {this.renderAgreement()}
               {this.renderCancel()}

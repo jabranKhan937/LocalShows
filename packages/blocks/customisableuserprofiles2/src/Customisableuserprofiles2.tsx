@@ -527,64 +527,58 @@ export default class Customisableuserprofiles2 extends Customisableuserprofiles2
     return (
       <>
         {this.state.userProfileData.category_subcat.length > 0 && (
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              marginVertical: 5,
-            }}
-          >
-            <Text
-              style={{
-                flex: 0.4,
-                fontSize: 16,
-                fontWeight: '700',
-                color: this.getProfileTheme().foreground,
-              }}
-            >
-              Category
-            </Text>
+          <View style={{ marginVertical: 5 }}>
+            {this.isViewingOwnProfile() && (
+              <TouchableOpacity
+                testID="editButton"
+                style={[this.styles.editButton, { alignSelf: 'flex-end', marginBottom: 4 }]}
+                onPress={this.navigateToCategoriesSubCategories}
+              >
+                <Text style={this.styles.editButtonText}>Edit</Text>
+              </TouchableOpacity>
+            )}
             <View
               style={{
-                flex: 0.5,
                 flexDirection: 'row',
                 justifyContent: 'space-between',
-                alignItems: 'center',
               }}
             >
-              <FlatList
-                testID="categoriesList"
-                data={this.state.userProfileData.category_subcat}
-                numColumns={20}
-                columnWrapperStyle={{ flexWrap: 'wrap' }}
-                keyExtractor={(item: any) => item.id}
-                style={{ flex: 1 }}
-                renderItem={({ item, index }) => {
-                  return (
-                    <Text
-                      style={{
-                        fontSize: 16,
-                        fontWeight: '400',
-                        color: this.getProfileTheme().foreground,
-                      }}
-                    >
-                      {index ===
-                      this.state.userProfileData.category_subcat.length - 1
-                        ? `${item.name}`
-                        : `${item.name}, `}
-                    </Text>
-                  );
+              <Text
+                style={{
+                  flex: 0.4,
+                  fontSize: 16,
+                  fontWeight: '700',
+                  color: this.getProfileTheme().foreground,
                 }}
-              />
-              {this.isViewingOwnProfile() && (
-                <TouchableOpacity
-                  testID="editButton"
-                  style={this.styles.editButton}
-                  onPress={this.navigateToCategoriesSubCategories}
-                >
-                  <Text style={this.styles.editButtonText}>Edit</Text>
-                </TouchableOpacity>
-              )}
+              >
+                Category
+              </Text>
+              <View style={{ flex: 0.5 }}>
+                <FlatList
+                  testID="categoriesList"
+                  data={this.state.userProfileData.category_subcat}
+                  numColumns={20}
+                  columnWrapperStyle={{ flexWrap: 'wrap' }}
+                  keyExtractor={(item: any) => item.id}
+                  style={{ flex: 1 }}
+                  renderItem={({ item, index }) => {
+                    return (
+                      <Text
+                        style={{
+                          fontSize: 16,
+                          fontWeight: '400',
+                          color: this.getProfileTheme().foreground,
+                        }}
+                      >
+                        {index ===
+                        this.state.userProfileData.category_subcat.length - 1
+                          ? `${item.name}`
+                          : `${item.name}, `}
+                      </Text>
+                    );
+                  }}
+                />
+              </View>
             </View>
           </View>
         )}
@@ -593,9 +587,35 @@ export default class Customisableuserprofiles2 extends Customisableuserprofiles2
   };
 
   renderMusicType = () => {
+    const typeItems = (this.state.userProfileData.category_subcat || []).reduce(
+      (all: any[], category: any) => {
+        const subcategories = Array.isArray(category?.subcategories)
+          ? category.subcategories
+          : [];
+        subcategories.forEach((sub: any) => {
+          const name = typeof sub === 'string' ? sub : sub?.name;
+          if (!name) {
+            return;
+          }
+          const alreadyAdded = all.some(
+            (item: any) =>
+              String(item.id) === String(sub?.id) || item.name === name,
+          );
+          if (!alreadyAdded) {
+            all.push({
+              id: sub?.id || name,
+              name,
+            });
+          }
+        });
+        return all;
+      },
+      [],
+    );
+
     return (
       <>
-        {this.state.userProfileData.category_subcat.length > 0 && (
+        {typeItems.length > 0 && (
           <View
             style={{
               flexDirection: 'row',
@@ -616,29 +636,38 @@ export default class Customisableuserprofiles2 extends Customisableuserprofiles2
             <View style={{ flex: 0.5 }}>
               <FlatList
                 testID="categorySubCategoriesList"
-                data={this.state.userProfileData.category_subcat}
-                keyExtractor={item => item.id}
+                data={[{ id: 'all-types', subcategories: typeItems }]}
+                keyExtractor={item => String(item.id)}
                 renderItem={({ item }) => (
-                  <FlatList
-                    testID="subCategoriesList"
-                    data={item.subcategories}
-                    numColumns={20}
-                    columnWrapperStyle={{ flexWrap: 'wrap' }}
-                    keyExtractor={sub_item => sub_item.id}
-                    renderItem={({ item: sub_item, index }) => (
-                      <Text
-                        style={{
-                          fontSize: 16,
-                          fontWeight: '400',
-                          color: this.getProfileTheme().foreground,
-                        }}
-                      >
-                        {index === item.subcategories?.length - 1
-                          ? `${sub_item.name}`
-                          : `${sub_item.name}, `}
-                      </Text>
-                    )}
-                  />
+                  <>
+                    <Text
+                      style={{
+                        fontSize: 16,
+                        fontWeight: '400',
+                        color: this.getProfileTheme().foreground,
+                      }}
+                    >
+                      {(item.subcategories || [])
+                        .map((sub: any) => sub.name)
+                        .filter(Boolean)
+                        .join(', ')}
+                    </Text>
+                    <FlatList
+                      testID="subCategoriesList"
+                      data={item.subcategories}
+                      keyExtractor={(sub_item, index) =>
+                        String(sub_item.id || `${sub_item.name}-${index}`)
+                      }
+                      renderItem={({ item: sub_item, index }) => (
+                        <Text>
+                          {index === item.subcategories.length - 1
+                            ? `${sub_item.name}`
+                            : `${sub_item.name}, `}
+                        </Text>
+                      )}
+                      style={{ height: 0, overflow: 'hidden' }}
+                    />
+                  </>
                 )}
               />
             </View>

@@ -557,14 +557,14 @@ Business
               <View style={this.styles.daysItem}>
                 <TouchableOpacity
                   testID={isSelected ? 'selectedDay' : 'unselectedDay'}
-                  style={this.styles.checkbox}
+                  style={[
+                    this.styles.checkbox,
+                    isSelected && this.styles.checkboxChecked,
+                  ]}
                   onPress={() => this.handleBusinessDayToggle(item)}
                 >
                   {isSelected && (
-                    <Image
-                      source={require('../../../mobile/assets/images/checkbox.png')}
-                      style={this.styles.checkboxImage}
-                    />
+                    <Feather name="check" size={14} color="#FFFFFF" />
                   )}
                 </TouchableOpacity>
                 <Text
@@ -1923,12 +1923,15 @@ Business
             return (
               <View style={this.styles.rulesItem}>
                 <TouchableOpacity
-                  style={this.styles.checkboxTouchable}
+                  style={[
+                    this.styles.checkboxTouchable,
+                    isSelected && this.styles.checkboxChecked,
+                  ]}
                   testID={`ruleCheckbox_${ruleId}`}
                   onPress={() => this.handleToggleRuleSelection(ruleId)}
                 >
                   {isSelected ? (
-                    <Feather name="check" size={14} color={this.getProfileTheme().primary} />
+                    <Feather name="check" size={14} color="#FFFFFF" />
                   ) : null}
                 </TouchableOpacity>
                 <Text style={this.styles.rulesItemText}>
@@ -2906,18 +2909,24 @@ const createEditProfileStyles = (theme: typeof redesignTheme) =>
   },
   daysItem: {
     flexDirection: 'row',
+    alignItems: 'center',
     width: '20%',
     marginTop: 10,
   },
   checkbox: {
     height: 20,
     width: 20,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderRadius: 5,
-    borderColor: theme.foreground,
+    borderColor: theme.muted,
+    backgroundColor: 'transparent',
     marginRight: 10,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  checkboxChecked: {
+    borderColor: theme.primary,
+    backgroundColor: theme.primary,
   },
   showFeatureItem: {
     flexDirection: 'row',
@@ -2957,9 +2966,10 @@ const createEditProfileStyles = (theme: typeof redesignTheme) =>
   checkboxTouchable: {
     height: 20,
     width: 20,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderRadius: 5,
-    borderColor: theme.foreground,
+    borderColor: theme.muted,
+    backgroundColor: 'transparent',
     marginRight: 10,
     alignItems: 'center',
     justifyContent: 'center',

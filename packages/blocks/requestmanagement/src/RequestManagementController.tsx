@@ -8,6 +8,13 @@ import { runEngine } from "../../../framework/src/RunEngine";
 
 // Customizable Area Start
 import { getStorageData } from "../../../framework/src/Utilities";
+import { DeviceEventEmitter } from "react-native";
+import {
+  lightTheme,
+  PROFILE_THEME_CHANGED_EVENT,
+  PROFILE_THEME_STORAGE_KEY,
+  redesignTheme,
+} from "../../utilities/src/Colors";
 interface IRequest {
   id: string;
   type: string;
@@ -46,6 +53,7 @@ interface S {
   newCategoryText: string;
   showConfirmationModal: boolean;
   newCategories: string[];
+  isDarkMode: boolean;
   // Customizable Area End
 }
 
@@ -92,6 +100,7 @@ export default class RequestManagementController extends BlockComponent<
       newCategoryText: "",
       showConfirmationModal: false,
       newCategories: [],
+      isDarkMode: true,
       // Customizable Area End
     };
     runEngine.attachBuildingBlock(this as IBlock, this.subScribedMessages);
@@ -126,11 +135,39 @@ export default class RequestManagementController extends BlockComponent<
 
   componentDidMount = async () => {
     this.getToken();
+    this.loadRequestTheme();
     if (this.isPlatformWeb() === false) {
       this.props.navigation.addListener("willFocus", () => {
         this.getToken();
+        this.loadRequestTheme();
       });
     }
+  };
+
+  componentWillUnmount = async () => {
+    if (this.profileThemeListener) {
+      this.profileThemeListener.remove();
+      this.profileThemeListener = null;
+    }
+  };
+
+  profileThemeListener: any = null;
+
+  loadRequestTheme = async () => {
+    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
+    this.setState({ isDarkMode: savedTheme !== "false" });
+    if (!this.profileThemeListener) {
+      this.profileThemeListener = DeviceEventEmitter.addListener(
+        PROFILE_THEME_CHANGED_EVENT,
+        (isDarkMode: boolean) => {
+          this.setState({ isDarkMode });
+        },
+      );
+    }
+  };
+
+  getRequestTheme = () => {
+    return this.state.isDarkMode ? redesignTheme : lightTheme;
   };
 
   getToken = async () => {

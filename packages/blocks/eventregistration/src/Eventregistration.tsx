@@ -33,7 +33,11 @@ import moment from 'moment';
 import Icon from 'react-native-vector-icons/Feather';
 const DateRangePicker = require('react-native-daterange-picker').default;
 //@ts-ignore
-import {ItineraryProps, TopCityItem} from './EventregistrationController';
+import {
+  ItineraryProps,
+  TopCityItem,
+  TOP_CITIES_PREVIEW_COUNT,
+} from './EventregistrationController';
 import {Calendar} from 'react-native-calendars';
 
 // Merge Engine - import assets - Start
@@ -732,11 +736,31 @@ export default class Eventregistration extends EventregistrationController {
 
   renderTopCitiesThisWeek = () => {
     const styles = this.styles;
+    if (!this.state.topCities.length) {
+      return null;
+    }
+    const previewCities = this.state.topCities.slice(
+      0,
+      TOP_CITIES_PREVIEW_COUNT,
+    );
+    const hasMoreCities =
+      this.state.topCities.length > TOP_CITIES_PREVIEW_COUNT;
     return (
       <View style={styles.topCitiesSection}>
-        <Text style={styles.savedTripsTitle}>TOP CITIES THIS WEEK</Text>
+        <View style={styles.topCitiesHeaderRow}>
+          <Text style={styles.savedTripsTitle}>TOP CITIES THIS WEEK</Text>
+          {hasMoreCities && (
+            <TouchableOpacity
+              testID="showMoreTopCitiesBtn"
+              activeOpacity={0.8}
+              onPress={this.handleShowMoreTopCities}
+              hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+              <Text style={styles.showMoreTopCitiesText}>Show more</Text>
+            </TouchableOpacity>
+          )}
+        </View>
         <View style={styles.topCitiesGrid}>
-          {this.state.topCities.map(city => this.renderTopCityCard(city))}
+          {previewCities.map(city => this.renderTopCityCard(city))}
         </View>
       </View>
     );
@@ -1141,6 +1165,17 @@ const createTravelStyles = (theme: TravelTheme) => StyleSheet.create({
   },
   topCitiesSection: {
     marginTop: 8,
+  },
+  topCitiesHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  showMoreTopCitiesText: {
+    color: theme.primary,
+    fontSize: 13,
+    fontWeight: '700',
+    fontFamily: 'OpenSans',
   },
   topCitiesGrid: {
     flexDirection: 'row',

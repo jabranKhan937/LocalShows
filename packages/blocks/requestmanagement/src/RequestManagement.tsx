@@ -15,15 +15,16 @@ import {
   ActivityIndicator,
   FlatList,
 } from "react-native";
-import { colors } from "../../utilities/src/Colors";
 import { leftArrow } from "../../events/src/assets";
 import Icon from "react-native-vector-icons/Feather";
+import { redesignTheme } from "../../utilities/src/Colors";
 // Customizable Area End
 
 import RequestManagementController, {
   Props,
-  configJSON,
 } from "./RequestManagementController";
+
+type RequestTheme = typeof redesignTheme;
 
 export default class RequestManagement extends RequestManagementController {
   constructor(props: Props) {
@@ -33,14 +34,31 @@ export default class RequestManagement extends RequestManagementController {
   }
 
   // Customizable Area Start
+  get styles() {
+    return createRequestStyles(this.getRequestTheme());
+  }
   // Customizable Area End
 
   render() {
     // Customizable Area Start
+    const styles = this.styles;
+    const theme = this.getRequestTheme();
     return (
-      <SafeAreaView style={{flex: 1, backgroundColor: colors(false).background}}>
-        <StatusBar barStyle="dark-content" backgroundColor={this.state.showConfirmationModal ? "#33415580" : colors(false).background}/>
-        <ScrollView style={styles.rootContainer} contentContainerStyle={{flexGrow: 1}}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
+        <StatusBar
+          barStyle={this.state.isDarkMode ? "light-content" : "dark-content"}
+          backgroundColor={
+            this.state.showConfirmationModal
+              ? "rgba(8, 8, 15, 0.72)"
+              : theme.background
+          }
+        />
+        <View pointerEvents="none" style={styles.decorTop} />
+        <ScrollView
+          style={styles.rootContainer}
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={styles.headerContainer}>
             <TouchableOpacity
               testID="backButton"
@@ -49,23 +67,36 @@ export default class RequestManagement extends RequestManagementController {
                 this.props.navigation.goBack();
               }}
             >
-              <Image source={leftArrow} style={styles.backNavButton} />
+              <Image
+                source={leftArrow}
+                style={[styles.backNavButton, { tintColor: theme.foreground }]}
+              />
             </TouchableOpacity>
-            <Text testID="testLabel" style={[styles.text, styles.titleText]}>New Category</Text>
+            <Text testID="testLabel" style={[styles.text, styles.titleText]}>
+              New Category
+            </Text>
           </View>
           <View style={styles.contentContainer}>
-            <Text style={styles.subtitle}>You can add categories that you have not found in the given options</Text>
+            <Text style={styles.subtitle}>
+              You can add categories that you have not found in the given options
+            </Text>
             <Text style={[styles.text, styles.inputFieldLabel]}>Category</Text>
             <TextInput
               testID="txtInputCategory"
               placeholder="Enter a category"
-              placeholderTextColor="#CBD5E1"
+              placeholderTextColor={theme.muted}
               style={styles.inputField}
               value={this.state.newCategoryText}
-              onChangeText={(newCategoryText) => this.setState({ newCategoryText })}
+              onChangeText={(newCategoryText) =>
+                this.setState({ newCategoryText })
+              }
             />
-            <TouchableOpacity testID="addNewCategoryTxt" style={styles.newCategoryLinkContainer} onPress={() => this.handleAddNewCategory()}>
-              <Icon name="plus-circle" color="#4949EE" size={18} />
+            <TouchableOpacity
+              testID="addNewCategoryTxt"
+              style={styles.newCategoryLinkContainer}
+              onPress={() => this.handleAddNewCategory()}
+            >
+              <Icon name="plus-circle" color={theme.primary} size={18} />
               <Text style={styles.newCategoryLink}>Add a new category</Text>
             </TouchableOpacity>
             <View style={styles.selectionsContainer}>
@@ -75,7 +106,13 @@ export default class RequestManagement extends RequestManagementController {
                 renderItem={(subCat: { item: string }) => (
                   <View style={styles.selectedItem}>
                     <Text style={styles.selectedItemText}>{subCat.item}</Text>
-                    <Icon testID="removeCategory" name="x" size={17} color="#4949EE" onPress={() => this.handleRemoveCategory(subCat.item)} />
+                    <Icon
+                      testID="removeCategory"
+                      name="x"
+                      size={17}
+                      color={theme.primary}
+                      onPress={() => this.handleRemoveCategory(subCat.item)}
+                    />
                   </View>
                 )}
                 scrollEnabled={false}
@@ -85,51 +122,64 @@ export default class RequestManagement extends RequestManagementController {
           </View>
           <TouchableOpacity
             testID="btnSend"
-            style={[styles.sendButton, { opacity: this.enableSendButton() ? 1 : 0.5 }]}
-            onPress={() => { this.setState({ showConfirmationModal: true }) }}
-            disabled={!(this.enableSendButton())}
+            style={[
+              styles.sendButton,
+              { opacity: this.enableSendButton() ? 1 : 0.5 },
+            ]}
+            onPress={() => {
+              this.setState({ showConfirmationModal: true });
+            }}
+            disabled={!this.enableSendButton()}
           >
-            <Text style={[styles.text, styles.sendButtonText]}>
-              Send
-            </Text>
+            <Text style={[styles.text, styles.sendButtonText]}>Send</Text>
           </TouchableOpacity>
         </ScrollView>
-        {this.state.fetching &&
+        {this.state.fetching && (
           <View style={styles.fetchingContainer}>
-            <ActivityIndicator size={'large'} color="#4949EE"/>
+            <ActivityIndicator size={"large"} color={theme.primary} />
           </View>
-        }
+        )}
         <Modal
           animationType="slide"
           transparent={true}
           visible={this.state.showConfirmationModal}
+          onRequestClose={() => this.setState({ showConfirmationModal: false })}
         >
           <View style={styles.centeredModalView}>
             <View style={styles.modalContainerView}>
               <TouchableOpacity
                 style={styles.closeModalButtonContainer}
-                onPress={() => this.setState({ showConfirmationModal: false })} >
-                <Icon name="x" color="#0F172A" size={25} />
+                onPress={() => this.setState({ showConfirmationModal: false })}
+              >
+                <Icon name="x" color={theme.foreground} size={22} />
               </TouchableOpacity>
               <Text style={styles.newCategoryHeading}>
                 Send the new category ?
               </Text>
               <Text style={[styles.text, styles.newCategorySubHeading]}>
-                These will be sent and approved in 3 work days. You will be notified about it.
+                These will be sent and approved in 3 work days. You will be
+                notified about it.
               </Text>
               <TouchableOpacity
                 testID="btnCancel"
                 style={[styles.sendButton, styles.cancelButton]}
                 onPress={() => this.setState({ showConfirmationModal: false })}
               >
-                <Text style={[styles.text, styles.sendButtonText, styles.cancelButtonText]}>
+                <Text
+                  style={[
+                    styles.text,
+                    styles.sendButtonText,
+                    styles.cancelButtonText,
+                  ]}
+                >
                   Cancel
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 testID="btnConfirm"
                 style={[styles.sendButton, styles.confirmButton]}
-                onPress={this.handleAddNewCategoryAPICall}>
+                onPress={this.handleAddNewCategoryAPICall}
+              >
                 <Text style={[styles.text, styles.sendButtonText]}>
                   Confirm
                 </Text>
@@ -144,154 +194,177 @@ export default class RequestManagement extends RequestManagementController {
 }
 
 // Customizable Area Start
-const styles = StyleSheet.create({
-  rootContainer: {
-    padding: 16,
-    backgroundColor: colors(false).background,
-    flex: 1,
-  },
-  headerContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginBottom: 10,
-  },
-  backNavContainer: {
-    position: "absolute",
-    left: -10,
-    alignSelf: "center",
-    padding: 10,
-  },
-  backNavButton: {
-    width: 12,
-    left: 0,
-    resizeMode: "contain",
-  },
-  titleText: {
-    fontWeight: "bold",
-    fontSize: 28,
-    maxWidth: "85%",
-    alignSelf: "center",
-    color: "black",
-  },
-  contentContainer: {
-    flex: 1,
-  },
-  subtitle: {
-    fontSize: 15,
-  },
-  text: {
-    fontFamily: "OpenSans",
-    alignSelf: "flex-start",
-    color: colors(false).text,
-  },
-  fetchingContainer: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#ffffffdd',
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  inputFieldLabel: {
-    fontWeight: "bold",
-    marginTop: 20,
-    marginBottom: 10,
-    fontSize: 16,
-  },
-  inputField: {
-    width: "100%",
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 0.5,
-    borderColor: "#C5C5FF",
-    color: colors(false).text,
-    height: 50,
-    fontSize: 16,
-  },
-  centeredModalView: {
-    flex: 1,
-    justifyContent: "flex-end",
-    backgroundColor: "#33415580",
-  },
-  newCategoryHeading: {
-    fontWeight: "700",
-    fontSize: 26,
-    lineHeight: 28,
-    marginVertical: 10,
-    color: "#0F172A",
-  },
-  newCategorySubHeading: {
-    fontSize: 18,
-  },
-  modalContainerView: {
-    justifyContent: "space-between",
-    backgroundColor: "white",
-    borderTopEndRadius: 20,
-    padding: 35,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
+const createRequestStyles = (theme: RequestTheme) =>
+  StyleSheet.create({
+    rootContainer: {
+      padding: 16,
+      backgroundColor: theme.background,
+      flex: 1,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 100,
-  },
-  sendButton: {
-    backgroundColor: "#3333CC",
-    width: "100%",
-    padding: 15,
-    borderRadius: 10,
-    marginTop: 10,
-    marginBottom: 25,
-  },
-  sendButtonText: {
-    color: colors(false).white,
-    fontWeight: "700",
-    fontSize: 18,
-    alignSelf: "center",
-  },
-  cancelButton: {
-    marginTop: 25,
-    marginBottom: 5,
-    backgroundColor: "transparent",
-  },
-  cancelButtonText: {
-    color: "#4949EE",
-  },
-  confirmButton: {
-    marginBottom: 0,
-  },
-  closeModalButtonContainer: {
-    position: "absolute",
-    right: 20,
-    top: 20,
-  },
-  newCategoryLinkContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 5,
-  },
-  newCategoryLink: {
-    color: "#4949EE",
-    fontWeight: "bold",
-    fontSize: 15,
-    marginLeft: 5,
-  },
-  selectionsContainer: {},
-  selectedItem: {
-    backgroundColor: "#EDEDFF",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    fontSize: 14,
-    flexDirection: "row",
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "space-evenly",
-    marginRight: 5,
-    marginTop: 10,
-  },
-  selectedItemText: {
-    color: "#4949EE",
-    paddingRight: 5,
-  },
-});
+    decorTop: {
+      position: "absolute",
+      top: -90,
+      right: -70,
+      width: 200,
+      height: 200,
+      borderRadius: 100,
+      backgroundColor: theme.primarySoft,
+    },
+    headerContainer: {
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      marginBottom: 16,
+    },
+    backNavContainer: {
+      position: "absolute",
+      left: -10,
+      alignSelf: "center",
+      padding: 10,
+    },
+    backNavButton: {
+      width: 12,
+      left: 0,
+      resizeMode: "contain",
+    },
+    titleText: {
+      fontWeight: "bold",
+      fontSize: 24,
+      maxWidth: "85%",
+      alignSelf: "center",
+      color: theme.primary,
+    },
+    contentContainer: {
+      flex: 1,
+    },
+    subtitle: {
+      fontSize: 15,
+      color: theme.muted,
+      lineHeight: 22,
+    },
+    text: {
+      fontFamily: "OpenSans",
+      alignSelf: "flex-start",
+      color: theme.foreground,
+    },
+    fetchingContainer: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: "rgba(8, 8, 15, 0.72)",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    inputFieldLabel: {
+      fontWeight: "bold",
+      marginTop: 24,
+      marginBottom: 10,
+      fontSize: 16,
+      color: theme.foreground,
+    },
+    inputField: {
+      width: "100%",
+      paddingHorizontal: 14,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: theme.border,
+      backgroundColor: theme.input,
+      color: theme.foreground,
+      height: 50,
+      fontSize: 16,
+    },
+    centeredModalView: {
+      flex: 1,
+      justifyContent: "flex-end",
+      backgroundColor: "rgba(8, 8, 15, 0.72)",
+    },
+    newCategoryHeading: {
+      fontWeight: "700",
+      fontSize: 24,
+      lineHeight: 30,
+      marginTop: 16,
+      marginBottom: 8,
+      color: theme.foreground,
+    },
+    newCategorySubHeading: {
+      fontSize: 15,
+      color: theme.muted,
+      lineHeight: 22,
+      marginBottom: 8,
+    },
+    modalContainerView: {
+      backgroundColor: theme.card,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      borderWidth: 1,
+      borderColor: theme.border,
+      paddingHorizontal: 24,
+      paddingTop: 20,
+      paddingBottom: 32,
+    },
+    sendButton: {
+      backgroundColor: theme.primary,
+      width: "100%",
+      padding: 15,
+      borderRadius: 12,
+      marginTop: 10,
+      marginBottom: 25,
+    },
+    sendButtonText: {
+      color: "#FFFFFF",
+      fontWeight: "700",
+      fontSize: 18,
+      alignSelf: "center",
+    },
+    cancelButton: {
+      marginTop: 16,
+      marginBottom: 5,
+      backgroundColor: "transparent",
+    },
+    cancelButtonText: {
+      color: theme.primary,
+    },
+    confirmButton: {
+      marginBottom: 0,
+    },
+    closeModalButtonContainer: {
+      position: "absolute",
+      right: 16,
+      top: 16,
+      zIndex: 2,
+      padding: 4,
+    },
+    newCategoryLinkContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginTop: 12,
+    },
+    newCategoryLink: {
+      color: theme.primary,
+      fontWeight: "bold",
+      fontSize: 15,
+      marginLeft: 5,
+    },
+    selectionsContainer: {
+      alignSelf: "flex-start",
+      width: "100%",
+    },
+    selectedItem: {
+      backgroundColor: theme.primarySoft,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      fontSize: 14,
+      flexDirection: "row",
+      borderRadius: 20,
+      alignItems: "center",
+      justifyContent: "space-evenly",
+      marginRight: 5,
+      marginTop: 10,
+      borderWidth: 1,
+      borderColor: theme.primary,
+    },
+    selectedItemText: {
+      color: theme.primary,
+      paddingRight: 5,
+      fontWeight: "600",
+    },
+  });
 // Customizable Area End

@@ -348,13 +348,15 @@ defineFeature(feature, (test) => {
 
         if (item.type === "clickableItems") {
           const typeOfShowFlatlist = renderItem.findWhere(node => node.prop("testID") === "typeOfShowFlatlist");
-          mockResponse.data.attributes.type_of_show.forEach((item: any, index: number) => {
-            typeOfShowFlatlist.renderProp("renderItem")({
-              item: item,
-              index: index,
-            });
-            typeOfShowFlatlist.renderProp("keyExtractor")({ item });
-          })
+          if (typeof typeOfShowFlatlist.prop("renderItem") === "function") {
+            mockResponse.data.attributes.type_of_show.forEach((item: any, index: number) => {
+              typeOfShowFlatlist.renderProp("renderItem")({
+                item: item,
+                index: index,
+              });
+              typeOfShowFlatlist.renderProp("keyExtractor")({ item });
+            })
+          }
           instance.showLineupProfile("1", "12@yopmail.com")
           instance.setState({ authToken: "w" })
           const lineupFlatlist = renderItem.findWhere(node => node.prop("testID") === "lineupFlatlist");
@@ -401,13 +403,15 @@ defineFeature(feature, (test) => {
         });
         if (item.type === "clickableItems") {
           const typeOfShowFlatlist = renderItem.findWhere(node => node.prop("testID") === "typeOfShowFlatlist");
-          mockResponse.data.attributes.type_of_show.forEach((item: any, index: number) => {
-            typeOfShowFlatlist.renderProp("renderItem")({
-              item: item,
-              index: index,
-            });
-            typeOfShowFlatlist.renderProp("keyExtractor")({ item });
-          })
+          if (typeof typeOfShowFlatlist.prop("renderItem") === "function") {
+            mockResponse.data.attributes.type_of_show.forEach((item: any, index: number) => {
+              typeOfShowFlatlist.renderProp("renderItem")({
+                item: item,
+                index: index,
+              });
+              typeOfShowFlatlist.renderProp("keyExtractor")({ item });
+            })
+          }
         }
         if (item.type === "image") {
           renderItem.findWhere(node => node.prop("testID") === "threeDotIcon").simulate("press")
