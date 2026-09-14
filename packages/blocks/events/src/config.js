@@ -15,6 +15,7 @@ exports.GOOGLE_API_KEY = "AIzaSyAQu429K52drmir9450TvUYcy82ZL3QQ9I";
 exports.GOOGLE_PACES_API_BASE_URL = "https://maps.googleapis.com/maps/api/place";
 exports.guestEventsEndPoint = "/get_all_show";
 exports.userEventsEndPoint = "/shows";
+exports.hotVenuesEndPoint = "/bx_block_eventregistration/hot_venues";
 exports.chatsEndPoint = "/bx_block_chat/chats"
 exports.likeDiskeEventEndPoint = "/bx_block_like/likes";
 exports.eventDetailEndPoint = "/shows";

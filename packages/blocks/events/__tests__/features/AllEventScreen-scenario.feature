@@ -99,7 +99,7 @@ Feature: AllEventScreen
         Given I am a User loading AllEventScreen
         When I navigate to the AllEventScreen
         When the home feed has swimming shows from the API
-        Then Artists to Watch and Hot Venues are shown from those shows
+        Then Artists to Watch are shown from those shows and Hot Venues from the hot venues API
 
     Scenario: See all artists opens the all artists screen
         Given I am a User loading AllEventScreen

@@ -42,6 +42,7 @@ type HomeFeedEventsCache = {
   filteredEventList: any[];
   stateNameList: string[];
   selectedState: string;
+  hotVenues: any[];
 };
 
 /** Keeps the home feed list across remounts (e.g. returning from event details). */
@@ -147,6 +148,7 @@ interface S {
   showType: any;
   selectedSortBy: string;
   sortClicked: boolean;
+  hotVenues: any[];
   /** US state / region name from reverse geocode of the device location (shown in state dropdown). */
   currentLocationState: string;
   forceUpdateRequired: boolean;
@@ -168,6 +170,8 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
   // Customizable Area Start
   getEventsListApiCallId: any;
   lastEventsListApiUrl: string = '';
+  getHotVenuesApiCallId: any;
+  lastHotVenuesApiUrl: string = '';
   postLikeDislikeEventApiCallId: any;
   getEventDetailApiCallID: any;
   addEventToCalendarAPICallID: any;
@@ -258,6 +262,7 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
       showType: '',
       selectedSortBy: '',
       sortClicked: false,
+      hotVenues: [],
       currentLocationState: '',
       forceUpdateRequired: false,
       forceUpdateStoreUrl: '',
@@ -351,6 +356,9 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
       filteredEventList: homeFeedEventsCache.filteredEventList,
       stateNameList: homeFeedEventsCache.stateNameList,
       selectedState: homeFeedEventsCache.selectedState,
+      hotVenues: Array.isArray(homeFeedEventsCache.hotVenues)
+        ? homeFeedEventsCache.hotVenues
+        : [],
       isLoading: false,
       detailsLoading: false,
     });
@@ -1088,6 +1096,8 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
 
       if (apiRequestCallId === this.getEventsListApiCallId) {
         this.handleEventsListApiResponse(message);
+      } else if (apiRequestCallId === this.getHotVenuesApiCallId) {
+        this.handleHotVenuesApiResponse(message);
       } else if (apiRequestCallId === this.postLikeDislikeEventApiCallId) {
         this.handleLikeDislikeEventResponse(message);
       } else if (apiRequestCallId === this.getEventDetailApiCallID) {
@@ -1435,6 +1445,27 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
     }
   };
 
+  handleHotVenuesApiResponse = (message: Message) => {
+    const responseJson = message.getData(
+      getName(MessageEnum.RestAPIResponceSuccessMessage),
+    );
+    const venues =
+      responseJson != null &&
+      !responseJson.errors &&
+      Array.isArray(responseJson.data)
+        ? responseJson.data
+        : [];
+    this.setState({ hotVenues: venues }, () => {
+      if (!homeFeedEventsCache) {
+        return;
+      }
+      this.saveHomeFeedEventsCache({
+        ...homeFeedEventsCache,
+        hotVenues: venues,
+      });
+    });
+  };
+
   logTopHomeFeedShows = (responseJson: any) => {
     const regions =
       Array.isArray(responseJson?.data) && responseJson.data.length > 0
@@ -1509,6 +1540,7 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
               filteredEventList: [],
               stateNameList,
               selectedState: this.state.selectedState,
+              hotVenues: this.state.hotVenues,
             });
           },
         );
@@ -1537,6 +1569,7 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
             filteredEventList,
             stateNameList: filteredStateList,
             selectedState,
+            hotVenues: this.state.hotVenues,
           });
         },
       );
@@ -1559,6 +1592,7 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
             filteredEventList: [],
             stateNameList,
             selectedState: this.state.selectedState,
+            hotVenues: this.state.hotVenues,
           });
         },
       );
@@ -2249,6 +2283,7 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
     if (!this.hasCachedHomeFeedEvents()) {
       this.safeSetState({ isLoading: true });
     }
+    this.getHotVenuesAPI();
     const getEventsListAPIMsg = new Message(
       getName(MessageEnum.RestAPIRequestMessage),
     );
@@ -2396,6 +2431,7 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
       this.getEventsFromLocation();
       return;
     }
+    this.getHotVenuesAPI();
 
     const getEventsListMsg = new Message(
       getName(MessageEnum.RestAPIRequestMessage),
@@ -2492,6 +2528,56 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
     );
 
     runEngine.sendMessage(getEventsListMsg.id, getEventsListMsg);
+  };
+
+  getHotVenuesAPI = () => {
+    if (this.isEventDetailScreen()) {
+      return;
+    }
+    const getHotVenuesMsg = new Message(
+      getName(MessageEnum.RestAPIRequestMessage),
+    );
+    this.getHotVenuesApiCallId = getHotVenuesMsg.messageId;
+
+    const queryParams = [];
+    const categoryID =
+      this.state.selectedCategoryID === '0'
+        ? ''
+        : this.state.selectedCategoryID;
+    if (categoryID) {
+      queryParams.push(`category_id=${categoryID}`);
+    }
+    if (this.state.selectedState && this.state.selectedState !== 'All') {
+      queryParams.push(
+        `state=${encodeURIComponent(this.state.selectedState)}`,
+      );
+    }
+    const queryString =
+      queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
+    const endpoint = `${configJSON.hotVenuesEndPoint}${queryString}`;
+    this.lastHotVenuesApiUrl = `${baseURL}${endpoint}`;
+    console.log('[HomeFeed] hot venues API URL:', this.lastHotVenuesApiUrl);
+
+    const headers: Record<string, string> = {
+      'Content-Type': configJSON.validationApiContentType,
+    };
+    if (this.state.authToken) {
+      headers.token = this.state.authToken;
+    }
+
+    getHotVenuesMsg.addData(
+      getName(MessageEnum.RestAPIResponceEndPointMessage),
+      endpoint,
+    );
+    getHotVenuesMsg.addData(
+      getName(MessageEnum.RestAPIRequestHeaderMessage),
+      JSON.stringify(headers),
+    );
+    getHotVenuesMsg.addData(
+      getName(MessageEnum.RestAPIRequestMethodMessage),
+      configJSON.validationApiMethodType,
+    );
+    runEngine.sendMessage(getHotVenuesMsg.id, getHotVenuesMsg);
   };
 
   formatEventMonth = (eventDate: string) => {
@@ -2631,7 +2717,18 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
 
   openGoogleMaps = (data: any) => {
     if (data) {
-      const location = `${data.address} ${data.city} ${data.state} ${data.zip_code}`;
+      const location = [
+        data.address,
+        data.city,
+        data.state,
+        data.zip_code,
+        data.country,
+      ]
+        .filter(part => part != null && String(part).trim() !== '')
+        .join(' ');
+      if (!location) {
+        return;
+      }
       const locationUrl = `https://www.google.com/maps?q=${encodeURIComponent(
         location,
       )}`;

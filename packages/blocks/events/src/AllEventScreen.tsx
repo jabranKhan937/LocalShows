@@ -461,6 +461,7 @@ export default class AllEventScreen extends AllEventController {
               venue.showCount === 1
                 ? '1 show'
                 : `${venue.showCount} shows`;
+            const imageUri = this.resolveHomeFeedImageUrl(venue.image);
             return (
               <TouchableOpacity
                 key={venue.id}
@@ -469,11 +470,11 @@ export default class AllEventScreen extends AllEventController {
                 activeOpacity={0.9}
                 onPress={() => this.openGoogleMaps(venue)}
               >
-                {venue.image ? (
+                {imageUri ? (
                   <FastImage
                     style={this.styles.hotVenueImage}
                     source={{
-                      uri: venue.image,
+                      uri: imageUri,
                       priority: FastImage.priority.high,
                     }}
                     resizeMode={FastImage.resizeMode.cover}
@@ -1638,55 +1639,57 @@ export default class AllEventScreen extends AllEventController {
   };
 
   getHotVenues = () => {
-    const byKey = new Map<
-      string,
-      {
-        id: string;
-        name: string;
-        city: string;
-        image: string;
-        showCount: number;
-        address: string;
-        state: string;
-        zip_code: any;
-      }
-    >();
-    this.getDiscoveryShows().forEach(show => {
-      const name =
-        (typeof show.location === 'string' && show.location.trim()) ||
-        (typeof show.address === 'string' && show.address.trim()) ||
-        '';
-      if (!name) {
-        return;
-      }
-      const key = name.toLowerCase();
-      const image =
-        typeof show.profile_image === 'string' ? show.profile_image : '';
-      const existing = byKey.get(key);
-      if (existing) {
-        existing.showCount += 1;
-        if (!existing.image && image) {
-          existing.image = image;
+    const list = Array.isArray(this.state.hotVenues)
+      ? this.state.hotVenues
+      : [];
+    return list
+      .map(venue => {
+        if (!venue || typeof venue !== 'object') {
+          return null;
         }
-      } else {
-        byKey.set(key, {
-          id: key,
+        const name = typeof venue.name === 'string' ? venue.name.trim() : '';
+        if (!name) {
+          return null;
+        }
+        const rawCount =
+          venue.showCount != null ? venue.showCount : venue.show_count;
+        const showCount = Number(rawCount);
+        return {
+          id: venue.id != null ? String(venue.id) : name,
           name,
-          city:
-            (typeof show.city === 'string' && show.city.trim()) ||
-            (typeof show.state === 'string' && show.state.trim()) ||
-            '',
-          image,
-          showCount: 1,
-          address: typeof show.address === 'string' ? show.address : '',
-          state: typeof show.state === 'string' ? show.state : '',
-          zip_code: show.zip_code,
-        });
-      }
-    });
-    return Array.from(byKey.values())
-      .sort((a, b) => b.showCount - a.showCount)
-      .slice(0, 8);
+          city: typeof venue.city === 'string' ? venue.city.trim() : '',
+          image:
+            venue.image ||
+            (typeof venue.profile_image === 'string'
+              ? venue.profile_image
+              : ''),
+          showCount: Number.isFinite(showCount) ? showCount : 0,
+          address:
+            (typeof venue.address === 'string' && venue.address.trim()) ||
+            name,
+          state: typeof venue.state === 'string' ? venue.state.trim() : '',
+          zip_code: venue.zip_code,
+          country:
+            typeof venue.country === 'string' ? venue.country.trim() : '',
+          verified: Boolean(venue.verified),
+        };
+      })
+      .filter(
+        (
+          venue,
+        ): venue is {
+          id: string;
+          name: string;
+          city: string;
+          image: string;
+          showCount: number;
+          address: string;
+          state: string;
+          zip_code: any;
+          country: string;
+          verified: boolean;
+        } => venue != null,
+      );
   };
 
   handleSeeAllArtists = () => {

@@ -157,6 +157,26 @@ const mockResponse = {
   ]
 }
 
+const hotVenuesApiResponse = {
+  data: [
+    {
+      id: 42,
+      name: "The Roxy Theatre",
+      city: "West Hollywood",
+      state: "California",
+      country: "US",
+      show_count: 5,
+      verified: true,
+      profile_image: "https://api.localshows.com/rails/active_storage/blobs/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBBWnM9IiwiZXhwIjpudWxsLCJwdXIiOiJibG9iX2lkIn19--6201841c0c4de12e3b4a28f31424568fbebebaa9/E4784hdVoAQPfw5.jpeg",
+    },
+  ],
+  meta: {
+    start_date: "2026-09-01",
+    end_date: "2026-09-07",
+    message: "Hot venues this week.",
+  },
+};
+
 const mockCategoryList = [
   {
     "id": "30",
@@ -816,6 +836,12 @@ defineFeature(feature, (test) => {
       getEventListAPISuccess.addData(getName(MessageEnum.RestAPIResponceSuccessMessage), mockResponse);
       instance.getEventsListApiCallId = getEventListAPISuccess.messageId
       runEngine.sendMessage("Unit Test", getEventListAPISuccess)
+
+      const getHotVenuesAPISuccess = new Message(getName(MessageEnum.RestAPIResponceMessage))
+      getHotVenuesAPISuccess.addData(getName(MessageEnum.RestAPIResponceDataMessage), getHotVenuesAPISuccess.messageId);
+      getHotVenuesAPISuccess.addData(getName(MessageEnum.RestAPIResponceSuccessMessage), hotVenuesApiResponse);
+      instance.getHotVenuesApiCallId = getHotVenuesAPISuccess.messageId
+      runEngine.sendMessage("Unit Test", getHotVenuesAPISuccess)
 
       const getCommentsAPISuccess = new Message(getName(MessageEnum.RestAPIResponceMessage))
       getCommentsAPISuccess.addData(getName(MessageEnum.RestAPIResponceDataMessage), getCommentsAPISuccess.messageId);
@@ -2030,18 +2056,40 @@ defineFeature(feature, (test) => {
         selectedState: "All",
         isLoading: false,
       });
+      instance.getHotVenuesAPI();
+      const getHotVenuesAPISuccess = new Message(
+        getName(MessageEnum.RestAPIResponceMessage)
+      );
+      getHotVenuesAPISuccess.addData(
+        getName(MessageEnum.RestAPIResponceDataMessage),
+        getHotVenuesAPISuccess.messageId
+      );
+      getHotVenuesAPISuccess.addData(
+        getName(MessageEnum.RestAPIResponceSuccessMessage),
+        hotVenuesApiResponse
+      );
+      instance.getHotVenuesApiCallId = getHotVenuesAPISuccess.messageId;
+      runEngine.sendMessage("Unit Test", getHotVenuesAPISuccess);
+
+      instance.setState({ selectedState: "California", selectedCategoryID: "30" });
+      instance.getHotVenuesAPI();
+      expect(instance.lastHotVenuesApiUrl).toContain("state=California");
+      expect(instance.lastHotVenuesApiUrl).toContain("category_id=30");
+      instance.setState({ selectedState: "All", selectedCategoryID: "0" });
     });
 
-    then("Artists to Watch and Hot Venues are shown from those shows", async () => {
+    then("Artists to Watch are shown from those shows and Hot Venues from the hot venues API", async () => {
       const artists = instance.getArtistsToWatch();
       const venues = instance.getHotVenues();
+      const roxyVenue = hotVenuesApiResponse.data[0];
       expect(artists.length).toBeGreaterThan(0);
       expect(artists[0].name).toBe(swimmingShowFromApi.event_title);
       expect(artists[0].upcomingCount).toBe(2);
       expect(venues.length).toBeGreaterThan(0);
-      expect(venues[0].name).toBe(swimmingShowFromApi.location);
-      expect(venues[0].city).toBe(swimmingShowFromApi.city);
-      expect(venues[0].showCount).toBe(2);
+      expect(venues[0].name).toBe(roxyVenue.name);
+      expect(venues[0].city).toBe(roxyVenue.city);
+      expect(venues[0].showCount).toBe(roxyVenue.show_count);
+      expect(venues[0].image).toBe(roxyVenue.profile_image);
 
       const footer = shallow(instance.renderHomeFeedFooter(false));
       expect(
@@ -2050,6 +2098,10 @@ defineFeature(feature, (test) => {
       ).toBeGreaterThan(0);
       expect(
         footer.findWhere((node) => node.prop("testID") === "hotVenuesSection")
+          .length
+      ).toBeGreaterThan(0);
+      expect(
+        footer.findWhere((node) => node.prop("testID") === `hotVenue-${roxyVenue.id}`)
           .length
       ).toBeGreaterThan(0);
       footer
@@ -2068,6 +2120,22 @@ defineFeature(feature, (test) => {
         "UserProfileBasicBlockArtist3",
         { isOtherUser: true }
       );
+
+      const getHotVenuesAPIEmpty = new Message(
+        getName(MessageEnum.RestAPIResponceMessage)
+      );
+      getHotVenuesAPIEmpty.addData(
+        getName(MessageEnum.RestAPIResponceDataMessage),
+        getHotVenuesAPIEmpty.messageId
+      );
+      getHotVenuesAPIEmpty.addData(
+        getName(MessageEnum.RestAPIResponceSuccessMessage),
+        { data: [] }
+      );
+      instance.getHotVenuesApiCallId = getHotVenuesAPIEmpty.messageId;
+      runEngine.sendMessage("Unit Test", getHotVenuesAPIEmpty);
+      expect(instance.getHotVenues()).toEqual([]);
+      expect(instance.renderHotVenuesSection()).toBeNull();
     });
   });
 
