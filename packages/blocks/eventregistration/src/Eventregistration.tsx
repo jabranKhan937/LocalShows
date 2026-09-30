@@ -18,7 +18,7 @@ import {
 } from 'react-native';
 
 import MergeEngineUtilities from '../../utilities/src/MergeEngineUtilities';
-import {redesignTheme} from '../../utilities/src/Colors';
+import {androidPickerItemColor, redesignTheme, selectableCountries} from '../../utilities/src/Colors';
 import {
   downArrow,
   leftArrow,
@@ -282,8 +282,9 @@ export default class Eventregistration extends EventregistrationController {
       <TouchableOpacity
         testID="btnCountrySelect"
         activeOpacity={1}
+        disabled
         onPress={this.handleToogleModalCountryField}
-        style={[styles.textInputSty, styles.selectorSty]}>
+        style={[styles.textInputSty, styles.selectorSty, {opacity: 0.5}]}>
         <Text style={[styles.text, styles.selectorTextSty]}>
           {this.state.selectedCountry}
         </Text>
@@ -386,7 +387,7 @@ export default class Eventregistration extends EventregistrationController {
       onValueChange: (selectedCountry: string) =>
         this.handleSelectedCountryiOS(selectedCountry),
       title: 'Country',
-      items: (this.state.countriesList || []).map(
+      items: selectableCountries(this.state.countriesList).map(
         ({country_code, country_name}) => ({
           key: country_code,
           label: country_name,
@@ -496,14 +497,14 @@ export default class Eventregistration extends EventregistrationController {
           <Picker.Item
             label={'Select a state'}
             value={''}
-            color={theme.foreground}
+            color={androidPickerItemColor}
           />
           {this?.state?.states?.map(({key, name}) => (
             <Picker.Item
               label={name}
               key={key}
               value={key}
-              color={theme.foreground}
+              color={androidPickerItemColor}
             />
           ))}
         </Picker>
@@ -593,14 +594,14 @@ export default class Eventregistration extends EventregistrationController {
           <Picker.Item
             label={'Select a city'}
             value={''}
-            color={theme.foreground}
+            color={androidPickerItemColor}
           />
           {this?.state?.cities?.map((name: string) => (
             <Picker.Item
               label={name}
               key={name}
               value={name}
-              color={theme.foreground}
+              color={androidPickerItemColor}
             />
           ))}
         </Picker>
@@ -627,17 +628,15 @@ export default class Eventregistration extends EventregistrationController {
   };
   renderType = () => {
     const styles = this.styles;
-    const theme = this.getTravelTheme();
     return (
       <>
         <Text style={[styles.text, styles.textInputLabel]}>Type</Text>
-        {this.isPlatformiOS() ? this.renderTypeiOS() : this.renderTypeAndroid()}
+        {this.renderTypeiOS()}
       </>
     );
   };
   renderTypeiOS = () => {
     const styles = this.styles;
-    const theme = this.getTravelTheme();
     const {selectedType} = this.state;
     return (
       <TouchableOpacity
@@ -652,38 +651,6 @@ export default class Eventregistration extends EventregistrationController {
     );
   };
 
-  renderTypeAndroid = () => {
-    const styles = this.styles;
-    const theme = this.getTravelTheme();
-    return (
-      <View
-        style={[
-          styles.textInputSty,
-          styles.selectorSty,
-          {
-            paddingHorizontal: 0,
-          },
-        ]}>
-        <Picker
-          testID="typePicker"
-          selectedValue={this.state.selectedType}
-          onValueChange={this.handleSelectedType}
-          style={[styles.textInputSty, styles.selectorSty, {color: theme.foreground}]}
-          itemStyle={[styles.text, styles.selectorTextSty]}
-          dropdownIconColor={theme.muted}>
-          {this?.state?.typesList?.map(item => (
-            <Picker.Item
-              key={item.id}
-              label={item.attributes.name}
-              value={item.attributes.name}
-              color={theme.foreground}
-            />
-          ))}
-        </Picker>
-        <Image source={leftArrow} style={styles.downArrowSty} />
-      </View>
-    );
-  };
   datePicker = () => {
     const {showDateSelector, displayedDate} = this.state;
     const styles = this.styles;
@@ -1235,6 +1202,11 @@ const createTravelStyles = (theme: TravelTheme) => StyleSheet.create({
     maxHeight: '62%',
     borderWidth: 1,
     borderColor: theme.border,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: -2},
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 24,
   },
   sheetHandle: {
     alignSelf: 'center',
@@ -1666,7 +1638,10 @@ const createTravelStyles = (theme: TravelTheme) => StyleSheet.create({
   centeredView: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(8, 8, 15, 0.72)',
+    backgroundColor:
+      theme.background === '#FFFFFF'
+        ? 'rgba(26, 26, 26, 0.4)'
+        : 'rgba(8, 8, 15, 0.72)',
   },
   modalView: {
     maxHeight: '55%',

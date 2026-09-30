@@ -21,7 +21,7 @@ import {
 import CategoriessubcategoriesController, {
   Props,
 } from './CategoriessubcategoriesController';
-import { redesignTheme } from '../../utilities/src/Colors';
+import { androidPickerItemColor, redesignTheme } from '../../utilities/src/Colors';
 import { leftArrow } from '../../events/src/assets';
 import Icon from 'react-native-vector-icons/Feather';
 import { Picker } from '@react-native-picker/picker';
@@ -536,12 +536,13 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
                     dropdownIconColor={theme.muted}
                     selectedValue={this.state.defaultState}
                     onValueChange={defaultState => this.setState({ defaultState })}>
-                    <Picker.Item label={'Select a state'} value={''} />
+                    <Picker.Item label={'Select a state'} value={''} color={androidPickerItemColor} />
                     {this.state.states.map((elem: any) => (
                       <Picker.Item
                         key={elem.key}
                         label={elem.name}
                         value={elem.key}
+                        color={androidPickerItemColor}
                       />
                     ))}
                   </Picker>
@@ -597,12 +598,13 @@ export default class Categoriessubcategories extends CategoriessubcategoriesCont
                       dropdownIconColor={theme.muted}
                       selectedValue={this.state.altState}
                       onValueChange={altState => this.setState({ altState })}>
-                      <Picker.Item label={'Select a state'} value={''} />
+                      <Picker.Item label={'Select a state'} value={''} color={androidPickerItemColor} />
                       {this.state.states.map((elem: any) => (
                         <Picker.Item
                           key={elem.key}
                           label={elem.name}
                           value={elem.key}
+                          color={androidPickerItemColor}
                         />
                       ))}
                     </Picker>

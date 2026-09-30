@@ -1445,16 +1445,37 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
     }
   };
 
+  extractHotVenueRecords = (responseJson: any): any[] => {
+    if (!responseJson || responseJson.errors) {
+      return [];
+    }
+    const buckets = [
+      responseJson.data,
+      responseJson.venues,
+      responseJson.hot_venues,
+      responseJson.data?.venues,
+      responseJson.data?.hot_venues,
+      responseJson.data?.data,
+    ];
+    const list = buckets.find(Array.isArray);
+    return Array.isArray(list) ? list : [];
+  };
+
   handleHotVenuesApiResponse = (message: Message) => {
     const responseJson = message.getData(
       getName(MessageEnum.RestAPIResponceSuccessMessage),
     );
-    const venues =
-      responseJson != null &&
-      !responseJson.errors &&
-      Array.isArray(responseJson.data)
-        ? responseJson.data
-        : [];
+    const errorResponse = message.getData(
+      getName(MessageEnum.RestAPIResponceErrorMessage),
+    );
+    const venues = this.extractHotVenueRecords(responseJson);
+    console.log('[HomeFeed] hot venues API count:', venues.length);
+    if (errorResponse || responseJson?.errors) {
+      console.log(
+        '[HomeFeed] hot venues API error:',
+        errorResponse || responseJson?.errors,
+      );
+    }
     this.setState({ hotVenues: venues }, () => {
       if (!homeFeedEventsCache) {
         return;
@@ -2530,7 +2551,49 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
     runEngine.sendMessage(getEventsListMsg.id, getEventsListMsg);
   };
 
+  formatHotVenuesQueryDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  getHotVenuesQueryRange = () => {
+    const start = new Date();
+    const weekday = start.getDay();
+    const mondayOffset = weekday === 0 ? -6 : 1 - weekday;
+    start.setDate(start.getDate() + mondayOffset);
+    const end = new Date();
+    end.setDate(end.getDate() + 60);
+    return {
+      startDate: this.formatHotVenuesQueryDate(start),
+      endDate: this.formatHotVenuesQueryDate(end),
+    };
+  };
+
   getHotVenuesAPI = () => {
+    if (this.isEventDetailScreen()) {
+      return;
+    }
+    if (this.state.authToken) {
+      this.sendHotVenuesRequest(this.state.authToken);
+      return;
+    }
+    void this.sendHotVenuesRequestWithStoredToken();
+  };
+
+  sendHotVenuesRequestWithStoredToken = async () => {
+    const token = await getStorageData('authToken');
+    if (!this.isComponentMounted || this.isEventDetailScreen()) {
+      return;
+    }
+    if (token && token !== this.state.authToken) {
+      this.setState({ authToken: token });
+    }
+    this.sendHotVenuesRequest(token || '');
+  };
+
+  sendHotVenuesRequest = (authToken: string) => {
     if (this.isEventDetailScreen()) {
       return;
     }
@@ -2552,6 +2615,9 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
         `state=${encodeURIComponent(this.state.selectedState)}`,
       );
     }
+    const { startDate, endDate } = this.getHotVenuesQueryRange();
+    queryParams.push(`start_date=${startDate}`);
+    queryParams.push(`end_date=${endDate}`);
     const queryString =
       queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
     const endpoint = `${configJSON.hotVenuesEndPoint}${queryString}`;
@@ -2561,8 +2627,8 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
     const headers: Record<string, string> = {
       'Content-Type': configJSON.validationApiContentType,
     };
-    if (this.state.authToken) {
-      headers.token = this.state.authToken;
+    if (authToken) {
+      headers.token = authToken;
     }
 
     getHotVenuesMsg.addData(

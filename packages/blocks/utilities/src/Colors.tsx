@@ -69,6 +69,18 @@ export const lightTheme = {
   divider: '#E4E4EA',
 } as const;
 
+/** Android's native picker menu uses a light surface, so option labels must stay dark. */
+export const androidPickerItemColor = '#1A1A1A';
+
+export function selectableCountries<T extends { country_name?: string }>(
+  countries: T[] | null | undefined,
+): T[] {
+  return (countries ?? []).filter(country => {
+    const name = `${country?.country_name ?? ''}`.trim();
+    return name.length > 0 && name.toLowerCase() !== 'country_name';
+  });
+}
+
 export const PROFILE_THEME_STORAGE_KEY = 'is_dark_mode';
 export const PROFILE_THEME_CHANGED_EVENT = 'localshows:profileThemeChanged';
 

@@ -21,6 +21,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import moment from 'moment';
 import FastImage from '../../../components/src/SafeFastImage';
@@ -61,7 +62,7 @@ export default class PostDetails extends PostCreationController {
       isDarkMode: true,
     };
   }
-
+                        
   get eventStyles() {
     return this.state.isDarkMode ? darkAllEventStyles : lightAllEventStyles;
   }
@@ -264,8 +265,8 @@ export default class PostDetails extends PostCreationController {
                 onPress={this.likeDislikeEventAPI}
                 activeOpacity={0.8}
               >
-                <Icon
-                  name="heart"
+                <FontAwesome
+                  name={liked ? 'heart' : 'heart-o'}
                   size={16}
                   color={liked ? this.getDetailTheme().primary : '#FFFFFF'}
                 />
@@ -442,8 +443,8 @@ export default class PostDetails extends PostCreationController {
               activeOpacity={0.7}
               hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
             >
-              <Icon
-                name="heart"
+              <FontAwesome
+                name={liked ? 'heart' : 'heart-o'}
                 size={18}
                 color={liked ? this.getDetailTheme().primary : iconColor}
               />
@@ -784,7 +785,7 @@ export default class PostDetails extends PostCreationController {
     });
     return { knownRules, otherRules };
   };
-
+                                                                                             
   renderRulesAndRegulations = () => {
     const postRules = this.getPostRules();
     const expanded = (this.state as any).showRulesExpanded;
@@ -863,11 +864,11 @@ export default class PostDetails extends PostCreationController {
       </View>
     );
   };
-
+                                                                                  
   closeRulesMoreModal = () => {
     this.setState({ showRulesMoreModal: false });
   };
-
+                                                                
   renderRulesMoreModal = () => {
     const showRulesMoreModal = this.state.showRulesMoreModal;
     const postRules = this.getPostRules();

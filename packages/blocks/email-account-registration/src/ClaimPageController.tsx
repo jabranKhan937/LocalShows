@@ -12,6 +12,7 @@ import {
   removeStorageData,
   setStorageData,
 } from '../../../framework/src/Utilities';
+import { selectableCountries } from '../../utilities/src/Colors';
 interface IPlaceRecord {
   key: string;
   name: string;
@@ -331,7 +332,7 @@ export default class ClaimPageController extends BlockComponent<Props, S, SS> {
     if (!responseJson.errors) {
       this.setState(
         {
-          countryList: responseJson.countries,
+          countryList: selectableCountries(responseJson.countries),
           stateList: [],
           selectedState: '',
           cityList: [],

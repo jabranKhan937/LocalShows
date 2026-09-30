@@ -42,6 +42,18 @@ export default class SearchResult extends SearchController {
     // Customizable Area End
   }
 
+  componentDidUpdate(prevProps: Props) {
+    const previousEventList =
+      prevProps.route?.params?.eventList ||
+      prevProps.navigation?.state?.params?.eventList;
+    const nextEventList =
+      this.props.route?.params?.eventList ||
+      this.props.navigation?.state?.params?.eventList;
+    if (nextEventList && nextEventList !== previousEventList) {
+      this.setEventList(nextEventList);
+    }
+  }
+
   // Customizable Area Start
   defaultEmojisForSelectionBar = ["️💖", "🙌", "🔥", "👏", "😢", "😍", "😲", "😂"];
 

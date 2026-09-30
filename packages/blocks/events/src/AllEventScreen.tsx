@@ -1,6 +1,7 @@
 import React from 'react';
 // Customizable Area Start.                             
 import {
+  Alert,
   View,
   Text,
   TouchableOpacity,
@@ -32,6 +33,7 @@ import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Picker } from '@react-native-picker/picker';
+import { androidPickerItemColor } from '../../utilities/src/Colors';
 import FastImage from '../../../components/src/SafeFastImage';
 import {
   deviceHeight,
@@ -43,7 +45,11 @@ import {
 
 // Customizable Area End
 
-import AllEventController, { Props, baseURL } from './AllEventController';
+import AllEventController, {
+  Props,
+  baseURL,
+  configJSON,
+} from './AllEventController';
 
 export default class AllEventScreen extends AllEventController {
   constructor(props: Props) {
@@ -57,6 +63,8 @@ export default class AllEventScreen extends AllEventController {
   }
 
   failedArtistImageIds = new Set<string>();
+  failedHotVenueImageIds = new Set<string>();
+  nearMeState = '';
                                                       
   async componentDidMount() {
     try {
@@ -289,7 +297,7 @@ export default class AllEventScreen extends AllEventController {
       <View testID="homeFeedDiscoveryFooter" style={this.styles.discoveryFooter}>
         {this.renderShowMoreFooter(hasMoreShows)}
         {this.renderArtistsToWatchSection(artists)}
-        {this.renderHotVenuesSection(venues)}
+        {this.renderHotVenuesSection(venues.slice(0, 8))}
       </View>
     );
   };
@@ -438,12 +446,12 @@ export default class AllEventScreen extends AllEventController {
         <View style={this.styles.discoverySectionHeader}>
           <Text style={this.styles.discoverySectionTitle}>HOT VENUES</Text>
           <TouchableOpacity
-            testID="viewVenuesMap"
+            testID="seeAllVenues"
             style={this.styles.discoverySectionLink}
-            onPress={this.handleViewHotVenuesMap}
+            onPress={this.handleSeeAllVenues}
             activeOpacity={0.7}
           >
-            <Text style={this.styles.discoverySectionLinkText}>View map</Text>
+            <Text style={this.styles.discoverySectionLinkText}>See all</Text>
             <Icon
               name="chevron-right"
               size={14}
@@ -461,14 +469,16 @@ export default class AllEventScreen extends AllEventController {
               venue.showCount === 1
                 ? '1 show'
                 : `${venue.showCount} shows`;
-            const imageUri = this.resolveHomeFeedImageUrl(venue.image);
+            const imageUri = this.getHotVenueImageUri(venue);
             return (
               <TouchableOpacity
                 key={venue.id}
                 testID={`hotVenue-${venue.id}`}
                 style={this.styles.hotVenueCard}
                 activeOpacity={0.9}
-                onPress={() => this.openGoogleMaps(venue)}
+                onPress={() => {
+                  void this.handleHotVenuePress(venue);
+                }}
               >
                 {imageUri ? (
                   <FastImage
@@ -478,14 +488,10 @@ export default class AllEventScreen extends AllEventController {
                       priority: FastImage.priority.high,
                     }}
                     resizeMode={FastImage.resizeMode.cover}
+                    onError={() => this.handleHotVenueImageError(venue)}
                   />
                 ) : (
-                  <View
-                    style={[
-                      this.styles.hotVenueImage,
-                      this.styles.compactShowThumbPlaceholder,
-                    ]}
-                  />
+                  <View style={this.styles.hotVenueImage} />
                 )}
                 <View style={this.styles.hotVenueScrim} />
                 <View style={this.styles.hotVenueTextWrap}>
@@ -1212,6 +1218,96 @@ export default class AllEventScreen extends AllEventController {
     );
   };
 
+  isNearMeActive = () => {
+    return (
+      this.nearMeState !== '' &&
+      this.state.selectedState === this.nearMeState
+    );
+  };
+
+  readStoredUserState = async () => {
+    const stored = await getStorageData('user_state');
+    if (typeof stored === 'string') {
+      const trimmed = stored.trim();
+      if (trimmed && trimmed !== 'null' && trimmed !== 'undefined') {
+        return trimmed;
+      }
+    }
+    return '';
+  };
+
+  resolveLoggedInUserState = async (authToken: string) => {
+    const headers = {
+      'Content-Type': configJSON.validationApiContentType,
+      token: authToken,
+    };
+    const userId = await getStorageData('user_id');
+    if (userId) {
+      try {
+        const profileUrl = `${baseURL}/account_block/show_user_profile?id=${encodeURIComponent(
+          String(userId),
+        )}`;
+        console.log('[HomeFeed] near me profile URL:', profileUrl);
+        const profileResponse = await fetch(profileUrl, {
+          method: 'GET',
+          headers,
+        });
+        const profileJson = await profileResponse.json().catch(() => ({}));
+        const profileState = profileJson?.data?.attributes?.state;
+        console.log('[HomeFeed] near me profile state:', profileState);
+        if (typeof profileState === 'string' && profileState.trim()) {
+          return profileState.trim();
+        }
+      } catch (_error) {
+        console.log('[HomeFeed] near me profile state lookup failed');
+      }
+    }
+    const stored = await this.readStoredUserState();
+    if (stored) {
+      return stored;
+    }
+    return '';
+  };
+
+  matchFeedStateName = (userState: string) => {
+    const needle = userState.trim().toLowerCase();
+    const match = this.getStateDropdownList().find(
+      item => item !== 'All' && item.toLowerCase() === needle,
+    );
+    return match || userState.trim();
+  };
+
+  handleNearMePress = async () => {
+    if (this.isForceUpdateBlocking()) {
+      return;
+    }
+    const authToken =
+      this.state.authToken || (await getStorageData('authToken'));
+    if (!authToken) {
+      this.setState({ loginPopup: true });
+      return;
+    }
+    const userState = await this.resolveLoggedInUserState(authToken);
+    if (!userState) {
+      Alert.alert(
+        'Near Me',
+        'Add your state on your profile to see shows near you.',
+      );
+      return;
+    }
+    const feedState = this.matchFeedStateName(userState);
+    this.nearMeState = feedState;
+    const list = this.eventsFeedListRef?.current;
+    if (list?.scrollToOffset) {
+      list.scrollToOffset({ offset: 0, animated: true });
+    }
+    if (Platform.OS === 'android') {
+      this.handleStateValueChangeAndroid(feedState);
+      return;
+    }
+    this.handleStateValueChangeIOS(feedState);
+  };
+
   renderSearch = () => {
     return (
       <View style={this.styles.inputContainer}>
@@ -1229,11 +1325,23 @@ export default class AllEventScreen extends AllEventController {
         />
         <TouchableOpacity
           testID="nearMeButton"
-          style={this.styles.nearMeButton}
-          onPress={this.modalYesClicked}
+          style={[
+            this.styles.nearMeButton,
+            this.isNearMeActive() ? this.styles.nearMeButtonActive : null,
+          ]}
+          onPress={() => {
+            void this.handleNearMePress();
+          }}
           activeOpacity={0.75}
         >
-          <Text style={this.styles.nearMeButtonText}>Near Me</Text>
+          <Text
+            style={[
+              this.styles.nearMeButtonText,
+              this.isNearMeActive() ? this.styles.nearMeButtonTextActive : null,
+            ]}
+          >
+            Near Me
+          </Text>
         </TouchableOpacity>
       </View>
     );
@@ -1638,47 +1746,118 @@ export default class AllEventScreen extends AllEventController {
     });
   };
 
-  getHotVenues = () => {
-    const list = Array.isArray(this.state.hotVenues)
-      ? this.state.hotVenues
-      : [];
+  readHotVenueText = (...values: any[]) => {
+    const match = values.find(
+      value => typeof value === 'string' && value.trim() !== '',
+    );
+    return typeof match === 'string' ? match.trim() : '';
+  };
+
+  readHotVenueImage = (record: any) => {
+    const candidates = [
+      record?.image,
+      record?.profile_image,
+      record?.profile_image_url,
+    ];
+    for (const candidate of candidates) {
+      if (typeof candidate === 'string' && candidate.trim()) {
+        return candidate.trim();
+      }
+      if (candidate && typeof candidate === 'object') {
+        const nested = this.readHotVenueText(
+          candidate.url,
+          candidate.uri,
+          candidate.image,
+        );
+        if (nested) {
+          return nested;
+        }
+      }
+    }
+    return '';
+  };
+
+  mapHotVenueRecord = (venue: any) => {
+    if (!venue || typeof venue !== 'object') {
+      return null;
+    }
+    const source =
+      venue.attributes && typeof venue.attributes === 'object'
+        ? { ...venue.attributes, id: venue.id ?? venue.attributes.id }
+        : venue;
+    const name = this.readHotVenueText(
+      source.name,
+      source.venue_name,
+      source.first_name,
+      venue.name,
+    );
+    if (!name) {
+      return null;
+    }
+    const rawCount =
+      source.showCount != null
+        ? source.showCount
+        : source.show_count != null
+          ? source.show_count
+          : venue.show_count;
+    const showCount = Number(rawCount);
+    const id = source.id != null ? source.id : venue.id;
+    const accountId = this.readHotVenueAccountId(source, venue);
+    return {
+      id: id != null ? String(id) : name,
+      accountId,
+      accountType:
+        this.readHotVenueText(
+          source.account_type,
+          source.role,
+          venue.account_type,
+          venue.role,
+        ) || 'Venue',
+      name,
+      city: this.readHotVenueText(source.city, venue.city),
+      image: this.readHotVenueImage(source) || this.readHotVenueImage(venue),
+      showCount: Number.isFinite(showCount) ? showCount : 0,
+      address: this.readHotVenueText(source.address, venue.address) || name,
+      state: this.readHotVenueText(source.state, venue.state),
+      zip_code: source.zip_code ?? venue.zip_code,
+      country: this.readHotVenueText(source.country, venue.country),
+      verified: Boolean(source.verified ?? venue.verified),
+    };
+  };
+
+  readHotVenueAccountId = (source: any, venue: any) => {
+    const candidates = [
+      source?.account_id,
+      source?.accountId,
+      venue?.account_id,
+      venue?.accountId,
+      source?.id,
+      venue?.id,
+    ];
+    for (const candidate of candidates) {
+      if (candidate == null || candidate === '') {
+        continue;
+      }
+      if (typeof candidate === 'number' && Number.isFinite(candidate)) {
+        return candidate;
+      }
+      if (typeof candidate === 'string' && /^\d+$/.test(candidate.trim())) {
+        return candidate.trim();
+      }
+    }
+    return null;
+  };
+
+  mapHotVenueList = (list: any[]) => {
     return list
-      .map(venue => {
-        if (!venue || typeof venue !== 'object') {
-          return null;
-        }
-        const name = typeof venue.name === 'string' ? venue.name.trim() : '';
-        if (!name) {
-          return null;
-        }
-        const rawCount =
-          venue.showCount != null ? venue.showCount : venue.show_count;
-        const showCount = Number(rawCount);
-        return {
-          id: venue.id != null ? String(venue.id) : name,
-          name,
-          city: typeof venue.city === 'string' ? venue.city.trim() : '',
-          image:
-            venue.image ||
-            (typeof venue.profile_image === 'string'
-              ? venue.profile_image
-              : ''),
-          showCount: Number.isFinite(showCount) ? showCount : 0,
-          address:
-            (typeof venue.address === 'string' && venue.address.trim()) ||
-            name,
-          state: typeof venue.state === 'string' ? venue.state.trim() : '',
-          zip_code: venue.zip_code,
-          country:
-            typeof venue.country === 'string' ? venue.country.trim() : '',
-          verified: Boolean(venue.verified),
-        };
-      })
+      .map(venue => this.mapHotVenueRecord(venue))
       .filter(
         (
           venue,
         ): venue is {
           id: string;
+          accountId: any;
+          accountType: string;
           name: string;
           city: string;
           image: string;
@@ -1692,6 +1871,164 @@ export default class AllEventScreen extends AllEventController {
       );
   };
 
+  getHotVenuesFromShows = () => {
+    const byKey = new Map<
+      string,
+      {
+        id: string;
+        accountId: any;
+        accountType: string;
+        name: string;
+        city: string;
+        image: string;
+        showCount: number;
+        address: string;
+        state: string;
+        zip_code: any;
+        country: string;
+        verified: boolean;
+      }
+    >();
+    this.getDiscoveryShows().forEach(show => {
+      const name = this.readHotVenueText(show.location, show.address);
+      if (!name) {
+        return;
+      }
+      const key = name.toLowerCase();
+      const image = this.readHotVenueImage(show);
+      const directoryRecord = this.findBandArtistRecord(name);
+      const accountId = directoryRecord?.id ?? null;
+      const accountType =
+        directoryRecord?.account_type || directoryRecord?.role || 'Venue';
+      const existing = byKey.get(key);
+      if (existing) {
+        existing.showCount += 1;
+        if (!existing.image && image) {
+          existing.image = image;
+        }
+        if (existing.accountId == null && accountId != null) {
+          existing.accountId = accountId;
+          existing.accountType = accountType;
+        }
+        return;
+      }
+      byKey.set(key, {
+        id: key,
+        accountId,
+        accountType,
+        name,
+        city: this.readHotVenueText(show.city, show.state),
+        image,
+        showCount: 1,
+        address: this.readHotVenueText(show.address) || name,
+        state: this.readHotVenueText(show.state),
+        zip_code: show.zip_code,
+        country: this.readHotVenueText(show.country),
+        verified: false,
+      });
+    });
+    return Array.from(byKey.values()).sort(
+      (a, b) => b.showCount - a.showCount,
+    );
+  };
+
+  getHotVenueImageUri = (venue: { id: string; image?: string; name?: string; city?: string }) => {
+    const profileUri = this.resolveHomeFeedImageUrl(venue.image);
+    const showCover = this.findShowCoverForVenue(venue);
+    if (!profileUri || this.failedHotVenueImageIds.has(venue.id)) {
+      return showCover || profileUri;
+    }
+    return profileUri;
+  };
+
+  handleHotVenueImageError = (venue: { id: string; name?: string; city?: string }) => {
+    const showCover = this.findShowCoverForVenue(venue);
+    if (
+      showCover &&
+      !this.failedHotVenueImageIds.has(venue.id)
+    ) {
+      this.failedHotVenueImageIds.add(venue.id);
+      this.forceUpdate();
+    }
+  };
+
+  readShowCoverImage = (show: any) => {
+    const gallery = Array.isArray(show?.images_and_videos)
+      ? show.images_and_videos[0]
+      : show?.images_and_videos;
+    return (
+      this.resolveHomeFeedImageUrl(show?.profile_image) ||
+      this.resolveHomeFeedImageUrl(gallery) ||
+      this.resolveHomeFeedImageUrl(show?.band_profile_image) ||
+      ''
+    );
+  };
+
+  findShowCoverForVenue = (venue: { name?: string; city?: string }) => {
+    const name = this.readHotVenueText(venue.name).toLowerCase();
+    const city = this.readHotVenueText(venue.city).toLowerCase();
+    let bestScore = 0;
+    let bestCover = '';
+    this.getDiscoveryShows().forEach(show => {
+      const cover = this.readShowCoverImage(show);
+      if (!cover) {
+        return;
+      }
+      const location = this.readHotVenueText(show.location).toLowerCase();
+      const address = this.readHotVenueText(show.address).toLowerCase();
+      const band = this.readHotVenueText(show.band_name).toLowerCase();
+      const title = this.readHotVenueText(show.event_title).toLowerCase();
+      const showCity = this.readHotVenueText(show.city).toLowerCase();
+      let score = 0;
+      if (
+        name &&
+        (location === name ||
+          address === name ||
+          band === name ||
+          title === name)
+      ) {
+        score += 5;
+      }
+      if (city && showCity === city) {
+        score += 2;
+      }
+      if (score > bestScore) {
+        bestScore = score;
+        bestCover = cover;
+      }
+    });
+    return bestScore > 0 ? bestCover : '';
+  };
+
+  withHotVenueShowCovers = <
+    T extends {
+      name: string;
+      city: string;
+      image: string;
+    },
+  >(
+    venues: T[],
+  ) => {
+    return venues.map(venue => {
+      if (this.resolveHomeFeedImageUrl(venue.image)) {
+        return venue;
+      }
+      const cover = this.findShowCoverForVenue(venue);
+      return cover ? { ...venue, image: cover } : venue;
+    });
+  };
+
+  getHotVenues = () => {
+    const list = Array.isArray(this.state.hotVenues)
+      ? this.state.hotVenues
+      : [];
+    const fromApi = this.mapHotVenueList(list);
+    if (fromApi.length > 0) {
+      return this.withHotVenueShowCovers(fromApi);
+    }
+    return this.withHotVenueShowCovers(this.getHotVenuesFromShows());
+  };
+
   handleSeeAllArtists = () => {
     if (this.isForceUpdateBlocking()) {
       return;
@@ -1699,12 +2036,23 @@ export default class AllEventScreen extends AllEventController {
     this.props.navigation.navigate('ArtistsToWatchAllScreen');
   };
 
-  handleViewHotVenuesMap = () => {
-    const venues = this.getHotVenues();
-    if (venues.length === 0) {
+  handleSeeAllVenues = () => {
+    if (this.isForceUpdateBlocking()) {
       return;
     }
-    this.openGoogleMaps(venues[0]);
+    this.props.navigation.navigate('HotVenuesAllScreen');
+  };
+
+  handleHotVenuePress = (venue: {
+    accountId?: any;
+    accountType?: string;
+    name?: string;
+  }) => {
+    return this.handleArtistToWatchPress({
+      accountId: venue.accountId,
+      accountType: venue.accountType || 'Venue',
+      name: venue.name,
+    });
   };
 
   formatGenreLabel = (genre: any): string => {
@@ -2495,7 +2843,7 @@ export default class AllEventScreen extends AllEventController {
             mode="dropdown"
           >
             {list.map((name: string) => (
-              <Picker.Item key={`state-android-${name}`} label={name} value={name} />
+              <Picker.Item key={`state-android-${name}`} label={name} value={name} color={androidPickerItemColor} />
             ))}
           </Picker>
         </View>
@@ -2739,6 +3087,7 @@ export default class AllEventScreen extends AllEventController {
           alignItems: 'center',
           backgroundColor: this.getHomeTheme().background,
           paddingTop: 50,
+          paddingHorizontal: 24,
           minHeight: 200,
         }}
       >
@@ -2747,9 +3096,10 @@ export default class AllEventScreen extends AllEventController {
             fontSize: 14,
             fontWeight: '400',
             color: this.getHomeTheme().muted,
+            textAlign: 'center',
           }}
         >
-          No record(s) found
+          No shows on the selected date range. Please apply another filter to see latest shows
         </Text>
       </View>
     );
@@ -2802,7 +3152,7 @@ export default class AllEventScreen extends AllEventController {
             renderItem={({ item, index }: any) => this.renderItems(item, index)}
             contentContainerStyle={[
               this.styles.feedListContent,
-              { paddingBottom: hasEvents ? 20 : 0 },
+              { paddingBottom: hasEvents ? 120 : 0 },
             ]}
             keyExtractor={(item, idx) =>
               `${String(item?.state_name ?? 'state')}-${idx}`

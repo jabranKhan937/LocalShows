@@ -163,10 +163,16 @@ export const createAllEventStyles = (theme: HomeTheme) => StyleSheet.create({
     paddingVertical: 8,
     marginLeft: 6,
   },
+  nearMeButtonActive: {
+    backgroundColor: theme.primary,
+  },
   nearMeButtonText: {
     color: theme.primary,
     fontSize: 12,
     fontWeight: '600',
+  },
+  nearMeButtonTextActive: {
+    color: '#FFFFFF',
   },
   featuredCard: {
     marginHorizontal: FEED_GUTTER,
@@ -1613,6 +1619,25 @@ export const createAllEventStyles = (theme: HomeTheme) => StyleSheet.create({
     textAlign: 'center',
     marginTop: 48,
   },
+  venueAllThumbWrap: {
+    width: 72,
+    height: 56,
+    borderRadius: 10,
+    overflow: 'hidden',
+    marginRight: 12,
+    backgroundColor: theme.card,
+  },
+  venueAllThumb: {
+    width: 72,
+    height: 56,
+  },
+  venueAllThumbPlaceholder: {
+    width: 72,
+    height: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.input,
+  },
   hotVenueCard: {
     width: 210,
     height: 136,
@@ -1622,8 +1647,11 @@ export const createAllEventStyles = (theme: HomeTheme) => StyleSheet.create({
     backgroundColor: theme.card,
   },
   hotVenueImage: {
-    width: '100%',
-    height: '100%',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 210,
+    height: 136,
   },
   hotVenueScrim: {
     ...StyleSheet.absoluteFillObject,

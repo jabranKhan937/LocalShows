@@ -20,6 +20,7 @@ import {
   PROFILE_THEME_CHANGED_EVENT,
   PROFILE_THEME_STORAGE_KEY,
   redesignTheme,
+  selectableCountries,
 } from '../../utilities/src/Colors';
 
 interface IPlaceRecord {
@@ -249,12 +250,15 @@ export default class CreatePageController extends BlockComponent<Props, S, SS> {
       this.getCountryCodeListApi();
       this.handleCountryListAPI();
       this.loadCreatePageTheme();
-      this.props.navigation.addListener('willFocus', async () => {
+      const applyAcceptedTerms = async () => {
         const tAndCAcceptance = await getStorageData('tAndCAcceptance');
-        if (tAndCAcceptance) {
+        if (tAndCAcceptance === 'true' || tAndCAcceptance === true) {
           removeStorageData('tAndCAcceptance');
-          this.setState({ acceptTermsConditions: tAndCAcceptance });
+          this.setState({ acceptTermsConditions: true });
         }
+      };
+      this.props.navigation.addListener('willFocus', async () => {
+        await applyAcceptedTerms();
         // Also check for userRole on focus (check both keys)
         let userRole = await getStorageData('userRole');
         if (!userRole) {
@@ -269,6 +273,7 @@ export default class CreatePageController extends BlockComponent<Props, S, SS> {
           this.setState(stateUpdate);
         }
       });
+      this.props.navigation.addListener('focus', applyAcceptedTerms);
     }
   }
 
@@ -478,7 +483,7 @@ export default class CreatePageController extends BlockComponent<Props, S, SS> {
       // Temporarily disable automatic location check to prevent crashes
       // this.checkPermissionForLocation();
       this.setState({
-        countryList: responseJson.countries,
+        countryList: selectableCountries(responseJson.countries),
         stateList: [],
         selectedState: '',
         cityList: [],

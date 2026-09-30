@@ -17,7 +17,7 @@ import {
   Platform
 } from "react-native";
 
-import { colors } from "../../utilities/src/Colors";
+import { androidPickerItemColor, colors, selectableCountries } from "../../utilities/src/Colors";
 import { leftArrow } from "./assets";
 import { Picker } from '@react-native-picker/picker';
 // Customizable Area End
@@ -240,7 +240,7 @@ export default class ClaimPage extends ClaimPageController {
                   selectedValue={this.state.selectedCountry}
                   onValueChange={selectedCountry => this.handleCountry(selectedCountry)}
                 >
-                  {this.state.countryList?.map(
+                  {selectableCountries(this.state.countryList).map(
                     ({ country_code, country_name }: { country_code: string; country_name: string }) => (
                       <Picker.Item key={country_code} label={country_name} value={country_name} />
                     )
@@ -274,10 +274,11 @@ export default class ClaimPage extends ClaimPageController {
           <Picker.Item
             label={configJSON.selectACountry}
             value={""}
+            color={androidPickerItemColor}
           />
-          {this.state.countryList?.map(
+          {selectableCountries(this.state.countryList).map(
             ({ country_code, country_name }: { country_code: string; country_name: string }) => (
-              <Picker.Item key={country_code} label={country_name} value={country_name} />
+              <Picker.Item key={country_code} label={country_name} value={country_name} color={androidPickerItemColor} />
             )
           )}
         </Picker>
@@ -380,10 +381,11 @@ export default class ClaimPage extends ClaimPageController {
           <Picker.Item
             label={configJSON.selectAState}
             value={""}
+            color={androidPickerItemColor}
           />
           {this.state.stateList.map(
             ({ key, name }: { key: string; name: string }) => (
-              <Picker.Item key={key} label={name} value={key} />
+              <Picker.Item key={key} label={name} value={key} color={androidPickerItemColor} />
             )
           )}
         </Picker>
@@ -484,9 +486,10 @@ export default class ClaimPage extends ClaimPageController {
           <Picker.Item
             label={configJSON.selectACity}
             value={""}
+            color={androidPickerItemColor}
           />
           {this.state.cityList.map((name: string) => (
-            <Picker.Item key={name} label={name} value={name} />
+            <Picker.Item key={name} label={name} value={name} color={androidPickerItemColor} />
           ))}
         </Picker>
         <Image source={leftArrow} style={styles.downArrowIcon} />

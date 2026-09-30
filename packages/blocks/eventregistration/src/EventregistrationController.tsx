@@ -18,6 +18,7 @@ import {
   PROFILE_THEME_CHANGED_EVENT,
   PROFILE_THEME_STORAGE_KEY,
   redesignTheme,
+  selectableCountries,
 } from "../../utilities/src/Colors";
 export interface ItineraryProps {
     id ?: string;
@@ -512,7 +513,7 @@ export default class EventregistrationController extends BlockComponent<
           this.getStateList('US')
         }
 
-        const countriesList = responseJson.countries.filter((country : {country_code: string}) => country.country_code !== "COUNTRY_ISO_CODE")
+        const countriesList = selectableCountries(responseJson.countries).filter((country : {country_code: string}) => country.country_code !== "COUNTRY_ISO_CODE")
         return this.setState({ countriesList  });
       }
      
@@ -874,10 +875,16 @@ export default class EventregistrationController extends BlockComponent<
   handleHasPendingItineraryCard(){
     return this.state.itineraryList.some(item => item.hasAcceptButton)
   }
+  isTravelDateMissing = (value?: string) => {
+    return !value || value === 'MM-DD-YYYY' || value === 'MM/DD/YYYY';
+  }
   handleAddItineraryFieldsBlank = () => {
     let hasError = true;
 
-    if(this.state.startDate === 'MM/DD/YYYY'){
+    if(
+      this.isTravelDateMissing(this.state.startDate) ||
+      this.isTravelDateMissing(this.state.endDate)
+    ){
       this.setState({fieldNameBlank: 'Date'})
       return hasError
     }
@@ -1159,7 +1166,7 @@ export default class EventregistrationController extends BlockComponent<
       }
 
       handleToogleModalCountryField = () => {
-        this.setState((prev) => ({ countryFieldClicked: !prev.countryFieldClicked }))
+        // Country stays locked to United States.
       }
       handleToogleModalStatesField = () => {
         this.setState((prev) => ({ stateFieldClicked: !prev.stateFieldClicked }))

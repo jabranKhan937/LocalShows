@@ -17,6 +17,7 @@ import {
   lightTheme,
   PROFILE_THEME_STORAGE_KEY,
   redesignTheme,
+  selectableCountries,
 } from '../../utilities/src/Colors';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import {
@@ -1766,7 +1767,7 @@ export default class UserProfileBasicController extends BlockComponent<
     } else {
       this.setState(
         {
-          countriesList: responseJson.countries,
+          countriesList: selectableCountries(responseJson.countries),
           states: [],
           selectedState: '',
           cities: [],

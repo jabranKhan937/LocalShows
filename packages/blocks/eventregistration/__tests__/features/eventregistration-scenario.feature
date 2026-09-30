@@ -64,6 +64,10 @@ Scenario: User navigates to eventregistration for ios
         Then I expect the handleFieldsBlank to be called
         When I press addItineraryBtn with cities blank fields
         Then I expect the handleFieldsBlank to be called
+        When I press addItineraryBtn without a depart or return date
+        Then I expect a date error and no itinerary to be created
+        When I press addItineraryBtn with only a depart date
+        Then I expect a date error when the return date is missing
         When I press addItineraryBtn
         Then scrols to the new tile
         Then I can see a card on the bottom

@@ -72,6 +72,8 @@ export default class FilteritemsController extends BlockComponent<
   deleteCalendarEventApiCallId: any;
   checkUnreadNotificationsApiCallId: any;
   profileThemeListener: { remove: () => void } | null = null;
+  requestedStartDate = "";
+  requestedEndDate = "";
 
   constructor(props: Props) {
     super(props);
@@ -135,15 +137,10 @@ export default class FilteritemsController extends BlockComponent<
         this.getUnreadNotificationsCount();
         // Always refetch calendar to show latest data (no need to kill the app)
         if (this.state.token) {
-          const start =
-            this.state.startDate !== "MM DD YYYY"
-              ? moment(this.state.startDate).format("YYYY-MM-DD")
-              : "";
-          const end =
-            this.state.endDate !== "MM DD YYYY"
-              ? moment(this.state.endDate).format("YYYY-MM-DD")
-              : "";
-          this.getShows(start, end);
+          this.getShows(
+            this.toApiDate(this.state.startDate),
+            this.toApiDate(this.state.endDate)
+          );
         } else {
           // Token might not be in state yet (e.g. first focus); getToken will trigger getShows
           this.getToken();
@@ -168,7 +165,10 @@ export default class FilteritemsController extends BlockComponent<
     const userId = await getStorageData("user_id");
     const userRole = token ? await getStorageData("userRole") : "fan";
     this.setState({ token, userRole, userId }, () => {
-      this.getShows("", "");
+      this.getShows(
+        this.toApiDate(this.state.startDate),
+        this.toApiDate(this.state.endDate)
+      );
     });
   };
 
@@ -218,33 +218,102 @@ export default class FilteritemsController extends BlockComponent<
     this.setState({ showLoginPopup: false });
   };
 
+  toApiDate = (value: any) => {
+    if (!value || value === "MM DD YYYY") {
+      return "";
+    }
+    const parsed = moment.isMoment(value)
+      ? value.clone()
+      : moment(value, ["YYYY-MM-DD", "MMM DD YYYY"], true);
+    return parsed.isValid() ? parsed.format("YYYY-MM-DD") : "";
+  };
+
+  orderDateRange = (startDate: string, endDate: string) => {
+    if (!startDate || !endDate) {
+      return { startDate, endDate };
+    }
+    if (moment(startDate, "YYYY-MM-DD").isAfter(moment(endDate, "YYYY-MM-DD"))) {
+      return { startDate: endDate, endDate: startDate };
+    }
+    return { startDate, endDate };
+  };
+
+  formatDisplayDate = (apiDate: string) =>
+    moment(apiDate, "YYYY-MM-DD").format("MMM DD YYYY");
+
   setDates = (dates: any) => {
-    if (dates.startDate) {
-      this.setState({
-        startDate: moment(dates.startDate).format("MMM DD YYYY"),
-      });
-    }
-    if (dates.endDate) {
-      this.setState({
-        endDate: moment(dates.endDate).format("MMM DD YYYY"),
-        showDateSelector: false,
-      });
-      this.getShows(
-        moment(dates.startDate).format("YYYY-MM-DD"),
-        moment(dates.endDate).format("YYYY-MM-DD")
-      );
-    }
     if (dates.displayedDate) {
       this.setState({
         displayedDate: dates.displayedDate,
       });
     }
+    if (dates.startDate && !dates.endDate) {
+      this.setState({
+        startDate: moment(dates.startDate).format("MMM DD YYYY"),
+      });
+      return;
+    }
+    if (!dates.endDate) {
+      return;
+    }
+
+    // The range picker sends only { endDate } on the second tap.
+    // Falling back to moment(undefined) would query from today and
+    // include shows outside the range shown in the date field.
+    const startApi = this.toApiDate(dates.startDate || this.state.startDate);
+    const endApi = this.toApiDate(dates.endDate);
+    const range = this.orderDateRange(startApi, endApi);
+    if (!range.startDate || !range.endDate) {
+      return;
+    }
+
+    this.setState({
+      startDate: this.formatDisplayDate(range.startDate),
+      endDate: this.formatDisplayDate(range.endDate),
+      showDateSelector: false,
+    });
+    this.getShows(range.startDate, range.endDate);
+  };
+
+  eventDateForFilter = (item: any) => {
+    const attributes = item?.attributes || {};
+    if (this.state.activeTab === "post") {
+      return attributes.date_of_the_show || attributes.event_date;
+    }
+    return attributes.updated_at || attributes.date_of_the_show;
+  };
+
+  filterShowsByRequestedRange = (items: any[]) => {
+    const start = moment(this.requestedStartDate, "YYYY-MM-DD", true);
+    const end = moment(this.requestedEndDate, "YYYY-MM-DD", true);
+    if (!start.isValid() || !end.isValid() || !Array.isArray(items)) {
+      return items || [];
+    }
+
+    return items.filter((item) => {
+      const raw = this.eventDateForFilter(item);
+      if (!raw || raw === "2999-12-31") {
+        return false;
+      }
+      const showDate = moment(raw);
+      if (!showDate.isValid()) {
+        return false;
+      }
+      // Match the day shown on the group header (moment(date).utc()).
+      const showDay = showDate.clone().utc().format("YYYY-MM-DD");
+      return (
+        showDay >= this.requestedStartDate && showDay <= this.requestedEndDate
+      );
+    });
   };
 
   getShows = async (startDate: string, endDate: string) => {
     if (this.state.token === null) {
       return false;
     }
+    const range = this.orderDateRange(startDate || "", endDate || "");
+    this.requestedStartDate = range.startDate;
+    this.requestedEndDate = range.endDate;
     this.setState({ isFetching: true });
 
     const { userRole, activeTab, token } = this.state;
@@ -257,8 +326,8 @@ export default class FilteritemsController extends BlockComponent<
 
     const endpoints =
       userRole === "fan"
-        ? `${getCalendarEndpoint}?start_date=${startDate}&end_date=${endDate}`
-        : `${getPostsPicturesCalendarForBandEndpoint}?start_date=${startDate}&end_date=${endDate}&type=${activeTab}&query=${this.state.searchText}`;
+        ? `${getCalendarEndpoint}?start_date=${range.startDate}&end_date=${range.endDate}`
+        : `${getPostsPicturesCalendarForBandEndpoint}?start_date=${range.startDate}&end_date=${range.endDate}&type=${activeTab}&query=${this.state.searchText}`;
 
     console.log("[Filteritems] getShows API", {
       endpoint: endpoints,
@@ -610,14 +679,10 @@ export default class FilteritemsController extends BlockComponent<
 
   handleSearch = (searchText: string) => {
     this.setState({ searchText: searchText.replace("  ", " ") }, () => {
-      if (this.state.startDate === "MM DD YYYY") {
-        this.getShows("", "");
-      } else {
-        this.getShows(
-          moment(this.state.startDate).format("YYYY-MM-DD"),
-          moment(this.state.endDate).format("YYYY-MM-DD")
-        );
-      }
+      this.getShows(
+        this.toApiDate(this.state.startDate),
+        this.toApiDate(this.state.endDate)
+      );
     });
   };
 
@@ -626,8 +691,8 @@ export default class FilteritemsController extends BlockComponent<
       { activeTab: selectedTab, filteredEvents: [], events: {} },
       () => {
         this.getShows(
-          this.state.startDate !== "MM DD YYYY" ? this.state.startDate : "",
-          this.state.endDate !== "MM DD YYYY" ? this.state.endDate : ""
+          this.toApiDate(this.state.startDate),
+          this.toApiDate(this.state.endDate)
         );
       }
     );
@@ -748,23 +813,27 @@ export default class FilteritemsController extends BlockComponent<
       // Success
       const filterBy =
         this.state.activeTab === "post" ? "date_of_the_show" : "updated_at";
-      if (responseJson.data.length === 0) {
+      const showsInRange = this.filterShowsByRequestedRange(
+        Array.isArray(responseJson.data) ? responseJson.data : []
+      );
+      if (showsInRange.length === 0) {
         this.setState({
           events: {},
+          filteredEvents: [],
           postsCount: responseJson.meta?.posts ?? "0",
           picturesCount: responseJson.meta?.pictures ?? "0",
         });
       } else {
-        const events = this.groupBy(responseJson.data, filterBy);
+        const events = this.groupBy(showsInRange, filterBy);
         this.setState({
           events,
           postsCount: responseJson.meta?.posts ?? "0",
           picturesCount: responseJson.meta?.pictures ?? "0",
         });
-        this.filterEvents("0", events);
+        this.filterEvents(this.state.selectedFilter, events);
       }
     } else {
-      this.setState({ events: {} });
+      this.setState({ events: {}, filteredEvents: [] });
     }
   };
 
@@ -774,14 +843,10 @@ export default class FilteritemsController extends BlockComponent<
     );
     if (responseJson && responseJson.message) {
       // Success
-      if (this.state.startDate === "MM DD YYYY") {
-        this.getShows("", "");
-      } else {
-        this.getShows(
-          moment(this.state.startDate).format("YYYY-MM-DD"),
-          moment(this.state.endDate).format("YYYY-MM-DD")
-        );
-      }
+      this.getShows(
+        this.toApiDate(this.state.startDate),
+        this.toApiDate(this.state.endDate)
+      );
       this.showAlert("Message", responseJson.message);
     }
     this.setState({ isFetching: false });

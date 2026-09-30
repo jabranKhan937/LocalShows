@@ -8,7 +8,7 @@ import { runEngine } from "../../../framework/src/RunEngine";
 
 // Customizable Area Start
 import { getStorageData, setStorageData } from "../../../framework/src/Utilities";
-import { DeviceEventEmitter, Dimensions } from "react-native";
+import { DeviceEventEmitter } from "react-native";
 import {
   lightTheme,
   redesignTheme,
@@ -95,7 +95,7 @@ export default class TermsConditionsController extends BlockComponent<
       isTermsCondsAccepted: 'false', 
       isLoading: false,
       tAndCAPIData: "",
-      WebViewHeight:Dimensions.get('screen').height,
+      WebViewHeight: 0,
       isChecked:false,
       isDarkMode: true,
       // Customizable Area End
@@ -461,7 +461,9 @@ export default class TermsConditionsController extends BlockComponent<
 
     runEngine.sendMessage(requestMessage.id, requestMessage);
   }else{
-    await setStorageData("tAndCAcceptance", (this.state.isTermsCondsAccepted).toString())
+    if (this.state.isChecked) {
+      await setStorageData("tAndCAcceptance", "true")
+    }
     this.props.navigation.goBack()
   }
   }

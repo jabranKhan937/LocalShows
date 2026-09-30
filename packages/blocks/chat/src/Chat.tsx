@@ -13,10 +13,15 @@ import {
   KeyboardAvoidingView,
   ActivityIndicator,
   Dimensions,
+  Keyboard,
+  LayoutAnimation,
   Modal,
   Platform,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  initialWindowMetrics,
+  SafeAreaView,
+} from "react-native-safe-area-context";
 import { SwipeListView } from "react-native-swipe-list-view";
 import Icon from "react-native-vector-icons/Feather";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
@@ -32,6 +37,91 @@ type ChatTheme = typeof redesignTheme;
 
 export default class Chat extends ChatController {
   // Customizable Area Start
+  msgInputContainerRef = React.createRef<View>();
+  keyboardShowSubscription: { remove: () => void } | null = null;
+  keyboardHideSubscription: { remove: () => void } | null = null;
+
+  componentDidMount() {
+    void super.componentDidMount();
+    const showEvent =
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent =
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    this.keyboardShowSubscription = Keyboard.addListener(
+      showEvent,
+      this.handleKeyboardShow,
+    );
+    this.keyboardHideSubscription = Keyboard.addListener(
+      hideEvent,
+      this.handleKeyboardHide,
+    );
+  }
+
+  componentWillUnmount() {
+    this.keyboardShowSubscription?.remove();
+    this.keyboardHideSubscription?.remove();
+    this.keyboardShowSubscription = null;
+    this.keyboardHideSubscription = null;
+    void super.componentWillUnmount();
+  }
+
+  // The chat sits above the tab bar, so a fixed KeyboardAvoidingView offset
+  // leaves the composer under the keyboard. Measure the field and pad by the
+  // overlap. On Android 15+ the reported keyboard top is also at the screen bottom.
+  getKeyboardTop = (screenY: number, keyboardHeight: number) => {
+    const windowHeight = Dimensions.get("window").height;
+    const bottomInset = initialWindowMetrics?.insets.bottom ?? 0;
+    const screenYIsKeyboardTop =
+      screenY > 0 && screenY < windowHeight - keyboardHeight * 0.5;
+    if (screenYIsKeyboardTop) {
+      return screenY;
+    }
+    return windowHeight - keyboardHeight - bottomInset;
+  };
+
+  setKeyboardInset = (inset: number, duration?: number) => {
+    const next = Number.isFinite(inset) ? Math.max(0, Math.ceil(inset)) : 0;
+    if (next === this.state.keyboardInset) {
+      return;
+    }
+    if (Platform.OS === "ios") {
+      const animationDuration = duration && duration > 10 ? duration : 250;
+      LayoutAnimation.configureNext({
+        duration: animationDuration,
+        update: {
+          duration: animationDuration,
+          type: LayoutAnimation.Types.keyboard,
+        },
+      });
+    }
+    this.setState({ keyboardInset: next });
+  };
+
+  handleKeyboardShow = (event?: {
+    duration?: number;
+    endCoordinates?: { height?: number; screenY?: number };
+  }) => {
+    const keyboardHeight = event?.endCoordinates?.height ?? 0;
+    const screenY = event?.endCoordinates?.screenY ?? 0;
+    const input = this.msgInputContainerRef.current;
+    if (!input || keyboardHeight <= 0) {
+      this.setKeyboardInset(0, event?.duration);
+      return;
+    }
+    input.measureInWindow((_x, y, _width, height) => {
+      const keyboardTop = this.getKeyboardTop(screenY, keyboardHeight);
+      const naturalBottom = y + height + this.state.keyboardInset;
+      this.setKeyboardInset(
+        Math.min(keyboardHeight, naturalBottom - keyboardTop),
+        event?.duration,
+      );
+    });
+  };
+
+  handleKeyboardHide = (event?: { duration?: number }) => {
+    this.setKeyboardInset(0, event?.duration);
+  };
+
   get styles() {
     return this.state.isDarkMode ? darkChatStyles : lightChatStyles;
   }
@@ -547,7 +637,12 @@ export default class Chat extends ChatController {
         : this.state.sending;
 
     return (
-      <View style={{ flex: 1 }}>
+      <View
+        style={{
+          flex: 1,
+          paddingBottom: this.state.keyboardInset,
+        }}
+      >
         <View style={this.styles.header}>
           <TouchableOpacity
             testID="navigationBackButton"
@@ -584,7 +679,12 @@ export default class Chat extends ChatController {
             />
           </View>
         </View>
-        <View testID="msgInputContainer" style={this.styles.msgInputContainer}>
+        <View
+          testID="msgInputContainer"
+          ref={this.msgInputContainerRef}
+          collapsable={false}
+          style={this.styles.msgInputContainer}
+        >
           {this.renderChatInputType(this.state.selectedPic)}
           <View style={this.styles.actionButtons}>
             <TouchableOpacity
@@ -626,11 +726,7 @@ export default class Chat extends ChatController {
           barStyle={this.state.isDarkMode ? "light-content" : "dark-content"}
           backgroundColor={theme.background}
         />
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 45 : 0}
-          style={{ flex: 1 }}
-        >
+        <KeyboardAvoidingView behavior={undefined} style={{ flex: 1 }}>
           {this.state.showDetails ? this.renderChatDetail() : this.renderChatList()}
           {this.state.isLoading && (
             <View style={this.styles.loadingContainer}>

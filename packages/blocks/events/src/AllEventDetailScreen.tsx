@@ -335,8 +335,8 @@ export default class AllEventDetailScreen extends AllEventController {
                 onPress={this.handleLikeDislikePress}
                 activeOpacity={0.8}
               >
-                <Icon
-                  name="heart"
+                <FontAwesome
+                  name={liked ? "heart" : "heart-o"}
                   size={16}
                   color={liked ? this.getHomeTheme().primary : "#FFFFFF"}
                 />
@@ -683,8 +683,8 @@ export default class AllEventDetailScreen extends AllEventController {
               activeOpacity={0.7}
               hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
             >
-              <Icon
-                name="heart"
+              <FontAwesome
+                name={liked ? "heart" : "heart-o"}
                 size={18}
                 color={liked ? this.getHomeTheme().primary : iconColor}
               />

@@ -18,7 +18,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 
-import { redesignTheme } from "../../utilities/src/Colors";
+import { androidPickerItemColor, redesignTheme, selectableCountries } from "../../utilities/src/Colors";
 import { leftArrow, usFlag } from "./assets";
 import { getStorageData, removeStorageData } from "../../../framework/src/Utilities";
 import { configJSON } from "./EmailAccountRegistrationController";
@@ -225,7 +225,7 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
                   onValueChange={this.handleCountryValueiOS}
                   itemStyle={{ color: theme.foreground }}
                 >
-                  {this.state.countries?.map(
+                  {selectableCountries(this.state.countries).map(
                     ({ country_code, country_name }: { country_code: string; country_name: string }) => (
                       <Picker.Item key={country_code} label={country_name} value={country_name} color={theme.foreground} />
                     )
@@ -254,10 +254,10 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
           onValueChange={(countrySelected) => this.onSelectCountry(countrySelected)}
           dropdownIconColor={theme.muted}
         >
-          <Picker.Item label={this.state.countrySelected || "Select a country"} value={""} color={theme.foreground} />
-          {this.state.countries?.map(
+          <Picker.Item label={this.state.countrySelected || "Select a country"} value={""} color={androidPickerItemColor} />
+          {selectableCountries(this.state.countries).map(
             ({ country_code, country_name }: { country_code: string; country_name: string }) => (
-              <Picker.Item key={country_code} label={country_name} value={country_name} color={theme.foreground} />
+              <Picker.Item key={country_code} label={country_name} value={country_name} color={androidPickerItemColor} />
             )
           )}
         </Picker>
@@ -345,10 +345,10 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
           enabled={this.state.countrySelected !== "" && this.state.countrySelected === "United States"}
           dropdownIconColor={theme.muted}
         >
-          <Picker.Item label={this.state.selectedState || "Select a state"} value={""} color={theme.foreground} />
+          <Picker.Item label={this.state.selectedState || "Select a state"} value={""} color={androidPickerItemColor} />
           {this.state.states.map(
             ({ key, name }: { key: string; name: string }) => (
-              <Picker.Item key={key} label={name} value={name} color={theme.foreground} />
+              <Picker.Item key={key} label={name} value={name} color={androidPickerItemColor} />
             )
           )}
         </Picker>
@@ -435,10 +435,10 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
           enabled={this.state.selectedState !== ""}
           dropdownIconColor={theme.muted}
         >
-          <Picker.Item label={"Select a city"} value={""} color={theme.foreground} />
+          <Picker.Item label={"Select a city"} value={""} color={androidPickerItemColor} />
           {this.state.cities?.map(
             (name: string) => (
-              <Picker.Item key={name} label={name} value={name} color={theme.foreground} />
+              <Picker.Item key={name} label={name} value={name} color={androidPickerItemColor} />
             )
           )}
         </Picker>
@@ -791,13 +791,15 @@ export default class EmailAccountRegistration extends EmailAccountRegistrationCo
     const userRole = await getStorageData("userRole");
     this.setState({ userRole: configJSON[userRole] });
     this.loadSignupTheme();
-    this.props.navigation.addListener("willFocus", async () => {
+    const applyAcceptedTerms = async () => {
       const tAndCAcceptance = await getStorageData("tAndCAcceptance");
-      if (tAndCAcceptance) {
+      if (tAndCAcceptance === "true" || tAndCAcceptance === true) {
         removeStorageData("tAndCAcceptance");
-        this.setState({ acceptTermsConditions: tAndCAcceptance })
+        this.setState({ acceptTermsConditions: true });
       }
-    });
+    };
+    this.props.navigation.addListener("willFocus", applyAcceptedTerms);
+    this.props.navigation.addListener("focus", applyAcceptedTerms);
     // Customizable Area End
   }
 }

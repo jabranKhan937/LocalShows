@@ -16,6 +16,7 @@ import {
   PROFILE_THEME_CHANGED_EVENT,
   PROFILE_THEME_STORAGE_KEY,
   redesignTheme,
+  selectableCountries,
 } from '../../utilities/src/Colors';
 
 interface IPlaceRecord {
@@ -424,7 +425,7 @@ export default class EmailAccountRegistrationController extends BlockComponent<
   handleCountryResponse = (responseJson: any) => {
     if (!responseJson.errors) {
       this.setState({
-        countries: responseJson.countries,
+        countries: selectableCountries(responseJson.countries),
         states: [],
         selectedState: '',
         cities: [],

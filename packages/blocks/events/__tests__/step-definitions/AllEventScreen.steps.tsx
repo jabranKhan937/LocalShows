@@ -2075,6 +2075,8 @@ defineFeature(feature, (test) => {
       instance.getHotVenuesAPI();
       expect(instance.lastHotVenuesApiUrl).toContain("state=California");
       expect(instance.lastHotVenuesApiUrl).toContain("category_id=30");
+      expect(instance.lastHotVenuesApiUrl).toMatch(/start_date=\d{4}-\d{2}-\d{2}/);
+      expect(instance.lastHotVenuesApiUrl).toMatch(/end_date=\d{4}-\d{2}-\d{2}/);
       instance.setState({ selectedState: "All", selectedCategoryID: "0" });
     });
 
@@ -2104,6 +2106,11 @@ defineFeature(feature, (test) => {
         footer.findWhere((node) => node.prop("testID") === `hotVenue-${roxyVenue.id}`)
           .length
       ).toBeGreaterThan(0);
+      await instance.handleHotVenuePress(venues[0]);
+      expect(screenProps.navigation.push).toHaveBeenCalledWith(
+        "UserProfileBasicBlockArtist3",
+        { isOtherUser: true }
+      );
       footer
         .findWhere((node) => node.prop("testID") === "seeAllArtists")
         .first()
@@ -2112,9 +2119,12 @@ defineFeature(feature, (test) => {
         "ArtistsToWatchAllScreen",
       );
       footer
-        .findWhere((node) => node.prop("testID") === "viewVenuesMap")
+        .findWhere((node) => node.prop("testID") === "seeAllVenues")
         .first()
         .simulate("press");
+      expect(screenProps.navigation.navigate).toHaveBeenCalledWith(
+        "HotVenuesAllScreen",
+      );
       await instance.handleArtistToWatchPress(artists[0]);
       expect(screenProps.navigation.push).toHaveBeenCalledWith(
         "UserProfileBasicBlockArtist3",
@@ -2134,8 +2144,12 @@ defineFeature(feature, (test) => {
       );
       instance.getHotVenuesApiCallId = getHotVenuesAPIEmpty.messageId;
       runEngine.sendMessage("Unit Test", getHotVenuesAPIEmpty);
-      expect(instance.getHotVenues()).toEqual([]);
-      expect(instance.renderHotVenuesSection()).toBeNull();
+      const fallbackVenues = instance.getHotVenues();
+      expect(fallbackVenues.map((venue: { name: string }) => venue.name)).toEqual([
+        "Mig road",
+      ]);
+      expect(fallbackVenues[0].showCount).toBe(2);
+      expect(instance.renderHotVenuesSection()).not.toBeNull();
     });
   });
 

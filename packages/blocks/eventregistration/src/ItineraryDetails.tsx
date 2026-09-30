@@ -143,7 +143,7 @@ export default class ItineraryDetails extends ItineraryDetailsController {
 
               <TouchableOpacity testID="locationBtn" onPress={this.openGoogleMaps.bind(this,item.location)} style={styles.locationContainer}>
                 <Image source={location} style={[styles.location, {tintColor: theme.primary}]} />
-                <Text style={styles.eventLocationTitle}>{item.location} </Text>
+                <Text style={styles.eventLocationTitle} numberOfLines={2}>{item.location} </Text>
                 <Text style={styles.locationLinkText}>location</Text>
               </TouchableOpacity>
             </View>
@@ -192,9 +192,12 @@ export default class ItineraryDetails extends ItineraryDetailsController {
           </TouchableOpacity>
           )}
             <View style={styles.commentContainer}>
-              <Text style={styles.eventTitle}>{item.title}</Text>
-              <Text style={styles.eventTitle}> - </Text>
-              <Text style={styles.description} >{item.description}</Text>
+              <Text style={styles.eventTitle}>
+                {item.title}
+                {item.description ? (
+                  <Text style={styles.description}>{` - ${item.description}`}</Text>
+                ) : null}
+              </Text>
             </View>
           {item.post.comments && (
             <View style={styles.commentContainer}>
@@ -912,14 +915,13 @@ const createItineraryDetailsStyles = (theme: TravelResultsTheme) => StyleSheet.c
     fontSize: 14,
     lineHeight: 18,
     color: theme.foreground,
-    
   },
   eventTitle: {
     fontWeight: '700',
     fontSize: 14,
     lineHeight: 18,
     color: theme.foreground,
-    
+    flexShrink: 1,
   },
   likeText: {
     fontWeight: '400',
@@ -929,8 +931,10 @@ const createItineraryDetailsStyles = (theme: TravelResultsTheme) => StyleSheet.c
   },
   commentContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginTop: 5,
+    paddingRight: 8,
+    width: '100%',
   },
   countSty: {
     fontWeight: '700',
@@ -966,14 +970,16 @@ const createItineraryDetailsStyles = (theme: TravelResultsTheme) => StyleSheet.c
   viewContain: {
     flexDirection: 'column',
     paddingVertical: 10,
+    paddingRight: 4,
+    width: '100%',
   },
   subView: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     width: '100%',
-    marginBottom: 18
-    
+    marginBottom: 18,
+    paddingRight: 8,
   },
   location: {
     marginRight: 5,
@@ -987,7 +993,11 @@ const createItineraryDetailsStyles = (theme: TravelResultsTheme) => StyleSheet.c
     fontWeight: "400"
   },
   nameText: {
-    fontWeight: '700', fontSize: 14, lineHeight: 22, color: theme.foreground
+    fontWeight: '700',
+    fontSize: 14,
+    lineHeight: 22,
+    color: theme.foreground,
+    flexShrink: 1,
   },
   profileImg: {
      width: 44,
@@ -1002,13 +1012,20 @@ const createItineraryDetailsStyles = (theme: TravelResultsTheme) => StyleSheet.c
     justifyContent: "center",
   },
   locationContainer: {
-    flexDirection: 'row', alignItems: 'center' 
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+    flexShrink: 1,
   },
   eventDescription: {
-    marginLeft: 16 
+    flex: 1,
+    minWidth: 0,
+    marginLeft: 16,
+    paddingRight: 8,
   },
   eventLocationTitle: {
-    color: theme.foreground
+    color: theme.foreground,
+    flexShrink: 1,
   },
   flex1: {
     flexGrow: 1

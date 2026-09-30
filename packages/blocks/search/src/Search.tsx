@@ -20,7 +20,7 @@ import {
 // Customizable Area End
 
 // Customizable Area Start
-import {lightTheme, redesignTheme} from '../../utilities/src/Colors';
+import {androidPickerItemColor, lightTheme, redesignTheme} from '../../utilities/src/Colors';
 import {Picker} from '@react-native-picker/picker';
 import EntypoIcon from 'react-native-vector-icons/Entypo';
 import Icon from 'react-native-vector-icons/Feather';
@@ -254,10 +254,10 @@ export default class Search extends SearchController {
           itemStyle={[this.styles.txt]}
           selectedValue={this.state.selectedState}
           onValueChange={selectedState => this.onSelectState(selectedState)}>
-          <Picker.Item label={'Select a state'} value={''} />
+          <Picker.Item label={'Select a state'} value={''} color={androidPickerItemColor} />
           {this.state.statesList.map(
             ({key, name}: {key: string; name: string}) => (
-              <Picker.Item key={key} label={name} value={key} />
+              <Picker.Item key={key} label={name} value={key} color={androidPickerItemColor} />
             ),
           )}
         </Picker>
@@ -327,9 +327,9 @@ export default class Search extends SearchController {
             this.handleSelectedCityAndroid(selectedCity)
           }
           enabled={this.state.selectedState !== '' && !this.state.selectRange}>
-          <Picker.Item label={'Select a city'} value={''} />
+          <Picker.Item label={'Select a city'} value={''} color={androidPickerItemColor} />
           {this.state.citiesList.map((name: string) => (
-            <Picker.Item key={name} label={name} value={name} />
+            <Picker.Item key={name} label={name} value={name} color={androidPickerItemColor} />
           ))}
         </Picker>
         <Icon
@@ -1009,7 +1009,10 @@ export default class Search extends SearchController {
     }
     const displayedUsers = this.getDisplayedUserList();
     if (this.state.UserList.length <= 0 || displayedUsers.length <= 0) {
-      if ((this.state.searchText || '').trim()) {
+      if (
+        (this.state.searchText || '').trim() ||
+        this.isProfileSearchFilter()
+      ) {
         return (
           <View
             style={{
@@ -1050,7 +1053,9 @@ export default class Search extends SearchController {
           renderItem={
             this.state.searchFilter === 'Venues'
               ? this.renderVenueResultItem
-              : this.renderUserItem
+              : this.state.searchFilter === 'People'
+                ? this.renderPeopleResultItem
+                : this.renderUserItem
           }
           keyExtractor={(item: any) => String(item.id)}
         />
@@ -1178,8 +1183,9 @@ export default class Search extends SearchController {
 
   renderSearchTabs = (tab: string) => {
     if (
-      this.hasSearchQuery() &&
-      (this.isPeopleSearchTab() || tab === 'People')
+      this.isProfileSearchFilter() ||
+      (this.hasSearchQuery() &&
+        (this.isPeopleSearchTab() || tab === 'People'))
     ) {
       return this.renderUserSearchView();
     }

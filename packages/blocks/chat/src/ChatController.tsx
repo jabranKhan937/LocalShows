@@ -158,6 +158,7 @@ interface S {
   userId:string,
   userAccountType:string
   isDarkMode: boolean;
+  keyboardInset: number;
 
 
   // Customizable Area End
@@ -223,6 +224,7 @@ export default class ChatController extends BlockComponent<Props, S, SS> {
       userId:'',
       userAccountType:'',
       isDarkMode: true,
+      keyboardInset: 0,
 
       // Customizable Area End
     };

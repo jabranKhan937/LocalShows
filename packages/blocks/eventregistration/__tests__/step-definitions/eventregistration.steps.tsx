@@ -419,7 +419,7 @@ defineFeature(feature, (test) => {
         })
         when('I press addItineraryBtn with countries blank fields',() =>{
             jest.spyOn(instance, 'handleAddItineraryFieldsBlank')
-            instance.setState({countriesList:[], selectedCountry: '' , states: [], selectedState: '' , cities: [], selectedCity: ''})
+            instance.setState({countriesList:[], selectedCountry: '' , states: [], selectedState: '' , cities: [], selectedCity: '', startDate: '06/01/2025', endDate: '06/04/2025'})
             exampleBlockA.findWhere(node => node.prop("testID") === "btnTypeSelect").simulate("press")  
         })
         then('I expect the handleFieldsBlank to be called' , () => {
@@ -427,7 +427,7 @@ defineFeature(feature, (test) => {
         })
         when('I press addItineraryBtn with states blank fields',() =>{
             jest.spyOn(instance, 'handleAddItineraryFieldsBlank')
-            instance.setState({countriesList:[{country_code: 'US' , country_name: 'United States'}], selectedCountry: 'United States' , states: [], selectedState: ''})
+            instance.setState({countriesList:[{country_code: 'US' , country_name: 'United States'}], selectedCountry: 'United States' , states: [], selectedState: '', startDate: '06/01/2025', endDate: '06/04/2025'})
             exampleBlockA.findWhere(node => node.prop("testID") === "btnTypeSelect").simulate("press")  
         })
         then('I expect the handleFieldsBlank to be called' , () => {
@@ -435,11 +435,48 @@ defineFeature(feature, (test) => {
         })
         when('I press addItineraryBtn with cities blank fields',() =>{
             jest.spyOn(instance, 'handleAddItineraryFieldsBlank')
-            instance.setState({countriesList:[{country_code: 'US' , country_name: 'United States'}], selectedCountry: 'United States',states: [{key : 'AL', name: 'Alabama'}], selectedState: 'AL' , cities: [], selectedCity: ''})
+            instance.setState({countriesList:[{country_code: 'US' , country_name: 'United States'}], selectedCountry: 'United States',states: [{key : 'AL', name: 'Alabama'}], selectedState: 'AL' , cities: [], selectedCity: '', startDate: '06/01/2025', endDate: '06/04/2025'})
             exampleBlockA.findWhere(node => node.prop("testID") === "btnTypeSelect").simulate("press")  
         })
         then('I expect the handleFieldsBlank to be called' , () => {
             expect(instance.handleAddItineraryFieldsBlank()).toBe(true)
+        })
+        when('I press addItineraryBtn without a depart or return date', () => {
+            instance.setState({
+                selectedCity: 'Acampo',
+                selectedCountry: 'United States',
+                selectedState: 'California',
+                startDate: 'MM-DD-YYYY',
+                endDate: 'MM-DD-YYYY',
+                selectedStartDateFormatted: '',
+                selectedEndDateFormatted: '',
+                countriesList: [{country_code: 'US', country_name: 'United States'}],
+                itineraryList: [],
+                fieldNameBlank: '',
+            })
+            exampleBlockA.findWhere(node => node.prop("testID") === "addItineraryBtn").simulate("press")
+        })
+        then('I expect a date error and no itinerary to be created', () => {
+            expect(instance.state.fieldNameBlank).toBe('Date')
+            expect(instance.state.itineraryList).toStrictEqual([])
+        })
+        when('I press addItineraryBtn with only a depart date', () => {
+            instance.setState({
+                selectedCity: 'Acampo',
+                selectedCountry: 'United States',
+                selectedState: 'California',
+                startDate: '06/01/2025',
+                endDate: '',
+                selectedStartDateFormatted: 'Jun 01 2025',
+                selectedEndDateFormatted: '',
+                fieldNameBlank: '',
+                itineraryList: [],
+            })
+            exampleBlockA.findWhere(node => node.prop("testID") === "addItineraryBtn").simulate("press")
+        })
+        then('I expect a date error when the return date is missing', () => {
+            expect(instance.state.fieldNameBlank).toBe('Date')
+            expect(instance.state.itineraryList).toStrictEqual([])
         })
         when('I press addItineraryBtn',() =>{
             jest.spyOn(instance, 'handleAddToMyItinerary')
@@ -447,8 +484,10 @@ defineFeature(feature, (test) => {
                 selectedCity : 'Miami',
                 selectedCountry : 'United States',
                 selectedState : 'Florida',
-                selectedEndDateFormatted: 'June 4th',
-                selectedStartDateFormatted: 'June 1th',
+                startDate: '06/01/2025',
+                endDate: '06/04/2025',
+                selectedEndDateFormatted: 'Jun 04 2025',
+                selectedStartDateFormatted: 'Jun 01 2025',
                 countriesList: [{country_code: 'US', country_name: 'United States'}],
                 selectedType : 'All',
                 isPrivateAccount: true, 
@@ -467,8 +506,10 @@ defineFeature(feature, (test) => {
                 selectedCity : 'Miami',
                 selectedCountry : 'United States',
                 selectedState : 'Florida',
-                selectedEndDateFormatted: 'June 4th',
-                selectedStartDateFormatted: 'June 1th',
+                startDate: '06/01/2025',
+                endDate: '06/04/2025',
+                selectedEndDateFormatted: 'Jun 04 2025',
+                selectedStartDateFormatted: 'Jun 01 2025',
                 countriesList: [{country_code: 'US', country_name: 'United States'}],
                 selectedType : 'All',
                 isPrivateAccount: true, 
@@ -578,7 +619,7 @@ defineFeature(feature, (test) => {
                     }
                 ]
             })
-            exampleBlockA.findWhere(node => node.prop("testID") === "typePicker").simulate("valueChange","Music")  
+            exampleBlockA.findWhere(node => node.prop("testID") === "typePickerModal").simulate("valueChange","Music")  
         })
         then('I expect the type to be on the field' , () => {
             expect(instance.state.selectedType).toBe('Music');
@@ -655,8 +696,10 @@ defineFeature(feature, (test) => {
                 selectedCity : 'Miami',
                 selectedCountry: 'United States',
                 selectedState : 'Florida',
-                selectedEndDateFormatted : '4th June',
-                selectedStartDateFormatted : '1th June',
+                startDate: '06/01/2025',
+                endDate: '06/04/2025',
+                selectedEndDateFormatted : 'Jun 04 2025',
+                selectedStartDateFormatted : 'Jun 01 2025',
                 countriesList : [{country_code: 'US' , country_name: 'United States'}],
                 selectedType : 'All',
                 isPrivateAccount: true,

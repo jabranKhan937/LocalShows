@@ -173,6 +173,13 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
   debouncedLiveSearch: any;
   isNearMePreviewInFlight: boolean = false;
   nearMePreviewTimer: ReturnType<typeof setTimeout> | null = null;
+  userSearchGeneration: number = 0;
+  userSearchUsedAccountType: boolean = false;
+  userSearchRetriedWithoutType: boolean = false;
+  lastUserSearchQuery: string = '';
+  lastUserSearchToken: any = null;
+  activeUserSearchIds: {[key: string]: number} = {};
+  userSearchBuffer: any[] = [];
   // Customizable Area End
   constructor(props: Props) {
     super(props);
@@ -428,11 +435,15 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
   };
 
   setSelectedTab = (tab: string) => {
+    const searchFilter =
+      tab === 'People' ? 'People' : tab === 'Shows' ? 'Shows' : tab;
     this.setState(
       {
         SelectedTab: tab,
-        searchFilter:
-          tab === 'People' ? 'People' : tab === 'Shows' ? 'Shows' : tab,
+        searchFilter,
+        ...(tab === 'People'
+          ? { LoadingUsers: true, NoUserFound: false, UserList: [] }
+          : {}),
       },
       () => {
         this.runLiveSearch();
@@ -446,6 +457,9 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
         {
           searchFilter: filter,
           SelectedTab: 'People',
+          LoadingUsers: true,
+          NoUserFound: false,
+          UserList: [],
         },
         () => {
           this.runLiveSearch();
@@ -500,6 +514,17 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
       }
     }
 
+    if (
+      apiRequestCallId &&
+      this.activeUserSearchIds[apiRequestCallId] === this.userSearchGeneration
+    ) {
+      this.collectUserSearchResponse(
+        apiRequestCallId,
+        responseJson ? responseJson.data : null,
+      );
+      return;
+    }
+
     if (apiRequestCallId && responseJson) {
       this.handleSuccessfulApiResponse(apiRequestCallId, responseJson);
     } else {
@@ -525,7 +550,7 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
     } else if (apiRequestCallId === this.addNewCommentAPICallID) {
       this.handleCreateCommentApiResponse();
     } else if (apiRequestCallId === this.getSearchUserListAPICallID) {
-      this.handleSearchUserAPIResponse(responseJson.data);
+      this.handleSearchUserAPIResponse(responseJson?.data);
     } else if (apiRequestCallId === this.createSearchFollowApiCallID) {
       this.handleSearchFollowandUnfollowAPIResponse(responseJson);
     } else if (apiRequestCallId === this.checkUnreadNotificationsApiCallId) {
@@ -573,6 +598,63 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
     } else this.parseApiErrorResponse(responseJson);
   };
 
+  normalizeSearchLocation = (value: unknown): string => {
+    if (typeof value !== 'string') {
+      return '';
+    }
+    return value.trim().toLowerCase();
+  };
+
+  extractSearchShows = (responseJson: any): any[] => {
+    if (Array.isArray(responseJson)) {
+      return responseJson;
+    }
+    if (Array.isArray(responseJson?.data)) {
+      return responseJson.data;
+    }
+    if (responseJson?.data && typeof responseJson.data === 'object') {
+      return Object.values(responseJson.data);
+    }
+    return [];
+  };
+
+  // /search_show applies the state, then returns every city in that state.
+  // Keep only shows that match the city or state the user actually picked.
+  filterShowsForSelectedArea = (
+    responseJson: any,
+    stateName: string,
+    stateKey: string,
+    cityName: string,
+  ) => {
+    const wantedState = this.normalizeSearchLocation(stateName);
+    const wantedStateKey = this.normalizeSearchLocation(stateKey);
+    const wantedCity = this.normalizeSearchLocation(cityName);
+    const shows = this.extractSearchShows(responseJson).filter((item: any) => {
+      const attrs = item?.attributes || item || {};
+      const showState = this.normalizeSearchLocation(attrs.state);
+      const showCity = this.normalizeSearchLocation(attrs.city);
+      const matchesState =
+        !wantedState && !wantedStateKey
+          ? false
+          : showState === wantedState || showState === wantedStateKey;
+      if (!matchesState) {
+        return false;
+      }
+      if (wantedCity && showCity !== wantedCity) {
+        return false;
+      }
+      return true;
+    });
+    if (
+      responseJson &&
+      typeof responseJson === 'object' &&
+      !Array.isArray(responseJson)
+    ) {
+      return {...responseJson, data: shows};
+    }
+    return {data: shows};
+  };
+
   handleSearchApiResponse = (responseJson: any) => {
     if (responseJson != null && !responseJson.errors) {
       const selectedStateObject = this.state.statesList.find(
@@ -582,8 +664,20 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
       const cityName = this.state.wholeStateSelected
         ? ''
         : this.state.selectedCity;
+      const filteredResponse = this.filterShowsForSelectedArea(
+        responseJson,
+        stateName,
+        this.state.selectedState,
+        cityName,
+      );
+      console.log('[Search] shows by state filtered', {
+        state: stateName,
+        city: cityName || 'ALL',
+        returned: this.extractSearchShows(responseJson).length,
+        shown: filteredResponse.data.length,
+      });
       this.props.navigation.navigate('SearchResult', {
-        eventList: responseJson,
+        eventList: filteredResponse,
         searchAreaLabel: cityName || stateName || 'All areas',
       });
     } else {
@@ -1101,6 +1195,7 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
   runLiveSearch = async () => {
     try {
       if (this.isPeopleSearchTab()) {
+        this.setState({ LoadingUsers: true, NoUserFound: false });
         const token = await getStorageData('authToken');
         this.getSearchUserList(this.state.searchText, token);
         return;
@@ -2142,16 +2237,42 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
   };
 
   getSearchUserList = async (query: string, token: any) => {
-    if (!query.trim()) {
+    const trimmed = (query || '').trim();
+    const accountTypes = this.getAccountTypesForFilter(this.state.searchFilter);
+    if (!trimmed && accountTypes.length === 0) {
+      this.userSearchGeneration += 1;
       this.setState({
         UserList: [],
         LoadingUsers: false,
+        NoUserFound: false,
       });
       return;
     }
 
-    this.setState({ LoadingUsers: true, UserList: [] });
+    this.userSearchGeneration += 1;
+    this.userSearchRetriedWithoutType = false;
+    this.lastUserSearchQuery = trimmed;
+    this.lastUserSearchToken = token;
+    this.fetchUserSearch(trimmed, token, accountTypes);
+  };
 
+  fetchUserSearch = (
+    query: string,
+    token: any,
+    accountTypes: string[],
+  ) => {
+    this.userSearchUsedAccountType = accountTypes.length > 0;
+    this.activeUserSearchIds = {};
+    this.userSearchBuffer = [];
+    this.setState({ LoadingUsers: true, UserList: [], NoUserFound: false });
+
+    const requests = accountTypes.length > 0 ? accountTypes : [''];
+    requests.forEach(accountType => {
+      this.sendUserSearchRequest(query, token, accountType);
+    });
+  };
+
+  sendUserSearchRequest = (query: string, token: any, accountType: string) => {
     const header = token
       ? {
           'Content-Type': configJSON.searchApiContentType,
@@ -2161,14 +2282,19 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
           'Content-Type': configJSON.searchApiContentType,
         };
 
+    const params = [`query=${encodeURIComponent(query)}`];
+    if (accountType) {
+      params.push(`account_type=${encodeURIComponent(accountType)}`);
+    }
     const endpoint = token
-      ? `/bx_block_search/users?query=${query}`
-      : `/bx_block_search/users_search?query=${query}`;
+      ? `/bx_block_search/users?${params.join('&')}`
+      : `/bx_block_search/users_search?${params.join('&')}`;
 
     const requestMessage = new Message(
       getName(MessageEnum.RestAPIRequestMessage),
     );
 
+    this.activeUserSearchIds[requestMessage.messageId] = this.userSearchGeneration;
     this.getSearchUserListAPICallID = requestMessage.messageId;
 
     requestMessage.addData(
@@ -2195,6 +2321,42 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
     runEngine.sendMessage(requestMessage.id, requestMessage);
   };
 
+  mergeSearchUsers = (current: any[], incoming: any[]) => {
+    const merged = Array.isArray(current) ? [...current] : [];
+    const seen = new Set(
+      merged.map((item: any) => String(item?.id ?? '')).filter(Boolean),
+    );
+    (Array.isArray(incoming) ? incoming : []).forEach((item: any) => {
+      const id = String(item?.id ?? '');
+      if (id && seen.has(id)) {
+        return;
+      }
+      if (id) {
+        seen.add(id);
+      }
+      merged.push(item);
+    });
+    return merged;
+  };
+
+  collectUserSearchResponse = (requestId: string, data: any) => {
+    if (this.activeUserSearchIds[requestId] !== this.userSearchGeneration) {
+      return;
+    }
+    delete this.activeUserSearchIds[requestId];
+    this.userSearchBuffer = this.mergeSearchUsers(
+      this.userSearchBuffer,
+      this.normalizeUserSearchResults(data),
+    );
+    const stillPending = Object.keys(this.activeUserSearchIds).some(
+      id => this.activeUserSearchIds[id] === this.userSearchGeneration,
+    );
+    if (stillPending) {
+      return;
+    }
+    this.handleSearchUserAPIResponse(this.userSearchBuffer);
+  };
+
   handleSearchFollowandUnfollowAPIResponse = (responseJSONData: any) => {
     let updatedList = this.state.UserList.map((item: any, index: any) => {
       if (item.id === this.state.FollowUserId) {
@@ -2212,12 +2374,20 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
   };
 
   handleSearchUserAPIResponse = (data: any) => {
-    if (!data || data === null) {
-      this.setState({ NoUserFound: true, LoadingUsers: false });
+    const users = this.normalizeUserSearchResults(data);
+    const visibleUsers = this.filterUsersForSearch(users);
+    if (
+      visibleUsers.length === 0 &&
+      this.userSearchUsedAccountType &&
+      !this.userSearchRetriedWithoutType
+    ) {
+      this.userSearchRetriedWithoutType = true;
+      this.fetchUserSearch(this.lastUserSearchQuery, this.lastUserSearchToken, []);
       return;
     }
-    if (data.length <= 0) {
-      this.setState({ NoUserFound: true, LoadingUsers: false });
+
+    if (visibleUsers.length <= 0) {
+      this.setState({ NoUserFound: true, LoadingUsers: false, UserList: [] });
       return;
     }
 
@@ -2225,7 +2395,7 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
     this.setState(
       {
         NoUserFound: false,
-        UserList: data,
+        UserList: visibleUsers,
         LoadingUsers: false,
       },
       () => {
@@ -2648,6 +2818,11 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
     );
   };
 
+  isProfileSearchFilter = () => {
+    const filter = this.state.searchFilter;
+    return filter === 'Bands' || filter === 'Venues' || filter === 'People';
+  };
+
   hasSearchQuery = () => {
     return Boolean((this.state.searchText || '').trim());
   };
@@ -2660,25 +2835,58 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
     return this.state.searchFilter === 'All';
   };
 
-  getBandAccountTypes = () => [
-    'Band',
-    'Artist',
-    'Record_Label',
-    'Promoter',
-    'Booking_Agent',
-    'Agency',
-    'Record_Store',
-  ];
+  getBandAccountTypes = () => ['Band', 'Artist'];
 
-  getVenueAccountTypes = () => [
-    'Venue',
-    'Club',
-    'Theater',
-    'Museum',
-    'Bar',
-    'Gallery',
-    'Casino',
-  ];
+  getVenueAccountTypes = () => ['Venue'];
+
+  getFanAccountTypes = () => ['Fan'];
+
+  getAccountTypesForFilter = (filter: string) => {
+    if (filter === 'Bands') {
+      return this.getBandAccountTypes();
+    }
+    if (filter === 'Venues') {
+      return this.getVenueAccountTypes();
+    }
+    if (filter === 'People') {
+      return this.getFanAccountTypes();
+    }
+    return [];
+  };
+
+  normalizeUserSearchResults = (data: any) => {
+    if (Array.isArray(data)) {
+      return data;
+    }
+    if (Array.isArray(data?.data)) {
+      return data.data;
+    }
+    if (Array.isArray(data?.users)) {
+      return data.users;
+    }
+    return [];
+  };
+
+  resolveSearchAccountType = (item: any) => {
+    const attrs =
+      item?.attributes && typeof item.attributes === 'object'
+        ? item.attributes
+        : {};
+    const nestedAccount =
+      attrs.account && typeof attrs.account === 'object' ? attrs.account : {};
+    const candidates = [
+      attrs.account_type,
+      nestedAccount.account_type,
+      item?.account_type,
+    ];
+    for (let index = 0; index < candidates.length; index += 1) {
+      const value = candidates[index];
+      if (typeof value === 'string' && value.trim()) {
+        return value.trim();
+      }
+    }
+    return '';
+  };
 
   matchesAccountType = (accountType: any, types: string[]) => {
     if (typeof accountType !== 'string' || !accountType.trim()) {
@@ -2696,13 +2904,33 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
     this.matchesAccountType(accountType, this.getVenueAccountTypes());
 
   isPeopleAccountType = (accountType: any) =>
-    !this.isBandAccountType(accountType) &&
-    !this.isVenueAccountType(accountType);
+    this.matchesAccountType(accountType, this.getFanAccountTypes());
+
+  filterUsersForSearch = (list: any[]) => {
+    const users = Array.isArray(list) ? list : [];
+    const filter = this.state.searchFilter;
+    if (filter === 'Bands') {
+      return users.filter((item: any) =>
+        this.isBandAccountType(this.resolveSearchAccountType(item)),
+      );
+    }
+    if (filter === 'Venues') {
+      return users.filter((item: any) =>
+        this.isVenueAccountType(this.resolveSearchAccountType(item)),
+      );
+    }
+    if (filter === 'People') {
+      return users.filter((item: any) =>
+        this.isPeopleAccountType(this.resolveSearchAccountType(item)),
+      );
+    }
+    return users;
+  };
 
   getUsersForGroup = (group: 'bands' | 'venues' | 'people') => {
     const list = Array.isArray(this.state.UserList) ? this.state.UserList : [];
     return list.filter((item: any) => {
-      const accountType = item?.attributes?.account_type;
+      const accountType = this.resolveSearchAccountType(item);
       if (group === 'bands') {
         return this.isBandAccountType(accountType);
       }
@@ -2837,7 +3065,9 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
       return;
     }
     list
-      .filter((venue: any) => this.isVenueAccountType(venue?.attributes?.account_type))
+      .filter((venue: any) =>
+        this.isVenueAccountType(this.resolveSearchAccountType(venue)),
+      )
       .slice(0, 20)
       .forEach((venue: any) => {
         const id = String(venue?.id || '');
@@ -2857,7 +3087,7 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
     }
     let changed = false;
     const next = list.map((item: any) => {
-      if (!this.isVenueAccountType(item?.attributes?.account_type)) {
+      if (!this.isVenueAccountType(this.resolveSearchAccountType(item))) {
         return item;
       }
       const match = this.findCatalogVenueMatch(this.getVenueDisplayName(item));
@@ -3095,20 +3325,7 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
 
   getDisplayedUserList = () => {
     const list = Array.isArray(this.state.UserList) ? this.state.UserList : [];
-    const filter = this.state.searchFilter;
-    if (filter !== 'Bands' && filter !== 'Venues') {
-      return list;
-    }
-
-    return list.filter((item: any) => {
-      const accountType = item?.attributes?.account_type;
-      if (typeof accountType !== 'string' || accountType === '') {
-        return filter !== 'Venues';
-      }
-      return filter === 'Bands'
-        ? this.isBandAccountType(accountType)
-        : this.isVenueAccountType(accountType);
-    });
+    return this.filterUsersForSearch(list);
   };
 
   normalizeBrowseItem = (item: any) => {

@@ -17,7 +17,7 @@ import {
   Platform
 } from "react-native";
 
-import { redesignTheme } from "../../utilities/src/Colors";
+import { androidPickerItemColor, redesignTheme, selectableCountries } from "../../utilities/src/Colors";
 import { leftArrow, usFlag } from "./assets";
 import { Picker } from '@react-native-picker/picker';
 
@@ -288,19 +288,19 @@ export default class CreatePage extends CreatePageController {
             this.handleCountryChange(selectedCountry)
           }
         >
-          <Picker.Item label={configJSON.selectACountry} value={""} />
+          <Picker.Item label={configJSON.selectACountry} value={""} color={androidPickerItemColor} />
 
-          {this.state.countryList
+          {selectableCountries(this.state.countryList)
             .filter(
               ({ country_name }) =>
-                country_name !== "Aland" &&
-                country_name !== "country_name"
+                country_name !== "Aland"
             )
             .map(({ country_code, country_name }) => (
               <Picker.Item
                 key={country_code}
                 label={country_name}
                 value={country_name}
+                color={androidPickerItemColor}
               />
             ))}
         </Picker>
@@ -376,10 +376,11 @@ export default class CreatePage extends CreatePageController {
           <Picker.Item
             label={configJSON.selectAState}
             value={""}
+            color={androidPickerItemColor}
           />
           {this.state.stateList.map(
             ({ key, name }: { key: string; name: string }) => (
-              <Picker.Item key={key} label={name} value={name} />
+              <Picker.Item key={key} label={name} value={name} color={androidPickerItemColor} />
             )
           )}
         </Picker>
@@ -490,10 +491,10 @@ export default class CreatePage extends CreatePageController {
           selectedValue={this.state.selectedCity}
           onValueChange={(selectedCity) => this.handleCityValueChange(selectedCity)}
           enabled={this.state.selectedState !== ""}>
-          <Picker.Item label={"Select a city"} value={""} />
+          <Picker.Item label={"Select a city"} value={""} color={androidPickerItemColor} />
           {this.state.cityList?.map(
             (name: string) => (
-              <Picker.Item key={name} label={name} value={name} />
+              <Picker.Item key={name} label={name} value={name} color={androidPickerItemColor} />
             )
           )}
         </Picker>
@@ -810,11 +811,10 @@ export default class CreatePage extends CreatePageController {
       onHide: this.hideModalCountryPicker,
       onValueChange: (selectedCountry) => this.handleCountryChange(selectedCountry),
       title: configJSON.country,
-      items: this.state.countryList
+      items: selectableCountries(this.state.countryList)
         .filter(
           ({ country_name }: { country_name: string }) =>
-            country_name !== "Aland" &&
-            country_name !== "country_name"
+            country_name !== "Aland"
         )
         .map(({ country_code, country_name }: { country_code: string; country_name: string }) => ({
           key: country_code,

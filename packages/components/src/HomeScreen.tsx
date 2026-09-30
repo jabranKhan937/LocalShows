@@ -71,6 +71,7 @@ import UserProfileBasicBlock from '../../blocks/user-profile-basic/src/UserProfi
 import Scale from './Scale';
 import AllEventScreen from '../../blocks/events/src/AllEventScreen';
 import ArtistsToWatchAllScreen from '../../blocks/events/src/ArtistsToWatchAllScreen';
+import HotVenuesAllScreen from '../../blocks/events/src/HotVenuesAllScreen';
 import ForgotPassword from '../../blocks/forgot-password/src/ForgotPassword';
 import ForgotPasswordOTP from '../../blocks/forgot-password/src/ForgotPasswordOTP';
 import NewPassword from '../../blocks/forgot-password/src/NewPassword';
@@ -2108,6 +2109,12 @@ class HomeScreen extends BlockComponent<Props, State, SS> {
           },
           ArtistsToWatchAllScreen: {
             screen: ArtistsToWatchAllScreen,
+            navigationOptions: {
+              header: null,
+            },
+          },
+          HotVenuesAllScreen: {
+            screen: HotVenuesAllScreen,
             navigationOptions: {
               header: null,
             },

@@ -24,7 +24,7 @@ import { Picker } from '@react-native-picker/picker';
 import moment from 'moment';
 import DateRangePicker from 'react-native-daterange-picker';
 import { leftArrowWhite } from '../../user-profile-basic/src/assets';
-import { redesignTheme } from '../../utilities/src/Colors';
+import { androidPickerItemColor, redesignTheme } from '../../utilities/src/Colors';
 import PostCreationController, {
   configJSON,
 } from './PostCreationCommonController';
@@ -222,10 +222,10 @@ export default class PostCreation extends PostCreationController {
           onValueChange={value => this.handleStateValueChange(value)}
           enabled={!disableLocation}
         >
-          <Picker.Item label={'Select a state'} value={''} />
+          <Picker.Item label={'Select a state'} value={''} color={androidPickerItemColor} />
           {this.state.statesList.map(
             ({ key, name }: { key: string; name: string }) => (
-              <Picker.Item key={key} label={name} value={key} />
+              <Picker.Item key={key} label={name} value={key} color={androidPickerItemColor} />
             ),
           )}
         </Picker>
@@ -283,9 +283,9 @@ export default class PostCreation extends PostCreationController {
           }
           enabled={!disableLocation}
         >
-          <Picker.Item label={'Select a city'} value={''} />
+          <Picker.Item label={'Select a city'} value={''} color={androidPickerItemColor} />
           {this.state.citiesList?.map((name: string) => (
-            <Picker.Item key={name} label={name} value={name} />
+            <Picker.Item key={name} label={name} value={name} color={androidPickerItemColor} />
           ))}
         </Picker>
         <Image source={leftArrowWhite} style={styles.androidPickerDropdown} />

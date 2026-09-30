@@ -25,8 +25,10 @@ import {
 import { usFlag } from "../../email-account-registration/src/assets";
 
 import {
+  androidPickerItemColor,
   lightTheme,
   redesignTheme,
+  selectableCountries,
 } from "../../utilities/src/Colors";
 import { getStorageData, removeStorageData } from "../../../framework/src/Utilities";
 import { Picker } from '@react-native-picker/picker';
@@ -269,7 +271,7 @@ export default class EditProfile extends UserProfileBasicController {
                   testID="countryPickerModal"
                   selectedValue={this.state.selectedCountry}
                   onValueChange={(selectedCountry: string) => this.handleSelectedCountryiOS(selectedCountry)} >
-                  {this.state.countriesList.map(
+                  {selectableCountries(this.state.countriesList).map(
                     ({ country_code, country_name }: { country_code: string; country_name: string }) => (
                       <Picker.Item key={country_code} value={country_name} label={country_name} />
                     )
@@ -295,10 +297,10 @@ export default class EditProfile extends UserProfileBasicController {
           selectedValue={this.state.selectedCountry}
           onValueChange={(selectedCountry: string) => { this.onCountrySelect(selectedCountry) }}
         >
-          <Picker.Item label={"Select a country"} value={""} />
-          {this.state.countriesList.map(
+          <Picker.Item label={"Select a country"} value={""} color={androidPickerItemColor} />
+          {selectableCountries(this.state.countriesList).map(
             ({ country_code, country_name }: { country_code: string; country_name: string }) => (
-              <Picker.Item label={country_name} key={country_code} value={country_name} />
+              <Picker.Item label={country_name} key={country_code} value={country_name} color={androidPickerItemColor} />
             )
           )}
         </Picker>
@@ -373,10 +375,10 @@ export default class EditProfile extends UserProfileBasicController {
           onValueChange={(selectedState: string) => this.onSelectState(selectedState)}
           enabled={this.state.selectedCountry !== "" && (this.state.selectedCountry === "United States" || this.state.selectedCountry === "US")}
         >
-          <Picker.Item label={"Select a state"} value={""} />
+          <Picker.Item label={"Select a state"} value={""} color={androidPickerItemColor} />
           {this.state.states.map(
             ({ key, name }: { key: string; name: string }) => (
-              <Picker.Item label={name} key={key} value={key} />
+              <Picker.Item label={name} key={key} value={key} color={androidPickerItemColor} />
             )
           )}
         </Picker>
@@ -451,10 +453,10 @@ export default class EditProfile extends UserProfileBasicController {
           onValueChange={(selectedCity: string) => this.handleSelectedCity(selectedCity)}
           enabled={this.state.selectedState !== ""}
         >
-          <Picker.Item label={"Select a city"} value={""} />
+          <Picker.Item label={"Select a city"} value={""} color={androidPickerItemColor} />
           {this.state.cities?.map(
             (name: string) => (
-              <Picker.Item label={name} key={name} value={name} />
+              <Picker.Item label={name} key={name} value={name} color={androidPickerItemColor} />
             )
           )}
         </Picker>

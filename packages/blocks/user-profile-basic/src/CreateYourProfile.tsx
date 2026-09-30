@@ -25,8 +25,10 @@ import Feather from 'react-native-vector-icons/Feather';
 import { Picker } from '@react-native-picker/picker';
                                                                                     
 import {
+  androidPickerItemColor,
   lightTheme,
   redesignTheme,
+  selectableCountries,
 } from '../../utilities/src/Colors';
 import FastImage from '../../../components/src/SafeFastImage';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -1378,8 +1380,8 @@ Business
             this.onCountrySelect(country);
           }}
         >
-          <Picker.Item label={'Select a country'} value={''} />
-          {this.state.countriesList.map(
+          <Picker.Item label={'Select a country'} value={''} color={androidPickerItemColor} />
+          {selectableCountries(this.state.countriesList).map(
             ({
               country_code,
               country_name,
@@ -1391,6 +1393,7 @@ Business
                 label={country_name}
                 value={country_name}
                 key={country_code}
+                color={androidPickerItemColor}
               />
             ),
           )}
@@ -1482,10 +1485,10 @@ Business
             this.state.selectedCountry === 'United States'
           }
         >
-          <Picker.Item label={'Select a state'} value={''} />
+          <Picker.Item label={'Select a state'} value={''} color={androidPickerItemColor} />
           {this.state.states.map(
             ({ key, name }: { key: string; name: string }) => (
-              <Picker.Item label={name} value={key} key={key} />
+              <Picker.Item label={name} value={key} key={key} color={androidPickerItemColor} />
             ),
           )}
         </Picker>
@@ -1558,9 +1561,9 @@ Business
           }}
           enabled={this.state.selectedState !== ''}
         >
-          <Picker.Item label={'Select a city'} value={''} />
+          <Picker.Item label={'Select a city'} value={''} color={androidPickerItemColor} />
           {this.state.cities?.map((name: string) => (
-            <Picker.Item label={name} value={name} key={name} />
+            <Picker.Item label={name} value={name} key={name} color={androidPickerItemColor} />
           ))}
         </Picker>
         <Image
@@ -1657,7 +1660,7 @@ Business
                     }}
                     selectedValue={this.state.selectedCountry}
                   >
-                    {this.state.countriesList.map(
+                    {selectableCountries(this.state.countriesList).map(
                       ({
                         country_code,
                         country_name,

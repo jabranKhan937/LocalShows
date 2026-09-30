@@ -4,12 +4,12 @@ import React from "react";
 import {
   StyleSheet,
   View,
-  ScrollView,
   Text,
   TouchableOpacity,
   Linking,
   StatusBar,
   Platform,
+  LayoutChangeEvent,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/Feather";
@@ -221,7 +221,18 @@ export default class TermsConditions extends TermsConditionsController {
     );
   };
 
+  handleWebViewLayout = (event: LayoutChangeEvent) => {
+    const nextHeight = Math.round(event.nativeEvent.layout.height);
+    if (nextHeight > 0 && Math.abs(nextHeight - this.state.WebViewHeight) > 1) {
+      this.setState({ WebViewHeight: nextHeight });
+    }
+  };
+
   renderTncContent = () => {
+    if (this.state.WebViewHeight <= 0) {
+      return null;
+    }
+
     return (
       <WebView
         originWhitelist={["*"]}
@@ -232,13 +243,12 @@ export default class TermsConditions extends TermsConditionsController {
           this.styles.webView,
           {
             height: this.state.WebViewHeight,
+            opacity: Platform.OS === "android" ? 0.99 : 1,
           },
         ]}
-        onMessage={(event) => {
-          this.setState({ WebViewHeight: parseInt(event.nativeEvent.data) });
-        }}
         scalesPageToFit={false}
-        scrollEnabled={false}
+        scrollEnabled={true}
+        nestedScrollEnabled={true}
         limitsNavigationsToAppBoundDomains={true}
         automaticallyAdjustContentInsets={false}
         onShouldStartLoadWithRequest={(request) => {
@@ -248,13 +258,6 @@ export default class TermsConditions extends TermsConditionsController {
           }
           return true;
         }}
-        injectedJavaScript={`
-       setTimeout(function() {
-         window.ReactNativeWebView.postMessage(
-           Math.max(document.body.scrollHeight, document.body.offsetHeight, document.documentElement.scrollHeight, document.documentElement.offsetHeight)
-         );
-       }, 800);
-     `}
         domStorageEnabled={true}
         useWebKit={true}
       />
@@ -273,11 +276,7 @@ export default class TermsConditions extends TermsConditionsController {
           backgroundColor={theme.background}
         />
         {this.renderHeader()}
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          style={this.styles.scroll}
-          contentContainerStyle={this.styles.scrollContent}
-        >
+        <View style={this.styles.body}>
           <View style={this.styles.contentCard}>
             <View style={this.styles.brandRow}>
               <View style={this.styles.brandMark}>
@@ -285,7 +284,13 @@ export default class TermsConditions extends TermsConditionsController {
               </View>
               <Text style={this.styles.brandLabel}>Local Shows</Text>
             </View>
-            {this.renderTncContent()}
+            <View
+              style={this.styles.webViewSlot}
+              collapsable={false}
+              onLayout={this.handleWebViewLayout}
+            >
+              {this.renderTncContent()}
+            </View>
           </View>
           {this.state.isTermsCondsAccepted === "false" &&
             !this.isPrivacyPolicyScreen() && (
@@ -295,7 +300,7 @@ export default class TermsConditions extends TermsConditionsController {
               {this.renderAgree()}
             </View>
           )}
-        </ScrollView>
+        </View>
       </SafeAreaView>
     );
     // Customizable Area End
@@ -313,13 +318,11 @@ const createTermsStyles = (theme: TermsTheme) => {
       alignSelf: "center",
       backgroundColor: theme.background,
     },
-    scroll: {
+    body: {
       flex: 1,
-    },
-    scrollContent: {
       paddingHorizontal: 16,
       paddingTop: 16,
-      paddingBottom: 32,
+      paddingBottom: 16,
     },
     header: {
       flexDirection: "row",
@@ -353,6 +356,8 @@ const createTermsStyles = (theme: TermsTheme) => {
       textTransform: "uppercase",
     },
     contentCard: {
+      flex: 1,
+      minHeight: 0,
       backgroundColor: theme.card,
       borderRadius: 16,
       borderWidth: StyleSheet.hairlineWidth,
@@ -360,6 +365,7 @@ const createTermsStyles = (theme: TermsTheme) => {
       paddingHorizontal: 16,
       paddingTop: 16,
       paddingBottom: 8,
+      overflow: Platform.OS === "ios" ? "hidden" : "visible",
       ...Platform.select({
         ios: {
           shadowColor: isLightTheme ? "#000000" : "#FFFFFF",
@@ -392,6 +398,10 @@ const createTermsStyles = (theme: TermsTheme) => {
       letterSpacing: 0.4,
       color: theme.foreground,
       textTransform: "uppercase",
+    },
+    webViewSlot: {
+      flex: 1,
+      minHeight: 0,
     },
     webView: {
       width: "100%",
