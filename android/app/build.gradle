@@ -44,8 +44,8 @@ android {
         applicationId "com.localshows.events"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 25
-        versionName "1.1.3"
+        versionCode 26
+        versionName "1.1.4"
 
            // This block is different from the one you use to link Gradle
         // to your CMake or ndk-build script.

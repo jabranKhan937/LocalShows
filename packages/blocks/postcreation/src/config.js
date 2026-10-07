@@ -41,6 +41,7 @@ exports.endDate = 'End Date';
 exports.time = 'Time';
 exports.lineUp = 'Line up';
 exports.typeOfShows = 'Type of shows';
+exports.max2 = ' (max. 2)';
 exports.max3 = ' (max. 3)';
 exports.description = 'Description';
 exports.max300 = ' (max. 300 characters)';

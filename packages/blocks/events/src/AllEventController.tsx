@@ -34,6 +34,118 @@ import GeolocationServices from 'react-native-geolocation-service';
 /** Set to true to use GPS for the home feed (lat/long APIs). Off: avoids native geolocation crashes on some Android builds. */
 const DEVICE_GEOLOCATION_ENABLED_FOR_FEED = false;
 
+/**
+ * US state names in the same order as the account state picker
+ * (alphabetical by postal abbreviation).
+ */
+export const US_STATE_NAMES = [
+  'Alaska',
+  'Alabama',
+  'Arkansas',
+  'Arizona',
+  'California',
+  'Colorado',
+  'Connecticut',
+  'District of Columbia',
+  'Delaware',
+  'Florida',
+  'Georgia',
+  'Hawaii',
+  'Iowa',
+  'Idaho',
+  'Illinois',
+  'Indiana',
+  'Kansas',
+  'Kentucky',
+  'Louisiana',
+  'Massachusetts',
+  'Maryland',
+  'Maine',
+  'Michigan',
+  'Minnesota',
+  'Missouri',
+  'Mississippi',
+  'Montana',
+  'North Carolina',
+  'North Dakota',
+  'Nebraska',
+  'New Hampshire',
+  'New Jersey',
+  'New Mexico',
+  'Nevada',
+  'New York',
+  'Ohio',
+  'Oklahoma',
+  'Oregon',
+  'Pennsylvania',
+  'Rhode Island',
+  'South Carolina',
+  'South Dakota',
+  'Tennessee',
+  'Texas',
+  'Utah',
+  'Virginia',
+  'Vermont',
+  'Washington',
+  'Wisconsin',
+  'West Virginia',
+  'Wyoming',
+];
+
+const US_STATE_CODE_TO_NAME: Record<string, string> = {
+  AK: 'Alaska',
+  AL: 'Alabama',
+  AR: 'Arkansas',
+  AZ: 'Arizona',
+  CA: 'California',
+  CO: 'Colorado',
+  CT: 'Connecticut',
+  DC: 'District of Columbia',
+  DE: 'Delaware',
+  FL: 'Florida',
+  GA: 'Georgia',
+  HI: 'Hawaii',
+  IA: 'Iowa',
+  ID: 'Idaho',
+  IL: 'Illinois',
+  IN: 'Indiana',
+  KS: 'Kansas',
+  KY: 'Kentucky',
+  LA: 'Louisiana',
+  MA: 'Massachusetts',
+  MD: 'Maryland',
+  ME: 'Maine',
+  MI: 'Michigan',
+  MN: 'Minnesota',
+  MO: 'Missouri',
+  MS: 'Mississippi',
+  MT: 'Montana',
+  NC: 'North Carolina',
+  ND: 'North Dakota',
+  NE: 'Nebraska',
+  NH: 'New Hampshire',
+  NJ: 'New Jersey',
+  NM: 'New Mexico',
+  NV: 'Nevada',
+  NY: 'New York',
+  OH: 'Ohio',
+  OK: 'Oklahoma',
+  OR: 'Oregon',
+  PA: 'Pennsylvania',
+  RI: 'Rhode Island',
+  SC: 'South Carolina',
+  SD: 'South Dakota',
+  TN: 'Tennessee',
+  TX: 'Texas',
+  UT: 'Utah',
+  VA: 'Virginia',
+  VT: 'Vermont',
+  WA: 'Washington',
+  WI: 'Wisconsin',
+  WV: 'West Virginia',
+  WY: 'Wyoming',
+};
+
 /** Number of shows revealed on the home feed at a time. */
 export const HOME_FEED_PAGE_SIZE = 10;
 
@@ -195,6 +307,13 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
   eventsFeedListRef = createRef<any>();
   homeFeedTabScrollListenerAttached = false;
   profileThemeListener: { remove: () => void } | null = null;
+  /** True after the user picks a state in the Shows in dropdown this session. */
+  userDidSelectFeedState = false;
+  /** True after the device location has been applied as the default state. */
+  defaultLocationStateApplied = false;
+  locationStateRequestStarted = false;
+  /** Set only after a logged-in user is confirmed, before reading device location. */
+  locationDefaultForLoggedInUser = false;
   // Customizable Area End
   constructor(props: Props) {
     super(props);
@@ -1574,7 +1693,9 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
       const { selectedState } = this.state;
       const filteredEventList =
         selectedState && selectedState !== 'All'
-          ? newData.filter((e: any) => e.state_name === selectedState)
+          ? newData.filter((e: any) =>
+              this.eventStateMatchesSelection(e.state_name, selectedState),
+            )
           : newData;
       this.setState(
         {
@@ -1713,6 +1834,38 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
       return a.localeCompare(b);
     });
     return unique;
+  };
+
+  /** Map a geocoder or profile value onto one of the US state names. */
+  matchUsStateName = (value: string): string | null => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+    const byName = US_STATE_NAMES.find(
+      name => name.toLowerCase() === trimmed.toLowerCase(),
+    );
+    if (byName) {
+      return byName;
+    }
+    return US_STATE_CODE_TO_NAME[trimmed.toUpperCase()] ?? null;
+  };
+
+  eventStateMatchesSelection = (
+    eventState: unknown,
+    selectedState: string,
+  ) => {
+    if (typeof eventState !== 'string') {
+      return false;
+    }
+    if (eventState === selectedState) {
+      return true;
+    }
+    const matchedEvent = this.matchUsStateName(eventState);
+    const matchedSelected = this.matchUsStateName(selectedState);
+    return Boolean(
+      matchedEvent && matchedSelected && matchedEvent === matchedSelected,
+    );
   };
 
   /** Fan profile stores home state(s) in storage; merge so the state picker always lists them. */
@@ -2233,16 +2386,152 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
         return;
       }
       const components = json.results[0].address_components;
+      const countryComp = components.find((c: { types: string[] }) =>
+        c.types.includes('country'),
+      );
+      const countryCode = (countryComp?.short_name || countryComp?.long_name || '')
+        .trim()
+        .toUpperCase();
       const stateComp = components.find((c: { types: string[] }) =>
         c.types.includes('administrative_area_level_1'),
       );
       const stateName = stateComp?.long_name?.trim();
-      if (stateName && this.isComponentMounted) {
-        this.safeSetState({ currentLocationState: stateName });
+      if (!stateName || !this.isComponentMounted) {
+        return;
       }
+      const isUnitedStates =
+        countryCode === '' || countryCode === 'US' || countryCode === 'UNITED STATES';
+      if (!isUnitedStates) {
+        this.defaultLocationStateApplied = true;
+        return;
+      }
+      this.applyResolvedLocationState(stateName);
     } catch (_err) {
-      // Optional; feed still loads via lat/long
+      this.locationStateRequestStarted = false;
     }
+  };
+
+  /**
+   * Read the device location only to choose the Shows in state.
+   * The home feed still loads through the existing state filter, not lat/long.
+   */
+  requestCurrentLocationStateDefault = async () => {
+    if (this.isEventDetailScreen() || this.userDidSelectFeedState) {
+      return;
+    }
+    if (this.defaultLocationStateApplied || this.locationStateRequestStarted) {
+      return;
+    }
+    if (this.state.selectedState && this.state.selectedState !== 'All') {
+      return;
+    }
+    const authToken =
+      this.state.authToken || (await getStorageData('authToken'));
+    if (!authToken) {
+      return;
+    }
+    this.locationDefaultForLoggedInUser = true;
+
+    this.locationStateRequestStarted = true;
+    let granted = false;
+    try {
+      if (Platform.OS === 'ios') {
+        const status = await GeolocationServices.requestAuthorization(
+          'whenInUse',
+        );
+        granted = status === 'granted';
+      } else if (Platform.OS === 'android') {
+        const alreadyGranted = await PermissionsAndroid.check(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        );
+        if (alreadyGranted) {
+          granted = true;
+        } else {
+          const status = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          );
+          granted = status === PermissionsAndroid.RESULTS.GRANTED;
+        }
+      }
+    } catch (_error) {
+      this.locationStateRequestStarted = false;
+      return;
+    }
+
+    if (!granted || !this.isComponentMounted) {
+      this.locationStateRequestStarted = false;
+      return;
+    }
+
+    const readPosition = () => {
+      if (!this.isComponentMounted) {
+        return;
+      }
+      try {
+        GeolocationServices.getCurrentPosition(
+          position => {
+            if (this.isComponentMounted) {
+              void this.resolveCurrentLocationStateForDropdown(
+                position.coords.latitude,
+                position.coords.longitude,
+              );
+            }
+          },
+          () => {
+            this.locationStateRequestStarted = false;
+          },
+          {
+            enableHighAccuracy: false,
+            timeout: 12000,
+            maximumAge: 300000,
+          },
+        );
+      } catch (_error) {
+        this.locationStateRequestStarted = false;
+      }
+    };
+
+    InteractionManager.runAfterInteractions(() => {
+      setTimeout(readPosition, 80);
+    });
+  };
+
+  applyResolvedLocationState = (rawStateName: string) => {
+    const matched = this.matchUsStateName(rawStateName);
+    if (!this.isComponentMounted) {
+      return;
+    }
+    if (!matched) {
+      this.defaultLocationStateApplied = true;
+      return;
+    }
+
+    const shouldApplyDefault =
+      !this.isEventDetailScreen() &&
+      this.locationDefaultForLoggedInUser &&
+      !this.userDidSelectFeedState &&
+      !this.defaultLocationStateApplied &&
+      (this.state.selectedState === 'All' || this.state.selectedState === '');
+
+    this.defaultLocationStateApplied = true;
+    if (!shouldApplyDefault) {
+      this.safeSetState({ currentLocationState: matched });
+      return;
+    }
+
+    const filteredEventList = this.eventsForSelectedState(matched);
+    this.safeSetState(
+      {
+        currentLocationState: matched,
+        selectedState: matched,
+        filteredEventList,
+        isLoading: true,
+        visibleShowsCount: HOME_FEED_PAGE_SIZE,
+      },
+      () => {
+        this.getEventsListAPI(true);
+      },
+    );
   };
 
   getEventsFromLocation = () => {
@@ -2855,8 +3144,8 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
 
   filterEvents = () => {
     const dataList = [...this.state.authenticatedEventsList];
-    const filteredEvent = dataList.filter(
-      (event: any) => event.state_name === this.state.selectedState,
+    const filteredEvent = dataList.filter((event: any) =>
+      this.eventStateMatchesSelection(event.state_name, this.state.selectedState),
     );
     this.setState({ filteredEventList: filteredEvent, isLoading: false });
   };
@@ -3708,9 +3997,27 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
     this.setState({ stateClicked: true });
   };
 
+  eventsForSelectedState = (selectedState: string) => {
+    if (!selectedState || selectedState === 'All') {
+      return this.state.authenticatedEventsList;
+    }
+    return this.state.authenticatedEventsList.filter((event: any) =>
+      this.eventStateMatchesSelection(event.state_name, selectedState),
+    );
+  };
+
   handleStateValueChangeAndroid = (selectedState: string) => {
+    if (!selectedState || selectedState === this.state.selectedState) {
+      return;
+    }
+    this.userDidSelectFeedState = true;
     this.setState(
-      { selectedState, isLoading: true, visibleShowsCount: HOME_FEED_PAGE_SIZE },
+      {
+        selectedState,
+        filteredEventList: this.eventsForSelectedState(selectedState),
+        isLoading: true,
+        visibleShowsCount: HOME_FEED_PAGE_SIZE,
+      },
       () => {
         this.getEventsListAPI();
       },
@@ -3718,10 +4025,16 @@ export default class AllEventController extends BlockComponent<Props, S, SS> {
   };
 
   handleStateValueChangeIOS = (selectedState: string) => {
+    if (!selectedState || selectedState === this.state.selectedState) {
+      this.setState({ stateClicked: false });
+      return;
+    }
+    this.userDidSelectFeedState = true;
     this.setState(
       {
         stateClicked: false,
         selectedState,
+        filteredEventList: this.eventsForSelectedState(selectedState),
         isLoading: true,
         visibleShowsCount: HOME_FEED_PAGE_SIZE,
       },

@@ -1,7 +1,7 @@
 import { IBlock } from '../../../framework/src/IBlock';
 import { Message } from '../../../framework/src/Message';
 import { BlockComponent } from '../../../framework/src/BlockComponent';
-import { Alert, Linking, Platform } from 'react-native';
+import { Alert, DeviceEventEmitter, Linking, Platform } from 'react-native';
 import MessageEnum, {
   getName,
 } from '../../../framework/src/Messages/MessageEnum';
@@ -20,6 +20,12 @@ import {
   RESULTS,
 } from 'react-native-permissions';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import {
+  lightTheme,
+  redesignTheme,
+  PROFILE_THEME_CHANGED_EVENT,
+  PROFILE_THEME_STORAGE_KEY,
+} from '../../utilities/src/Colors';
 
 const months = [
   'Jan',
@@ -180,9 +186,12 @@ export default class PostCreationCommonController extends BlockComponent<
   getLineupsAPICallID: any;
   getTypeOfShowAPICallID: any;
   getGenreAPICallID: any;
+  genreRequestMeta = new Map<string, { categoryId: string }>();
+  genreListsByCategory: Record<string, any[]> = {};
   getEventFeaturesAPICallID: string = '';
   markAsSoldoutAPICallID: any;
   getUserProfileAPICallId: any;
+  profileThemeListener: { remove: () => void } | null = null;
 
   /** When userRole is venue or accountType is one of these, auto-fill location from first_name.
    * Excludes RECORD LABEL / BOOKING AGENT / AGENCY / PROMOTER so location fields stay empty by default. */
@@ -310,7 +319,25 @@ export default class PostCreationCommonController extends BlockComponent<
     runEngine.attachBuildingBlock(this as IBlock, this.subScribedMessages);
   }
 
+  getPostTheme = () => {
+    return this.state.isDarkMode ? redesignTheme : lightTheme;
+  };
+
+  loadPostTheme = async () => {
+    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
+    this.setState({ isDarkMode: savedTheme !== 'false' });
+    if (!this.profileThemeListener) {
+      this.profileThemeListener = DeviceEventEmitter.addListener(
+        PROFILE_THEME_CHANGED_EVENT,
+        (isDarkMode: boolean) => {
+          this.setState({ isDarkMode });
+        },
+      );
+    }
+  };
+
   async componentDidMount() {
+    await this.loadPostTheme();
     const eventImage =
       this.props.route?.params?.event_image ||
       this.props.navigation.state?.params?.event_image;
@@ -435,6 +462,14 @@ export default class PostCreationCommonController extends BlockComponent<
     this.send(authTokenReq);
   }
 
+  async componentWillUnmount() {
+    if (this.profileThemeListener) {
+      this.profileThemeListener.remove();
+      this.profileThemeListener = null;
+    }
+    await super.componentWillUnmount();
+  }
+
   async receive(from: string, message: Message) {
     runEngine.debugLog('Message Recived', message);
 
@@ -516,6 +551,12 @@ export default class PostCreationCommonController extends BlockComponent<
   };
 
   handleRestAPISuccessResponse = (apiRequestCallId: any, responseJson: any) => {
+    const genreMeta = this.genreRequestMeta.get(String(apiRequestCallId));
+    if (genreMeta && apiRequestCallId !== this.getGenreAPICallID) {
+      this.genreRequestMeta.delete(String(apiRequestCallId));
+      this.handleGenreApiResponse(responseJson, genreMeta);
+      return;
+    }
     switch (apiRequestCallId) {
       case this.apiPostItemCallId:
         this.handlePostItemAPIResponse(responseJson);
@@ -566,7 +607,11 @@ export default class PostCreationCommonController extends BlockComponent<
         this.handleTypeOfShowApiResponse(responseJson);
         break;
       case this.getGenreAPICallID:
-        this.handleGenreApiResponse(responseJson);
+        this.handleGenreApiResponse(
+          responseJson,
+          this.genreRequestMeta.get(String(apiRequestCallId)),
+        );
+        this.genreRequestMeta.delete(String(apiRequestCallId));
         break;
       case this.getEventFeaturesAPICallID:
         this.handleEventFeaturesAPIResponse(responseJson);
@@ -1388,13 +1433,16 @@ export default class PostCreationCommonController extends BlockComponent<
         if (selectedStateKey) {
           this.getCitiesListAPI(selectedStateKey);
         }
-        if (
-          attributes.type_of_show &&
-          attributes.type_of_show.length > 0 &&
-          attributes.type_of_show[0].id
-        ) {
-          this.getGenreListAPI(attributes.type_of_show[0].id);
-        }
+        const selectedTypes = Array.isArray(attributes.type_of_show)
+          ? attributes.type_of_show
+          : [];
+        this.genreListsByCategory = {};
+        selectedTypes.forEach((typeOfShow: any) => {
+          const typeId = this.getShowTypeId(typeOfShow);
+          if (typeId) {
+            this.getGenreListAPI(typeId);
+          }
+        });
       },
     );
   };
@@ -1437,9 +1485,57 @@ export default class PostCreationCommonController extends BlockComponent<
     }
   };
 
-  handleGenreApiResponse = (responseJson: any) => {
-    if (!responseJson.errors) {
-      this.setState({ genreList: responseJson.data });
+  getShowTypeId = (item: any): string => {
+    if (!item || typeof item !== 'object') {
+      return '';
+    }
+    const id = item.id ?? item.attributes?.id;
+    return id == null || id === '' ? '' : String(id);
+  };
+
+  getShowTypeKey = (item: any): string => {
+    if (typeof item === 'string') {
+      return item.trim();
+    }
+    const id = this.getShowTypeId(item);
+    if (id) {
+      return `id:${id}`;
+    }
+    const name = item?.attributes?.name ?? item?.name;
+    return typeof name === 'string' ? `name:${name}` : '';
+  };
+
+  mergeGenreOptions = (genres: any[]): any[] => {
+    const seenIds = new Set<string>();
+    return genres.filter(genre => {
+      const id = genre?.id ?? genre?.attributes?.id;
+      const key = id == null || id === '' ? '' : String(id);
+      if (!key || seenIds.has(key)) {
+        return false;
+      }
+      seenIds.add(key);
+      return true;
+    });
+  };
+
+  handleGenreApiResponse = (
+    responseJson: any,
+    meta?: { categoryId: string },
+  ) => {
+    if (!responseJson?.errors) {
+      const incoming = Array.isArray(responseJson?.data) ? responseJson.data : [];
+      if (!meta?.categoryId) {
+        this.setState({ genreList: responseJson?.data });
+        return;
+      }
+      this.genreListsByCategory[meta.categoryId] = incoming;
+      const merged = this.mergeGenreOptions(
+        Object.values(this.genreListsByCategory).reduce(
+          (all: any[], list: any[]) => all.concat(list),
+          [],
+        ),
+      );
+      this.setState({ genreList: merged });
     } else {
       this.parseApiErrorResponse(responseJson);
     }
@@ -2642,6 +2738,9 @@ export default class PostCreationCommonController extends BlockComponent<
     );
 
     this.getGenreAPICallID = requestMessage.messageId;
+    this.genreRequestMeta.set(String(requestMessage.messageId), {
+      categoryId: String(cat_id),
+    });
 
     requestMessage.addData(
       getName(MessageEnum.RestAPIResponceEndPointMessage),
@@ -2661,14 +2760,39 @@ export default class PostCreationCommonController extends BlockComponent<
   };
 
   handleSelectedTypeOfShow = async (typeOfShow: any) => {
+    const typeKey = this.getShowTypeKey(typeOfShow);
+    if (!typeKey) {
+      return;
+    }
+    const selectedTypeOfShows = Array.isArray(this.state.selectedTypeOfShows)
+      ? this.state.selectedTypeOfShows
+      : [];
+    if (selectedTypeOfShows.length >= 2) {
+      return;
+    }
+    if (
+      selectedTypeOfShows.some(
+        item => this.getShowTypeKey(item) === typeKey,
+      )
+    ) {
+      return;
+    }
+    const isFirstType = selectedTypeOfShows.length === 0;
     this.setState(
       {
-        selectedTypeOfShows: [typeOfShow],
+        selectedTypeOfShows: [...selectedTypeOfShows, typeOfShow],
         openTyeOfShowsPicker: false,
-        selectedGenres: [],
+        ...(isFirstType ? { selectedGenres: [], genreList: [] } : {}),
       },
       () => {
-        this.getGenreListAPI(typeOfShow.id);
+        const typeId = this.getShowTypeId(typeOfShow);
+        if (!typeId) {
+          return;
+        }
+        if (isFirstType) {
+          this.genreListsByCategory = {};
+        }
+        this.getGenreListAPI(typeId);
       },
     );
   };
@@ -2690,11 +2814,44 @@ export default class PostCreationCommonController extends BlockComponent<
   };
 
   handleRemoveTypeOfShow = (item: any) => {
-    const { selectedTypeOfShows } = this.state;
-    const updatedTypeOfShow = selectedTypeOfShows.filter(
-      typeOfShow => typeOfShow !== item,
+    const removedKey = this.getShowTypeKey(item);
+    const updatedTypeOfShow = this.state.selectedTypeOfShows.filter(
+      typeOfShow => this.getShowTypeKey(typeOfShow) !== removedKey,
     );
-    this.setState({ selectedTypeOfShows: updatedTypeOfShow });
+    const removedId = this.getShowTypeId(item);
+    if (removedId) {
+      delete this.genreListsByCategory[removedId];
+    }
+    if (updatedTypeOfShow.length === 0) {
+      this.genreListsByCategory = {};
+      this.setState({
+        selectedTypeOfShows: [],
+        genreList: [],
+        selectedGenres: [],
+      });
+      return;
+    }
+    const genreList = this.mergeGenreOptions(
+      Object.values(this.genreListsByCategory).reduce(
+        (all: any[], list: any[]) => all.concat(list),
+        [],
+      ),
+    );
+    const allowedIds = new Set(
+      genreList.map(genre => String(genre?.id ?? genre?.attributes?.id ?? '')),
+    );
+    const selectedGenres =
+      allowedIds.size === 0
+        ? this.state.selectedGenres
+        : this.state.selectedGenres.filter(genre => {
+            const id = genre?.id ?? genre?.attributes?.id;
+            return id == null || allowedIds.has(String(id));
+          });
+    this.setState({
+      selectedTypeOfShows: updatedTypeOfShow,
+      genreList,
+      selectedGenres,
+    });
   };
 
   handleRemoveGenre = (item: any) => {
@@ -2910,7 +3067,7 @@ export default class PostCreationCommonController extends BlockComponent<
 
   handleIosTypeValueChange = (value: string) => {
     this.setState({ openTyeOfShowsPicker: false }, () => {
-      if (this.state.selectedTypeOfShows.length < 1)
+      if (this.state.selectedTypeOfShows.length < 2)
         this.handleSelectedTypeOfShow(value);
     });
   };

@@ -2,14 +2,15 @@ import React from "react";
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   StatusBar,
   ActivityIndicator,
   Dimensions,
 } from "react-native";
 import MergeEngineUtilities from "../../utilities/src/MergeEngineUtilities";
-import Icon from "react-native-vector-icons/Feather";
 import { lightTheme, redesignTheme } from "../../utilities/src/Colors";
+import { imgAppLogo } from "./assets";
 
 let artBoardHeightOrg = 667;
 let artBoardWidthOrg = 375;
@@ -74,9 +75,7 @@ export default class Splashscreen extends SplashscreenController {
 
         <View style={styles.center}>
           <View style={styles.logoGlow}>
-            <View style={styles.logoMark}>
-              <Icon name="music" size={34} color="#FFFFFF" />
-            </View>
+            <Image source={imgAppLogo} style={styles.logoMark} />
           </View>
           <Text style={styles.wordmarkLocal}>LOCAL</Text>
           <Text style={styles.wordmarkShows}>SHOWS</Text>
@@ -145,19 +144,16 @@ const createSplashStyles = (theme: SplashTheme) =>
       elevation: 12,
     },
     logoMark: {
-      width: 88,
-      height: 88,
-      borderRadius: 24,
-      backgroundColor: theme.primary,
-      alignItems: "center",
-      justifyContent: "center",
+      width: 148,
+      height: 148,
+      borderRadius: 33,
     },
     wordmarkLocal: {
       fontFamily: "OpenSans",
-      fontSize: 18,
-      fontWeight: "800",
-      letterSpacing: 8,
-      color: theme.foreground,
+      fontSize: 44,
+      fontWeight: "900",
+      letterSpacing: 4,
+      color: theme.primary,
     },
     wordmarkShows: {
       fontFamily: "OpenSans",

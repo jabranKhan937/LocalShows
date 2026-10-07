@@ -21,7 +21,7 @@ import PostCreationCommonController, {
 } from './PostCreationCommonController';
 import Icon from 'react-native-vector-icons/Feather';
 import { leftArrow } from '../../email-account-registration/src/assets';
-import { redesignTheme } from '../../utilities/src/Colors';
+import { lightTheme, redesignTheme } from '../../utilities/src/Colors';
 
 // Customizable Area End
 
@@ -37,7 +37,12 @@ export default class ImageSelection extends PostCreationCommonController {
     super(props);
   }
 
+  get styles() {
+    return this.state.isDarkMode ? darkImageSelectionStyles : lightImageSelectionStyles;
+  }
+
   async componentDidMount() {
+    await this.loadPostTheme();
     const selectedType =
       this.props.route?.params?.selectedType ||
       this.props.navigation.state?.params?.selectedType;
@@ -97,53 +102,53 @@ export default class ImageSelection extends PostCreationCommonController {
   renderHeader = (selectedType: string) => {
     const isPicture = selectedType === 'picture';
     return (
-      <View style={styles.headerContainer}>
+      <View style={this.styles.headerContainer}>
         {isPicture ? (
           <TouchableOpacity
             testID="backBtn"
-            style={styles.headerIconBtn}
+            style={this.styles.headerIconBtn}
             onPress={() => this.props?.navigation?.goBack()}
           >
             <Icon
               name="arrow-left"
               size={18}
-              color={redesignTheme.foreground}
+              color={this.getPostTheme().foreground}
             />
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
             testID="crossBtn"
-            style={styles.headerIconBtn}
+            style={this.styles.headerIconBtn}
             onPress={() => this.props?.navigation?.goBack()}
           >
-            <Icon name="x" size={18} color={redesignTheme.muted} />
+            <Icon name="x" size={18} color={this.getPostTheme().muted} />
           </TouchableOpacity>
         )}
-        <View style={styles.headerCopy}>
-          <Text style={styles.titleHeader}>
+        <View style={this.styles.headerCopy}>
+          <Text style={this.styles.titleHeader}>
             {isPicture
               ? configJSON.shareAPhotoCardTitle
               : configJSON.postAShowCardTitle}
           </Text>
           {isPicture && (
-            <Text style={styles.stepLabel}>Step 1 of 2 — Details</Text>
+            <Text style={this.styles.stepLabel}>Step 1 of 2 — Details</Text>
           )}
         </View>
         {isPicture ? (
           <TouchableOpacity
             testID="crossBtn"
-            style={styles.headerIconBtn}
+            style={this.styles.headerIconBtn}
             onPress={() => this.props?.navigation?.goBack()}
           >
-            <Icon name="x" size={18} color={redesignTheme.muted} />
+            <Icon name="x" size={18} color={this.getPostTheme().muted} />
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
             testID="forwardArrow"
-            style={styles.headerIconBtn}
+            style={this.styles.headerIconBtn}
             onPress={() => this.handleContinue(selectedType)}
           >
-            <Image source={leftArrow} style={styles.forwardArrow} />
+            <Image source={leftArrow} style={this.styles.forwardArrow} />
           </TouchableOpacity>
         )}
       </View>
@@ -160,25 +165,25 @@ export default class ImageSelection extends PostCreationCommonController {
         testID="openCameraBtn"
         activeOpacity={0.85}
         onPress={this.handleOpenCameraPopup}
-        style={[styles.photoPicker, hasImage && styles.photoPickerFilled]}
+        style={[this.styles.photoPicker, hasImage && this.styles.photoPickerFilled]}
       >
         {hasImage ? (
           <>
-            <Image source={{ uri: imageUri }} style={styles.photoPreview} />
+            <Image source={{ uri: imageUri }} style={this.styles.photoPreview} />
             {this.state.isPictureExplicit && (
-              <View style={styles.lockBadge}>
+              <View style={this.styles.lockBadge}>
                 <Icon name="lock" size={12} color="#FFFFFF" />
               </View>
             )}
-            <View style={styles.changePhotoPill}>
+            <View style={this.styles.changePhotoPill}>
               <Icon name="camera" size={14} color="#FFFFFF" />
-              <Text style={styles.changePhotoText}>Change Photo</Text>
+              <Text style={this.styles.changePhotoText}>Change Photo</Text>
             </View>
           </>
         ) : (
           <>
-            <Icon name="image" size={28} color={redesignTheme.muted} />
-            <Text style={styles.photoPickerText}>Tap to select a photo</Text>
+            <Icon name="image" size={28} color={this.getPostTheme().muted} />
+            <Text style={this.styles.photoPickerText}>Tap to select a photo</Text>
           </>
         )}
       </TouchableOpacity>
@@ -192,7 +197,7 @@ export default class ImageSelection extends PostCreationCommonController {
     const isOn = this.state.isPictureExplicit;
     return (
       <TouchableOpacity
-        style={styles.protectRow}
+        style={this.styles.protectRow}
         testID="pictureExplicitBtn"
         activeOpacity={0.85}
         onPress={() =>
@@ -201,13 +206,13 @@ export default class ImageSelection extends PostCreationCommonController {
           })
         }
       >
-        <View style={styles.protectCopy}>
-          <Icon name="shield" size={18} color={redesignTheme.primary} />
-          <Text style={styles.protectTitle}>{configJSON.pictureIsExplicit}</Text>
-          <Icon name="info" size={14} color={redesignTheme.muted} />
+        <View style={this.styles.protectCopy}>
+          <Icon name="shield" size={18} color={this.getPostTheme().primary} />
+          <Text style={this.styles.protectTitle}>{configJSON.pictureIsExplicit}</Text>
+          <Icon name="info" size={14} color={this.getPostTheme().muted} />
         </View>
-        <View style={[styles.toggleTrack, isOn && styles.toggleTrackOn]}>
-          <View style={styles.toggleThumb} />
+        <View style={[this.styles.toggleTrack, isOn && this.styles.toggleTrackOn]}>
+          <View style={this.styles.toggleThumb} />
         </View>
       </TouchableOpacity>
     );
@@ -219,31 +224,31 @@ export default class ImageSelection extends PostCreationCommonController {
     }
     return (
       <View>
-        <View style={styles.disclaimerRow}>
-          <Icon name="info" size={14} color={redesignTheme.muted} />
-          <Text style={styles.disclaimerText}>
+        <View style={this.styles.disclaimerRow}>
+          <Icon name="info" size={14} color={this.getPostTheme().muted} />
+          <Text style={this.styles.disclaimerText}>
             Users under the age of 18 will not see any explicit content.
           </Text>
         </View>
-        <View style={styles.fieldLabelRow}>
-          <Icon name="align-left" size={14} color={redesignTheme.primary} />
-          <Text style={styles.fieldLabel}>
+        <View style={this.styles.fieldLabelRow}>
+          <Icon name="align-left" size={14} color={this.getPostTheme().primary} />
+          <Text style={this.styles.fieldLabel}>
             DESCRIPTION
-            <Text style={styles.fieldLabelMuted}>{configJSON.max300}</Text>
+            <Text style={this.styles.fieldLabelMuted}>{configJSON.max2000}</Text>
           </Text>
         </View>
         <TextInput
           testID="descriptionInputText"
           placeholder="Enter description"
-          placeholderTextColor={redesignTheme.muted}
-          style={styles.captionInput}
+          placeholderTextColor={this.getPostTheme().muted}
+          style={this.styles.captionInput}
           multiline
           value={this.state.description}
-          maxLength={300}
+          maxLength={2000}
           onChangeText={description => this.setState({ description })}
         />
-        <Text style={styles.charCount}>
-          {this.state.description.length}/300
+        <Text style={this.styles.charCount}>
+          {this.state.description.length}/2000
         </Text>
       </View>
     );
@@ -255,20 +260,20 @@ export default class ImageSelection extends PostCreationCommonController {
     }
     const isReady = this.hasSelectedImage();
     return (
-      <View style={styles.previewCtaWrap}>
+      <View style={this.styles.previewCtaWrap}>
         <TouchableOpacity
           testID="forwardArrow"
           style={[
-            styles.previewBtn,
-            isReady ? styles.previewBtnActive : styles.previewBtnInactive,
+            this.styles.previewBtn,
+            isReady ? this.styles.previewBtnActive : this.styles.previewBtnInactive,
           ]}
           onPress={() => this.handleContinue(selectedType)}
           activeOpacity={isReady ? 0.85 : 1}
         >
           <Text
             style={[
-              styles.previewBtnText,
-              !isReady && styles.previewBtnInactiveText,
+              this.styles.previewBtnText,
+              !isReady && this.styles.previewBtnInactiveText,
             ]}
           >
             PREVIEW POST
@@ -276,7 +281,7 @@ export default class ImageSelection extends PostCreationCommonController {
           <Icon
             name="chevron-right"
             size={18}
-            color={isReady ? '#FFFFFF' : redesignTheme.muted}
+            color={isReady ? '#FFFFFF' : this.getPostTheme().muted}
           />
         </TouchableOpacity>
       </View>
@@ -298,7 +303,7 @@ export default class ImageSelection extends PostCreationCommonController {
                 this.handleSelectedGalleryItem(item);
               }}
             >
-              <Image source={{ uri: item }} style={styles.galleryImage} />
+              <Image source={{ uri: item }} style={this.styles.galleryImage} />
             </TouchableOpacity>
           );
         }}
@@ -313,28 +318,28 @@ export default class ImageSelection extends PostCreationCommonController {
         transparent={true}
         visible={this.state.showCameraGalleryPopup}
       >
-        <View style={[styles.centerView, { padding: 10 }]}>
-          <View style={styles.cameraGalleryOption}>
+        <View style={[this.styles.centerView, { padding: 10 }]}>
+          <View style={this.styles.cameraGalleryOption}>
             <TouchableOpacity
               testID="takePhotoBtn"
               onPress={this.handleCameraImage}
             >
-              <Text style={styles.cameraButtonText}>Take photo</Text>
+              <Text style={this.styles.cameraButtonText}>Take photo</Text>
             </TouchableOpacity>
-            <View style={styles.divider} />
+            <View style={this.styles.divider} />
             <TouchableOpacity
               testID="choosePhotoBtn"
               onPress={this.handleGallery}
             >
-              <Text style={styles.cameraButtonText}>Choose photo</Text>
+              <Text style={this.styles.cameraButtonText}>Choose photo</Text>
             </TouchableOpacity>
           </View>
           <TouchableOpacity
             testID="cancelCameraOption"
-            style={styles.cancelCameraPopup}
+            style={this.styles.cancelCameraPopup}
             onPress={this.handleCameraGalleryCancelPopup}
           >
-            <Text style={styles.cancelCameraText}>Cancel</Text>
+            <Text style={this.styles.cancelCameraText}>Cancel</Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -348,7 +353,7 @@ export default class ImageSelection extends PostCreationCommonController {
     console.log('ImageSelection render - selectedType:', selectedType);
     // Customizable Area End
     return (
-      <SafeAreaView style={styles.safeAreaView} edges={['top', 'left', 'right']}>
+      <SafeAreaView style={this.styles.safeAreaView} edges={['top', 'left', 'right']}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -358,25 +363,25 @@ export default class ImageSelection extends PostCreationCommonController {
             showsVerticalScrollIndicator={false}
           >
             {/* Customizable Area Start */}
-            <View style={styles.container}>
+            <View style={this.styles.container}>
               <StatusBar
-                barStyle="light-content"
-                backgroundColor={redesignTheme.background}
+                barStyle={this.state.isDarkMode ? 'light-content' : 'dark-content'}
+                backgroundColor={this.getPostTheme().background}
               />
               {this.renderHeader(selectedType)}
               {selectedType === 'picture' && (
-                <View style={styles.progressTrack}>
-                  <View style={styles.progressFill} />
+                <View style={this.styles.progressTrack}>
+                  <View style={this.styles.progressFill} />
                 </View>
               )}
               {selectedType === 'picture' && (
-                <View style={styles.fieldLabelRow}>
-                  <Icon name="image" size={14} color={redesignTheme.primary} />
-                  <Text style={styles.fieldLabel}>EVENT / SHOW PHOTO</Text>
+                <View style={this.styles.fieldLabelRow}>
+                  <Icon name="image" size={14} color={this.getPostTheme().primary} />
+                  <Text style={this.styles.fieldLabel}>EVENT / SHOW PHOTO</Text>
                 </View>
               )}
               {selectedType !== 'picture' && (
-                <Text style={styles.photoLabel}>EVENT / SHOW PHOTO</Text>
+                <Text style={this.styles.photoLabel}>EVENT / SHOW PHOTO</Text>
               )}
               {this.renderCameraRoll()}
               {this.renderPictureExplicit(selectedType)}
@@ -384,10 +389,10 @@ export default class ImageSelection extends PostCreationCommonController {
               {this.state.galleryImages.length !== 0 && (
                 <TouchableOpacity
                   testID="galleryDropdown"
-                  style={styles.galleryHeader}
+                  style={this.styles.galleryHeader}
                 >
-                  <Text style={styles.galleryLabel}>{configJSON.gallery}</Text>
-                  <Image source={leftArrow} style={styles.galleryDropdown} />
+                  <Text style={this.styles.galleryLabel}>{configJSON.gallery}</Text>
+                  <Image source={leftArrow} style={this.styles.galleryDropdown} />
                 </TouchableOpacity>
               )}
               {this.renderGallery()}
@@ -403,10 +408,10 @@ export default class ImageSelection extends PostCreationCommonController {
 }
 
 // Customizable Area Start
-const styles = StyleSheet.create({
+const createImageSelectionStyles = (theme: typeof redesignTheme | typeof lightTheme) => StyleSheet.create({
   safeAreaView: {
     flex: 1,
-    backgroundColor: redesignTheme.background,
+    backgroundColor: theme.background,
   },
   container: {
     paddingHorizontal: 16,
@@ -427,14 +432,14 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: theme.input,
     borderWidth: 1,
-    borderColor: redesignTheme.border,
+    borderColor: theme.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   titleHeader: {
-    color: redesignTheme.foreground,
+    color: theme.foreground,
     fontSize: 20,
     lineHeight: 24,
     fontWeight: '900',
@@ -443,7 +448,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   stepLabel: {
-    color: redesignTheme.muted,
+    color: theme.muted,
     fontSize: 12,
     marginTop: 2,
     textAlign: 'center',
@@ -451,7 +456,7 @@ const styles = StyleSheet.create({
   progressTrack: {
     height: 3,
     borderRadius: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: theme.border,
     overflow: 'hidden',
     marginTop: 12,
     marginBottom: 8,
@@ -459,10 +464,10 @@ const styles = StyleSheet.create({
   progressFill: {
     width: '50%',
     height: '100%',
-    backgroundColor: redesignTheme.primary,
+    backgroundColor: theme.primary,
   },
   photoLabel: {
-    color: redesignTheme.primary,
+    color: theme.primary,
     fontSize: 13,
     fontWeight: '800',
     letterSpacing: 0.6,
@@ -474,15 +479,15 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderColor: 'rgba(255, 255, 255, 0.16)',
-    backgroundColor: redesignTheme.card,
+    borderColor: theme.border,
+    backgroundColor: theme.card,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
   photoPickerFilled: {
     borderStyle: 'solid',
-    borderColor: redesignTheme.border,
+    borderColor: theme.border,
     minHeight: 220,
   },
   photoPreview: {
@@ -491,7 +496,7 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   photoPickerText: {
-    color: redesignTheme.muted,
+    color: theme.muted,
     fontSize: 14,
     fontWeight: '600',
     marginTop: 8,
@@ -503,7 +508,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: redesignTheme.primary,
+    backgroundColor: theme.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -528,10 +533,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: redesignTheme.card,
+    backgroundColor: theme.card,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: redesignTheme.border,
+    borderColor: theme.border,
     paddingHorizontal: 14,
     paddingVertical: 14,
   },
@@ -542,7 +547,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   protectTitle: {
-    color: redesignTheme.foreground,
+    color: theme.foreground,
     fontSize: 15,
     fontWeight: '700',
     marginHorizontal: 8,
@@ -551,12 +556,12 @@ const styles = StyleSheet.create({
     width: 44,
     height: 24,
     borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: theme.divider,
     justifyContent: 'flex-start',
     paddingHorizontal: 2,
   },
   toggleTrackOn: {
-    backgroundColor: redesignTheme.primary,
+    backgroundColor: theme.primary,
     justifyContent: 'flex-end',
   },
   toggleThumb: {
@@ -571,14 +576,14 @@ const styles = StyleSheet.create({
     marginTop: 22,
   },
   fieldLabel: {
-    color: redesignTheme.primary,
+    color: theme.primary,
     fontSize: 13,
     fontWeight: '800',
     letterSpacing: 0.6,
     marginLeft: 6,
   },
   fieldLabelMuted: {
-    color: redesignTheme.muted,
+    color: theme.muted,
     fontWeight: '600',
     letterSpacing: 0,
   },
@@ -587,9 +592,9 @@ const styles = StyleSheet.create({
     minHeight: 110,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: redesignTheme.border,
-    backgroundColor: redesignTheme.input,
-    color: redesignTheme.foreground,
+    borderColor: theme.border,
+    backgroundColor: theme.input,
+    color: theme.foreground,
     fontSize: 16,
     paddingHorizontal: 14,
     paddingTop: 14,
@@ -597,7 +602,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   charCount: {
-    color: redesignTheme.muted,
+    color: theme.muted,
     fontSize: 12,
     textAlign: 'right',
     marginTop: 6,
@@ -609,7 +614,7 @@ const styles = StyleSheet.create({
   },
   disclaimerText: {
     flex: 1,
-    color: redesignTheme.muted,
+    color: theme.muted,
     fontSize: 13,
     lineHeight: 18,
     marginLeft: 8,
@@ -625,8 +630,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   previewBtnActive: {
-    backgroundColor: redesignTheme.primary,
-    shadowColor: redesignTheme.primary,
+    backgroundColor: theme.primary,
+    shadowColor: theme.primary,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.55,
     shadowRadius: 12,
@@ -635,7 +640,7 @@ const styles = StyleSheet.create({
   previewBtnInactive: {
     backgroundColor: '#1A1A28',
     borderWidth: 1,
-    borderColor: redesignTheme.border,
+    borderColor: theme.border,
   },
   previewBtnText: {
     color: '#FFFFFF',
@@ -645,14 +650,14 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   previewBtnInactiveText: {
-    color: redesignTheme.muted,
+    color: theme.muted,
   },
   forwardArrow: {
     height: 14,
     width: 14,
     resizeMode: 'contain',
     transform: [{ rotate: '180deg' }],
-    tintColor: redesignTheme.foreground,
+    tintColor: theme.foreground,
   },
   galleryHeader: {
     flexDirection: 'row',
@@ -661,7 +666,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   galleryLabel: {
-    color: redesignTheme.muted,
+    color: theme.muted,
     fontSize: 14,
     fontWeight: '600',
     textTransform: 'uppercase',
@@ -678,7 +683,7 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     transform: [{ rotate: '270deg' }],
     marginLeft: 15,
-    tintColor: redesignTheme.muted,
+    tintColor: theme.muted,
   },
   centerView: {
     flex: 1,
@@ -687,23 +692,23 @@ const styles = StyleSheet.create({
   },
   cameraGalleryOption: {
     borderRadius: 14,
-    backgroundColor: redesignTheme.card,
+    backgroundColor: theme.card,
     alignItems: 'center',
   },
   cameraButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: redesignTheme.primary,
+    color: theme.primary,
     marginVertical: 16,
   },
   divider: {
-    backgroundColor: redesignTheme.border,
+    backgroundColor: theme.border,
     height: 1,
     width: '100%',
   },
   cancelCameraPopup: {
     borderRadius: 14,
-    backgroundColor: redesignTheme.card,
+    backgroundColor: theme.card,
     marginTop: 10,
     marginBottom: 20,
     alignItems: 'center',
@@ -711,8 +716,11 @@ const styles = StyleSheet.create({
   cancelCameraText: {
     fontSize: 16,
     fontWeight: '700',
-    color: redesignTheme.foreground,
+    color: theme.foreground,
     marginVertical: 16,
   },
 });
+
+const darkImageSelectionStyles = createImageSelectionStyles(redesignTheme);
+const lightImageSelectionStyles = createImageSelectionStyles(lightTheme);
 // Customizable Area End

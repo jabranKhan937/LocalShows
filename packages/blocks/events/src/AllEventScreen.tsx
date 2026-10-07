@@ -23,7 +23,7 @@ import {
   darkAllEventStyles,
   lightAllEventStyles,
 } from './AllEventStyle';
-import { leftArrow } from './assets';
+import { appLogo, leftArrow } from './assets';
 import Svg, { Path } from 'react-native-svg';
 import Icon from 'react-native-vector-icons/Feather';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
@@ -78,6 +78,7 @@ export default class AllEventScreen extends AllEventController {
       this.getAuthToken();
       this.getAllBandsList();
       this.initialiseLocation();
+      void this.requestCurrentLocationStateDefault();
       this.refreshUserSelectionStateList();
       this.getUnreadNotificationsCount();
       await this.checkForceUpdateRequirement();
@@ -194,6 +195,7 @@ export default class AllEventScreen extends AllEventController {
                 ? `g-${show.id}`
                 : `g-${stateKey}-${showIndex}`;
             const title = this.getCompactShowTitle(show);
+            const lineupLabel = this.formatLineupLabel(show?.line_ups);
             const venue =
               (typeof show?.location === 'string' && show.location.trim()) ||
               (typeof show?.city === 'string' && show.city.trim()) ||
@@ -216,6 +218,14 @@ export default class AllEventScreen extends AllEventController {
                       {title !== '' && (
                         <Text style={this.styles.compactShowTitle} numberOfLines={2}>
                           {title}
+                        </Text>
+                      )}
+                      {lineupLabel !== '' && (
+                        <Text
+                          style={this.styles.compactShowLineup}
+                          numberOfLines={2}
+                        >
+                          {lineupLabel}
                         </Text>
                       )}
                       {(venue !== '' || timeLabel !== '') && (
@@ -1347,26 +1357,142 @@ export default class AllEventScreen extends AllEventController {
     );
   };
 
-  /** First real show from the current filtered feed — used for the redesign featured card. */
+  /** Calendar day (UTC, same as the show badges) plus clock minutes when the show has a real time. */
+  getShowSchedule = (
+    show: any,
+  ): { dayKey: number; minutes: number | null } | null => {
+    const rawDate =
+      typeof show?.date_of_the_show === 'string'
+        ? show.date_of_the_show.trim()
+        : '';
+    if (rawDate === '' || rawDate.startsWith('2999-12-31')) {
+      return null;
+    }
+    const parsed = new Date(rawDate);
+    if (Number.isNaN(parsed.getTime())) {
+      return null;
+    }
+    const dayKey =
+      parsed.getUTCFullYear() * 10000 +
+      (parsed.getUTCMonth() + 1) * 100 +
+      parsed.getUTCDate();
+    return { dayKey, minutes: this.getShowClockMinutes(show, parsed, rawDate) };
+  };
+
+  getShowClockMinutes = (
+    show: any,
+    parsedDate: Date,
+    rawDate: string,
+  ): number | null => {
+    const timeValue = show?.time;
+    if (typeof timeValue === 'string' && timeValue.trim() !== '') {
+      const fromText = this.parseClockMinutes(timeValue.trim());
+      if (fromText != null) {
+        return fromText;
+      }
+    }
+    if (timeValue instanceof Date && !Number.isNaN(timeValue.getTime())) {
+      return timeValue.getHours() * 60 + timeValue.getMinutes();
+    }
+    if (!rawDate.includes('T')) {
+      return null;
+    }
+    const hours = parsedDate.getUTCHours();
+    const minutes = parsedDate.getUTCMinutes();
+    if (hours === 0 && minutes === 0) {
+      return null;
+    }
+    return hours * 60 + minutes;
+  };
+
+  parseClockMinutes = (raw: string): number | null => {
+    const match = raw.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*([ap]m)?/i);
+    if (!match) {
+      return null;
+    }
+    let hours = parseInt(match[1], 10);
+    const minutes = parseInt(match[2], 10);
+    if (Number.isNaN(hours) || Number.isNaN(minutes) || minutes > 59) {
+      return null;
+    }
+    const suffix = match[3] ? match[3].toLowerCase() : '';
+    if (suffix === 'pm' && hours < 12) {
+      hours += 12;
+    }
+    if (suffix === 'am' && hours === 12) {
+      hours = 0;
+    }
+    if (hours > 23) {
+      return null;
+    }
+    return hours * 60 + minutes;
+  };
+
+  isUpcomingSchedule = (
+    schedule: { dayKey: number; minutes: number | null },
+    now: Date,
+  ): boolean => {
+    const todayKey =
+      now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+    if (schedule.dayKey > todayKey) {
+      return true;
+    }
+    if (schedule.dayKey < todayKey) {
+      return false;
+    }
+    if (schedule.minutes == null) {
+      return true;
+    }
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    return schedule.minutes >= nowMinutes;
+  };
+
+  isScheduleSooner = (
+    candidate: { dayKey: number; minutes: number | null },
+    current: { dayKey: number; minutes: number | null },
+  ): boolean => {
+    if (candidate.dayKey !== current.dayKey) {
+      return candidate.dayKey < current.dayKey;
+    }
+    const candidateMinutes = candidate.minutes == null ? 24 * 60 : candidate.minutes;
+    const currentMinutes = current.minutes == null ? 24 * 60 : current.minutes;
+    return candidateMinutes < currentMinutes;
+  };
+
+  /** Nearest upcoming show in the current feed — featured card always shows what is coming next. */
   getFeaturedShow = (): { show: any; stateName: string } | null => {
     const eventList = this.filterEventList();
     if (!Array.isArray(eventList)) {
       return null;
     }
+    const now = new Date();
+    let nearest: {
+      show: any;
+      stateName: string;
+      schedule: { dayKey: number; minutes: number | null };
+    } | null = null;
     for (let i = 0; i < eventList.length; i += 1) {
       const item = eventList[i];
       const showsRaw = Array.isArray(item?.shows) ? item.shows : [];
-      const show = showsRaw.find(
-        (card: any) => card && typeof card === 'object' && card.type === 'show',
-      );
-      if (show) {
-        return {
-          show,
-          stateName: String(item?.state_name ?? ''),
-        };
+      const stateName = String(item?.state_name ?? '');
+      for (let j = 0; j < showsRaw.length; j += 1) {
+        const show = showsRaw[j];
+        if (!show || typeof show !== 'object' || show.type !== 'show') {
+          continue;
+        }
+        const schedule = this.getShowSchedule(show);
+        if (!schedule || !this.isUpcomingSchedule(schedule, now)) {
+          continue;
+        }
+        if (!nearest || this.isScheduleSooner(schedule, nearest.schedule)) {
+          nearest = { show, stateName, schedule };
+        }
       }
     }
-    return null;
+    if (!nearest) {
+      return null;
+    }
+    return { show: nearest.show, stateName: nearest.stateName };
   };
 
   formatFeaturedTime = (timeValue: any): string => {
@@ -2071,9 +2197,18 @@ export default class AllEventScreen extends AllEventController {
     if (!Array.isArray(lineUps)) {
       return '';
     }
-    const names = lineUps.filter(
-      (item: any) => typeof item === 'string' && item.trim(),
-    );
+    const names = lineUps
+      .map((item: any) => {
+        if (typeof item === 'string') {
+          return item.trim();
+        }
+        if (item && typeof item === 'object') {
+          const name = item.first_name || item.name || item.band_name;
+          return typeof name === 'string' ? name.trim() : '';
+        }
+        return '';
+      })
+      .filter((item: string) => item !== '');
     if (names.length === 0) {
       return '';
     }
@@ -2947,14 +3082,14 @@ export default class AllEventScreen extends AllEventController {
               </TouchableOpacity>
             )}
             <View style={this.styles.feedHeaderLogo} pointerEvents="none">
-              <Icon name="music" size={14} color="#FFFFFF" />
+              <Image source={appLogo} style={this.styles.feedHeaderLogoImage} />
             </View>
             <Text
               testID="localShowsTitle"
               pointerEvents="none"
               style={this.styles.feedHeaderTitle}
             >
-              Shows In
+              Local Shows
             </Text>
             <TouchableOpacity
               testID="headerLocationPill"

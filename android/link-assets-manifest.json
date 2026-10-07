@@ -42,16 +42,8 @@
       "sha1": "e256f8391718ef61f253dfb4e95bbeb3c5857afc"
     },
     {
-      "path": "packages/assets/fonts/SF-Pro-Display-Semibold.ttf",
-      "sha1": "754ee374c9c73bfc56d2404c1192df6621e64d72"
-    },
-    {
       "path": "packages/assets/fonts/HKGrotesk-MediumItalic.ttf",
       "sha1": "17786317443ac6c70882b61ee173df6e4998f6fc"
-    },
-    {
-      "path": "packages/assets/fonts/SF-Pro-Text-Light.ttf",
-      "sha1": "fe67769b09a8ea1d40027aee45e9ddf99d34cc94"
     },
     {
       "path": "packages/assets/fonts/Entypo.ttf",
@@ -60,14 +52,6 @@
     {
       "path": "packages/assets/fonts/HKGrotesk-LegacyItalic.ttf",
       "sha1": "86702d3ede36d59ee3c5d6b95a3f453753f48e82"
-    },
-    {
-      "path": "packages/assets/fonts/SF-Pro-Display-Medium.ttf",
-      "sha1": "af0e4a4d7f6b6cad021daf4c78cc664512cd0d50"
-    },
-    {
-      "path": "packages/assets/fonts/SF-Pro-Display-Heavy.ttf",
-      "sha1": "12e30db356b6fa487420245ef78b89cabd19965d"
     },
     {
       "path": "packages/assets/fonts/Vazir-Black-FD.ttf",
@@ -114,20 +98,12 @@
       "sha1": "2b4455e59a3327c8662bdd7daa6e74a369e7d6df"
     },
     {
-      "path": "packages/assets/fonts/SF-Pro-Display-RegularItalic.ttf",
-      "sha1": "184bbdeb2ef7b91f5dcc0dc46845b8ea1912a350"
-    },
-    {
       "path": "packages/assets/fonts/Gelion-MediumItalic.ttf",
       "sha1": "1cf7a5afa2392e376194efddc35e1235e33318f9"
     },
     {
       "path": "packages/assets/fonts/Gelion-Bold.ttf",
       "sha1": "79244a9d67af5a25da27358afd15f3fb998816ae"
-    },
-    {
-      "path": "packages/assets/fonts/SF-Pro-Display-Regular.ttf",
-      "sha1": "879e38712cc5064b619c50929ca2299c8a02276d"
     },
     {
       "path": "packages/assets/fonts/HKGrotesk-SemiBoldItalic.ttf",
@@ -138,20 +114,8 @@
       "sha1": "4e77868439280fb434d4697c7b911271406c81f3"
     },
     {
-      "path": "packages/assets/fonts/SF-Pro-Text-MediumItalic.ttf",
-      "sha1": "87272cdf45270cfea18210e5655bdace4e12dde3"
-    },
-    {
-      "path": "packages/assets/fonts/SF-Pro-Display-Light.ttf",
-      "sha1": "9a5c0dbf1c213b7cc9a47fbff9416ba25ab8c659"
-    },
-    {
       "path": "packages/assets/fonts/HKGrotesk-Italic.ttf",
       "sha1": "e27edd5bbe86f20a90fdfa8c78447bcd2df8bb81"
-    },
-    {
-      "path": "packages/assets/fonts/SF-Pro-Display-Bold.ttf",
-      "sha1": "b31760a8e53d3d5a2fa63ed70d74c61db7e5771a"
     },
     {
       "path": "packages/assets/fonts/Gelion-ThinItalic.ttf",
@@ -182,10 +146,6 @@
       "sha1": "9706453c3ea9b73e7c08b3be1e7c716d655cf916"
     },
     {
-      "path": "packages/assets/fonts/SF-Pro-Display-Thin.ttf",
-      "sha1": "3a65507c71d280df7104e0d5e403530b3b948341"
-    },
-    {
       "path": "packages/assets/fonts/HKGrotesk-LightItalic.ttf",
       "sha1": "61c58663e764b02ad3c0bcc342397ebfba61be35"
     },
@@ -206,20 +166,8 @@
       "sha1": "eae0f6aa553643ae5c2b4da46a422f8d26255bb1"
     },
     {
-      "path": "packages/assets/fonts/SF-Pro-Display-SemiboldItalic.ttf",
-      "sha1": "8a43207a5eb7d28b6fcb876781f38bf4f5bf77a3"
-    },
-    {
-      "path": "packages/assets/fonts/SF-Pro-Text-Heavy.ttf",
-      "sha1": "d77d84fcc8ff538b3045928346c29cea333ab99a"
-    },
-    {
       "path": "packages/assets/fonts/FontAwesome.ttf",
       "sha1": "13b1eab65a983c7a73bc7997c479d66943f7c6cb"
-    },
-    {
-      "path": "packages/assets/fonts/SF-Pro-Text-HeavyItalic.ttf",
-      "sha1": "88b8e1bfc8eb6a16c1edeb1f07c28aaa5b0c7fe6"
     },
     {
       "path": "packages/assets/fonts/HKGrotesk-Medium.ttf",
@@ -230,16 +178,8 @@
       "sha1": "0bda59c7bcd3d3927de047e091875a4428bfd1ab"
     },
     {
-      "path": "packages/assets/fonts/SF-Pro-Display-ThinItalic.ttf",
-      "sha1": "03fb6d22ed2879797d0bb3915dfda1179c4cab23"
-    },
-    {
       "path": "packages/assets/fonts/Roboto.ttf",
       "sha1": "1d1d41fcadc571decb6444211b7993b99ce926e2"
-    },
-    {
-      "path": "packages/assets/fonts/SF-Pro-Text-Semibold.ttf",
-      "sha1": "778ed24d5b170e2ae9ab24f5cc460d9f03823e39"
     },
     {
       "path": "packages/assets/fonts/HKGrotesk-Regular.ttf",
@@ -250,20 +190,12 @@
       "sha1": "f2d5805d517532aca92dcb7aaa2b06f6c6440eb8"
     },
     {
-      "path": "packages/assets/fonts/SF-Pro-Text-LightItalic.ttf",
-      "sha1": "123c29d3a6d4747fccb7c371edf474dc38df1846"
-    },
-    {
       "path": "packages/assets/fonts/Gilroy-ExtraBold.ttf",
       "sha1": "a3d6f0d668feb89b96e6e7313bb9ea95a69de2d5"
     },
     {
       "path": "packages/assets/fonts/OpenSans-ExtraBold.ttf",
       "sha1": "5acb1de2513aca9ce4fcf5d1e1e49aad86f1888c"
-    },
-    {
-      "path": "packages/assets/fonts/SF-Pro-Text-Medium.ttf",
-      "sha1": "1bd514af544e1ef4bb2aa8320a16e25b257482e5"
     },
     {
       "path": "packages/assets/fonts/Gilroy-Light.ttf",
@@ -274,16 +206,8 @@
       "sha1": "951559435bb109a422da130121235b79c0aa7b03"
     },
     {
-      "path": "packages/assets/fonts/SF-Pro-Display-BoldItalic.ttf",
-      "sha1": "fd393cb3ff586764822f5e15f1a5524d0eabaae3"
-    },
-    {
       "path": "packages/assets/fonts/HKGrotesk-SemiBold.ttf",
       "sha1": "c77d172ec4be1a9953f30405f074b3f2f235f71f"
-    },
-    {
-      "path": "packages/assets/fonts/SF-Pro-Text-SemiboldItalic.ttf",
-      "sha1": "bd82b31ce0c1c72b1686f07d5383bb5b09f11d84"
     },
     {
       "path": "packages/assets/fonts/EvilIcons.ttf",
@@ -322,24 +246,8 @@
       "sha1": "5e34a442257c8155047022e25d7793a7e2fb4af1"
     },
     {
-      "path": "packages/assets/fonts/SF-Pro-Text-RegularItalic.ttf",
-      "sha1": "6f4737d9266d1b80ee25c7c998a70c6fbf9aae37"
-    },
-    {
-      "path": "packages/assets/fonts/SF-Pro-Text-BoldItalic.ttf",
-      "sha1": "e9e62355d91360224cd0446cfa1a0d8cc86f5719"
-    },
-    {
-      "path": "packages/assets/fonts/SF-Pro-Display-Black.ttf",
-      "sha1": "603e9e112517347005c9bba34636ece20262f85f"
-    },
-    {
       "path": "packages/assets/fonts/OpenSans-SemiBoldItalic.ttf",
       "sha1": "b59e91cb19bc660ffbe3bd12501b4781196a8312"
-    },
-    {
-      "path": "packages/assets/fonts/SF-Pro-Display-BlackItalic.ttf",
-      "sha1": "d65cbb43be368905eccb7aca5afe6235d409fe75"
     },
     {
       "path": "packages/assets/fonts/Roboto-LightItalic.ttf",
@@ -358,10 +266,6 @@
       "sha1": "8938dc020a0f1321a0e21d7143b1dc1b841a27c7"
     },
     {
-      "path": "packages/assets/fonts/SF-Pro-Display-MediumItalic.ttf",
-      "sha1": "fc567af5d72e830bb24ff53132c5515ca13d43e2"
-    },
-    {
       "path": "packages/assets/fonts/HKGrotesk-MediumLegacyItalic.ttf",
       "sha1": "a075fcf3e62015291dd8998df10c354a0efed3bf"
     },
@@ -378,28 +282,12 @@
       "sha1": "ec0217f33199006eaa7c23742f4c72d496351f30"
     },
     {
-      "path": "packages/assets/fonts/SF-Pro-Display-HeavyItalic.ttf",
-      "sha1": "effa208ff9ce52bb80f3f4b61d66108a6a272363"
-    },
-    {
       "path": "packages/assets/fonts/Roboto-BlackItalic.ttf",
       "sha1": "94ba47a5510d3e21ae4db0da0425b855686de586"
     },
     {
-      "path": "packages/assets/fonts/SF-Pro-Display-LightItalic.ttf",
-      "sha1": "d7d1e83db967a9905b28c78683234e7d3261f218"
-    },
-    {
       "path": "packages/assets/fonts/Vazir-Bold-FD.ttf",
       "sha1": "6dd51654bc951550a9f19261c63fb18169a4acd5"
-    },
-    {
-      "path": "packages/assets/fonts/SF-Pro-Display-UltralightItalic.ttf",
-      "sha1": "370d379e8b82cd4ea1f3bca28bdf97b2860b1a2d"
-    },
-    {
-      "path": "packages/assets/fonts/SF-Pro-Display-Ultralight.ttf",
-      "sha1": "e343177743bb0749d37ad75c46863d340510e82a"
     },
     {
       "path": "packages/assets/fonts/SimpleLineIcons.ttf",
@@ -454,16 +342,8 @@
       "sha1": "b35bd2081764a89e977bc5753b803d4e036e2b17"
     },
     {
-      "path": "packages/assets/fonts/SF-Pro-Text-Bold.ttf",
-      "sha1": "5539dd5c130dc0b57088995e067f20d39f5b0141"
-    },
-    {
       "path": "packages/assets/fonts/MaterialIcons.ttf",
       "sha1": "fc05de31234e0090f7ddc28ce1b23af4026cb1da"
-    },
-    {
-      "path": "packages/assets/fonts/SF-Pro-Text-Regular.ttf",
-      "sha1": "671791f3d3e28017f2abf7aa57bbb661caf8642b"
     }
   ]
 }

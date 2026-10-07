@@ -2258,13 +2258,23 @@ Business
                       <Picker
                         testID="openAtPickerModal"
                         selectedValue={this.state.openAt}
+                        itemStyle={{ color: this.getProfileTheme().foreground }}
                         onValueChange={(item: string) =>
                           this.handleOpenAtSelection(item)
                         }
                       >
-                        <Picker.Item label={'Select'} value={''} />
+                        <Picker.Item
+                          label={'Select'}
+                          value={''}
+                          color={this.getProfileTheme().foreground}
+                        />
                         {this.state.openTimeSlots.map(item => (
-                          <Picker.Item key={item} label={item} value={item} />
+                          <Picker.Item
+                            key={item}
+                            label={item}
+                            value={item}
+                            color={this.getProfileTheme().foreground}
+                          />
                         ))}
                       </Picker>
                     </View>
@@ -2293,13 +2303,23 @@ Business
                       <Picker
                         testID="closeAtPickerModal"
                         selectedValue={this.state.closeAt}
+                        itemStyle={{ color: this.getProfileTheme().foreground }}
                         onValueChange={(item: string) =>
                           this.handleCloseAtSelection(item)
                         }
                       >
-                        <Picker.Item label={'Select'} value={''} />
+                        <Picker.Item
+                          label={'Select'}
+                          value={''}
+                          color={this.getProfileTheme().foreground}
+                        />
                         {this.state.closeTimeSlots.map(item => (
-                          <Picker.Item key={item} label={item} value={item} />
+                          <Picker.Item
+                            key={item}
+                            label={item}
+                            value={item}
+                            color={this.getProfileTheme().foreground}
+                          />
                         ))}
                       </Picker>
                     </View>

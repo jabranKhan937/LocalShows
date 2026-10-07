@@ -35,6 +35,7 @@ interface S {
   cancelPopup: boolean;
   pictureDetail: any;
   loginSignupPopup: boolean;
+  showImageModal: boolean;
   // Customizable Area End
 }
 
@@ -79,6 +80,7 @@ export default class PhotoLibraryDetailController extends BlockComponent<
       cancelPopup: false,
       pictureDetail: {},
       loginSignupPopup: false,
+      showImageModal: false,
       // Customizable Area End
     };
     runEngine.attachBuildingBlock(this as IBlock, this.subScribedMessages);

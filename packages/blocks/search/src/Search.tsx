@@ -357,19 +357,25 @@ export default class Search extends SearchController {
   };
 
   getNearMeShowTitle = (item: any) => {
-    const attrs = item?.attributes || item || {};
-    const lineUps = Array.isArray(attrs.line_ups) ? attrs.line_ups : [];
-    const firstAct = lineUps.find(
-      (name: any) => typeof name === 'string' && name.trim(),
-    );
-    if (firstAct) {
-      return firstAct.trim();
+    if (
+      typeof item?.searchResultTitle === 'string' &&
+      item.searchResultTitle.trim()
+    ) {
+      return item.searchResultTitle.trim();
     }
+    const lineupNames = this.getShowLineupNames(item);
+    if (lineupNames.length > 0) {
+      return lineupNames[0];
+    }
+    const attrs = item?.attributes || item || {};
     if (typeof attrs.band_name === 'string' && attrs.band_name.trim()) {
       return attrs.band_name.trim();
     }
     if (typeof attrs.event_title === 'string' && attrs.event_title.trim()) {
       return attrs.event_title.trim();
+    }
+    if (typeof attrs.name === 'string' && attrs.name.trim()) {
+      return attrs.name.trim();
     }
     return 'Show';
   };
@@ -1049,6 +1055,10 @@ export default class Search extends SearchController {
         <FlatList
           testID="SearchUserList"
           scrollEnabled={false}
+          removeClippedSubviews={false}
+          initialNumToRender={Math.max(displayedUsers.length, 1)}
+          maxToRenderPerBatch={Math.max(displayedUsers.length, 1)}
+          windowSize={Math.max(displayedUsers.length, 1)}
           data={displayedUsers}
           renderItem={
             this.state.searchFilter === 'Venues'
@@ -1057,7 +1067,9 @@ export default class Search extends SearchController {
                 ? this.renderPeopleResultItem
                 : this.renderUserItem
           }
-          keyExtractor={(item: any) => String(item.id)}
+          keyExtractor={(item: any, index: number) =>
+            `${item?.id ?? 'user'}-${index}`
+          }
         />
       </View>
     );
@@ -1105,9 +1117,15 @@ export default class Search extends SearchController {
         <FlatList
           testID="SearchShowList"
           scrollEnabled={false}
+          removeClippedSubviews={false}
+          initialNumToRender={Math.max(shows.length, 1)}
+          maxToRenderPerBatch={Math.max(shows.length, 1)}
+          windowSize={Math.max(shows.length, 1)}
           data={shows}
           keyExtractor={(item: any, index: number) =>
-            String(item?.id ?? item?.attributes?.id ?? index)
+            `${item?.id ?? item?.attributes?.id ?? 'show'}-${
+              item?.searchResultTitle ?? index
+            }-${index}`
           }
           renderItem={this.renderShowResultItem}
         />
@@ -1202,6 +1220,7 @@ export default class Search extends SearchController {
     const theme = this.getSearchTheme();
     const bands = this.getUsersForGroup('bands');
     const venues = this.getUsersForGroup('venues');
+    const profiles = this.getUsersForGroup('profiles');
     const people = this.getUsersForGroup('people');
     const shows = Array.isArray(this.state.catalogShowResults)
       ? this.state.catalogShowResults
@@ -1210,6 +1229,7 @@ export default class Search extends SearchController {
       (this.state.LoadingUsers || this.state.loadingCatalogShows) &&
       bands.length === 0 &&
       venues.length === 0 &&
+      profiles.length === 0 &&
       people.length === 0 &&
       shows.length === 0;
 
@@ -1232,6 +1252,7 @@ export default class Search extends SearchController {
     const hasResults =
       bands.length > 0 ||
       venues.length > 0 ||
+      profiles.length > 0 ||
       shows.length > 0 ||
       people.length > 0;
     if (!hasResults) {
@@ -1264,6 +1285,11 @@ export default class Search extends SearchController {
           this.renderVenueResultItem,
         )}
         {this.renderAllResultSection(
+          'PROFILES',
+          profiles,
+          this.renderUserItem,
+        )}
+        {this.renderAllResultSection(
           'SHOWS',
           shows,
           this.renderShowResultItem,
@@ -1290,9 +1316,15 @@ export default class Search extends SearchController {
         <Text style={this.styles.sectionLabel}>{title}</Text>
         <FlatList
           scrollEnabled={false}
+          removeClippedSubviews={false}
+          initialNumToRender={Math.max(data.length, 1)}
+          maxToRenderPerBatch={Math.max(data.length, 1)}
+          windowSize={Math.max(data.length, 1)}
           data={data}
           keyExtractor={(item: any, index: number) =>
-            String(item?.id ?? item?.attributes?.id ?? `${title}-${index}`)
+            `${item?.id ?? item?.attributes?.id ?? title}-${
+              item?.searchResultTitle ?? ''
+            }-${index}`
           }
           renderItem={renderItem}
         />
@@ -1348,7 +1380,7 @@ export default class Search extends SearchController {
         onPress={() => {
           this.renderProfileUserSearch(
             item.id,
-            item.attributes?.account_type,
+            this.resolveSearchAccountType(item),
           );
         }}>
         <View style={this.styles.userRowLeft}>
@@ -1389,7 +1421,7 @@ export default class Search extends SearchController {
             onPress={() => {
               this.renderProfileUserSearch(
                 item.id,
-                item.attributes?.account_type,
+                this.resolveSearchAccountType(item),
               );
             }}
             style={this.styles.userAvatarWrap}>
@@ -1435,19 +1467,19 @@ export default class Search extends SearchController {
     return (
       <View key={item.id}>
         <View style={this.styles.userRow}>
-          <View style={this.styles.userRowLeft}>
-            <TouchableOpacity
-              testID="userProfileImageBTN"
-              activeOpacity={0.7}
-              onPress={() => {
-                this.renderProfileUserSearch(
-                  item.id,
-                  item.attributes?.account_type,
-                );
-              }}
-              style={this.styles.userAvatarWrap}>
+          <TouchableOpacity
+            testID="userProfileImageBTN"
+            activeOpacity={0.7}
+            onPress={() => {
+              this.renderProfileUserSearch(
+                item.id,
+                this.resolveSearchAccountType(item),
+              );
+            }}
+            style={this.styles.userRowLeft}>
+            <View style={this.styles.userAvatarWrap}>
               {this.renderSearchAvatar(avatarUri)}
-            </TouchableOpacity>
+            </View>
             <View style={this.styles.userTextWrap}>
               <Text numberOfLines={1} style={this.styles.userName}>
                 {this.getName(
@@ -1461,7 +1493,7 @@ export default class Search extends SearchController {
                 </Text>
               ) : null}
             </View>
-          </View>
+          </TouchableOpacity>
           <TouchableOpacity
             testID="followAndUnfollowId"
             onPress={() =>

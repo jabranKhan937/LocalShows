@@ -17,7 +17,7 @@ import {
   Linking,
   TextInput,
   Dimensions,
-  DeviceEventEmitter,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
@@ -32,8 +32,6 @@ import {
 import {
   lightTheme,
   redesignTheme,
-  PROFILE_THEME_CHANGED_EVENT,
-  PROFILE_THEME_STORAGE_KEY,
 } from '../../utilities/src/Colors';
 // Customizable Area End
 
@@ -47,7 +45,9 @@ import { runEngine } from '../../../framework/src/RunEngine';
 import { getStorageData } from '../../../framework/src/Utilities';
 
 export default class PostDetails extends PostCreationController {
-  profileThemeListener: { remove: () => void } | null = null;
+  detailHeroAspectRatio: number | null = null;
+  lastHeroImageUri: string | null = null;
+  hasAutoOpenedHeroImageModal = false;
 
   constructor(props: Props) {
     super(props);
@@ -59,6 +59,7 @@ export default class PostDetails extends PostCreationController {
       reportError: '',
       showRulesMoreModal: false,
       showRulesExpanded: true,
+      showHeroImageModal: false,
       isDarkMode: true,
     };
   }
@@ -76,28 +77,25 @@ export default class PostDetails extends PostCreationController {
   };
 
   loadDetailTheme = async () => {
-    const savedTheme = await getStorageData(PROFILE_THEME_STORAGE_KEY);
-    this.setState({ isDarkMode: savedTheme !== 'false' });
-    if (!this.profileThemeListener) {
-      this.profileThemeListener = DeviceEventEmitter.addListener(
-        PROFILE_THEME_CHANGED_EVENT,
-        (isDarkMode: boolean) => {
-          this.setState({ isDarkMode });
-        },
-      );
-    }
+    await this.loadPostTheme();
   };
 
   async componentDidMount() {
     await this.loadDetailTheme();
     await super.componentDidMount();
+    this.maybeAutoOpenHeroImageModal();
+  }
+
+  componentDidUpdate(_prevProps: Props, prevState: { eventId?: string }) {
+    if (prevState.eventId !== this.state.eventId) {
+      this.hasAutoOpenedHeroImageModal = false;
+      this.detailHeroAspectRatio = null;
+      this.lastHeroImageUri = null;
+    }
+    this.maybeAutoOpenHeroImageModal();
   }
 
   async componentWillUnmount() {
-    if (this.profileThemeListener) {
-      this.profileThemeListener.remove();
-      this.profileThemeListener = null;
-    }
     await super.componentWillUnmount();
   }
 
@@ -291,8 +289,22 @@ export default class PostDetails extends PostCreationController {
     );
   };
 
+  getDetailHeroHeight = () => {
+    const { width, height } = Dimensions.get('window');
+    const maxHeight = Math.round(height * 0.62);
+    return Math.min(Math.round(width * (5 / 4)), maxHeight);
+  };
+
   renderHeroFade = () => (
-    <View pointerEvents="none" style={this.eventStyles.detailHeroFadeWrap}>
+    <View
+      pointerEvents="none"
+      style={[
+        this.eventStyles.detailHeroFadeWrap,
+        this.isPicturePost()
+          ? null
+          : { height: Math.round(this.getDetailHeroHeight() * 0.82) },
+      ]}
+    >
       <Svg
         width="100%"
         height="100%"
@@ -323,26 +335,149 @@ export default class PostDetails extends PostCreationController {
     </View>
   );
 
+  openHeroImageModal = () => {
+    if (!this.getImageUri()) {
+      return;
+    }
+    this.setState({ showHeroImageModal: true, showMenu: false });
+  };
+
+  closeHeroImageModal = () => {
+    this.hasAutoOpenedHeroImageModal = true;
+    this.setState({ showHeroImageModal: false });
+  };
+
+  maybeAutoOpenHeroImageModal = () => {
+    if (this.isPicturePost()) {
+      return;
+    }
+    if (this.hasAutoOpenedHeroImageModal || this.state.showHeroImageModal) {
+      return;
+    }
+    if (this.state.isLoading) {
+      return;
+    }
+    if (!this.getImageUri()) {
+      return;
+    }
+    this.hasAutoOpenedHeroImageModal = true;
+    this.setState({ showHeroImageModal: true, showMenu: false });
+  };
+
+  handleDetailHeroLoad = (event: any) => {
+    const imageWidth = Number(event?.nativeEvent?.width);
+    const imageHeight = Number(event?.nativeEvent?.height);
+    if (!imageWidth || !imageHeight) {
+      return;
+    }
+    const ratio = imageHeight / imageWidth;
+    const uri = this.getImageUri() ? String(this.getImageUri()) : null;
+    if (uri === this.lastHeroImageUri && this.detailHeroAspectRatio === ratio) {
+      return;
+    }
+    this.lastHeroImageUri = uri;
+    this.detailHeroAspectRatio = ratio;
+    this.forceUpdate();
+  };
+
+  getHeroImageModalSize = () => {
+    const { width, height } = Dimensions.get('window');
+    const maxWidth = width - 48;
+    const maxHeight = height - 160;
+    const ratio =
+      this.detailHeroAspectRatio && this.detailHeroAspectRatio > 0
+        ? this.detailHeroAspectRatio
+        : 5 / 4;
+    let imageWidth = maxWidth;
+    let imageHeight = Math.round(imageWidth * ratio);
+    if (imageHeight > maxHeight) {
+      imageHeight = maxHeight;
+      imageWidth = Math.round(imageHeight / ratio);
+    }
+    return { width: imageWidth, height: imageHeight };
+  };
+
+  renderHeroImageModal = () => {
+    const imageUri = this.getImageUri();
+    const imageSize = this.getHeroImageModalSize();
+    return (
+      <Modal
+        visible={this.state.showHeroImageModal}
+        transparent
+        animationType="fade"
+        onRequestClose={this.closeHeroImageModal}
+        statusBarTranslucent
+      >
+        <Pressable
+          testID="heroImageModalBackdrop"
+          style={this.eventStyles.detailHeroImageModalBackdrop}
+          onPress={this.closeHeroImageModal}
+        >
+          {imageUri ? (
+            <Pressable
+              onPress={() => undefined}
+              style={[this.eventStyles.detailHeroImageModalImageWrap, imageSize]}
+            >
+              <FastImage
+                style={this.eventStyles.detailHeroImageModalImage}
+                source={{
+                  uri: String(imageUri),
+                  priority: FastImage.priority.high,
+                }}
+                resizeMode={FastImage.resizeMode.contain}
+              />
+              <TouchableOpacity
+                testID="closeHeroImageModal"
+                style={[
+                  this.eventStyles.detailCircleBtn,
+                  this.eventStyles.detailHeroImageModalCloseBtn,
+                ]}
+                onPress={this.closeHeroImageModal}
+                activeOpacity={0.8}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Icon name="x" size={18} color="#FFFFFF" />
+              </TouchableOpacity>
+            </Pressable>
+          ) : null}
+        </Pressable>
+      </Modal>
+    );
+  };
+
   renderEventImage = () => {
     const imageUri = this.getImageUri();
     const genre = this.getGenreDisplay();
     const priceLabel = this.getTicketPriceLabel();
+    const isShow = !this.isPicturePost();
     return (
       <View
         style={
           this.state.showMenu ? { zIndex: 50, elevation: 50 } : undefined
         }
       >
-        <View style={this.eventStyles.detailHeroWrap}>
+        <View
+          style={[
+            this.eventStyles.detailHeroWrap,
+            isShow ? { height: this.getDetailHeroHeight() } : null,
+          ]}
+        >
           {imageUri ? (
-            <FastImage
-              source={{
-                uri: String(imageUri),
-                priority: FastImage.priority.high,
-              }}
+            <Pressable
+              testID="detailHeroImageBtn"
+              onPress={this.openHeroImageModal}
               style={this.eventStyles.detailHeroImage}
-              resizeMode={FastImage.resizeMode.cover}
-            />
+            >
+              <FastImage
+                source={{
+                  uri: String(imageUri),
+                  priority: FastImage.priority.high,
+                }}
+                style={this.eventStyles.detailHeroImage}
+                resizeMode={FastImage.resizeMode.cover}
+                onLoad={this.handleDetailHeroLoad}
+              />
+            </Pressable>
           ) : (
             <View style={this.eventStyles.detailHeroPlaceholder}>
               <Image
@@ -400,21 +535,44 @@ export default class PostDetails extends PostCreationController {
       return null;
     }
     return (
-      <View style={[this.eventStyles.detailSection, this.eventStyles.detailBadgeRow]}>
+      <View style={this.eventStyles.detailSection}>
         {canceled ? (
-          <Text style={this.localStyles.canceledBadge}>Show Canceled</Text>
-        ) : null}
-        {postponed ? (
-          <Image
-            source={require('../../../mobile/assets/images/postponed.png')}
-            style={this.eventStyles.detailStatusBadge}
-          />
+          <View style={this.localStyles.canceledBanner}>
+            <View style={this.localStyles.canceledIconWrap}>
+              <MaterialCommunityIcons name="close" size={20} color="#FFFFFF" />
+            </View>
+            <View style={this.localStyles.canceledTextWrap}>
+              <Text style={this.localStyles.canceledTitle}>Show Canceled</Text>
+              <Text style={this.localStyles.canceledSubtitle}>
+                This show will not take place
+              </Text>
+            </View>
+          </View>
         ) : null}
         {soldOut ? (
-          <Image
-            source={require('../../../mobile/assets/images/sold_out.png')}
-            style={this.eventStyles.detailSoldOutBadge}
-          />
+          <View style={this.localStyles.canceledBanner}>
+            <View style={this.localStyles.canceledIconWrap}>
+              <MaterialCommunityIcons
+                name="ticket-confirmation"
+                size={22}
+                color="#FFFFFF"
+              />
+            </View>
+            <View style={this.localStyles.canceledTextWrap}>
+              <Text style={this.localStyles.canceledTitle}>Sold Out</Text>
+              <Text style={this.localStyles.canceledSubtitle}>
+                Tickets for this show are sold out
+              </Text>
+            </View>
+          </View>
+        ) : null}
+        {postponed ? (
+          <View style={this.eventStyles.detailBadgeRow}>
+            <Image
+              source={require('../../../mobile/assets/images/postponed.png')}
+              style={this.eventStyles.detailStatusBadge}
+            />
+          </View>
         ) : null}
       </View>
     );
@@ -685,12 +843,6 @@ export default class PostDetails extends PostCreationController {
     const value = this.getShowTypeDisplay();
     if (!value) return null;
     return this.renderMetaRow('music', 'Show type', value, 'typeOfShowFlatlist');
-  };
-
-  renderGenre = () => {
-    const value = this.getGenreRowDisplay();
-    if (!value) return null;
-    return this.renderMetaRow('music', 'Genre', value, 'genreFlatlist');
   };
 
   renderDescription = () => {
@@ -1436,7 +1588,6 @@ export default class PostDetails extends PostCreationController {
           {this.renderEndDate()}
           {this.renderEventCreatorCategoryRow()}
           {this.renderShowType()}
-          {this.renderGenre()}
           {this.renderRulesAndRegulations()}
           <View style={this.eventStyles.detailTicketsWrap}>
             {this.renderBuyTicketButton()}
@@ -1479,17 +1630,6 @@ export default class PostDetails extends PostCreationController {
             }}
           >
             <View>
-              {this.state.sold_out && (
-                <View style={this.localStyles.soldoutContainer}>
-                  <View style={this.localStyles.soldoutView}>
-                    <View style={this.localStyles.soldoutView2}>
-                      <Text style={this.localStyles.soldoutText}>
-                        Unfortunately, the event tickets are SOLD OUT.
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              )}
               {this.renderEventImage()}
               {isPost ? this.renderPictureBody() : this.renderShowBody()}
               {this.renderDisclaimerModal()}
@@ -1557,6 +1697,7 @@ export default class PostDetails extends PostCreationController {
             </View>
           </TouchableWithoutFeedback>
         </ScrollView>
+        {this.renderHeroImageModal()}
         {this.state.isLoading && (
           <View style={this.eventStyles.detailLoadingContainer}>
             <ActivityIndicator size={'large'} color={this.getDetailTheme().primary} />
@@ -1578,11 +1719,40 @@ const createPostDetailStyles = (theme: DetailTheme) =>
       height: 20,
       resizeMode: 'contain',
     },
-    canceledBadge: {
+    canceledBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.card,
+      borderRadius: 18,
+      borderWidth: 1,
+      borderColor: 'rgba(255, 45, 107, 0.45)',
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+      marginTop: 12,
+      marginBottom: 18,
+    },
+    canceledIconWrap: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: theme.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 14,
+    },
+    canceledTextWrap: {
+      flex: 1,
+    },
+    canceledTitle: {
+      color: theme.foreground,
+      fontSize: 17,
+      fontWeight: '800',
+    },
+    canceledSubtitle: {
       color: theme.primary,
-      fontSize: 14,
-      fontWeight: '700',
-      marginRight: 10,
+      fontSize: 13,
+      fontWeight: '600',
+      marginTop: 3,
     },
     text: {
       fontSize: 16,
@@ -1654,31 +1824,6 @@ const createPostDetailStyles = (theme: DetailTheme) =>
     },
     textKeepButton: {
       color: theme.foreground,
-    },
-    soldoutView: {
-      flex: 1,
-      backgroundColor: theme.primary,
-      paddingLeft: 8,
-      borderRadius: 4,
-      overflow: 'hidden',
-    },
-    soldoutView2: {
-      backgroundColor: theme.primarySoft,
-      flex: 1,
-      paddingVertical: 12,
-      paddingLeft: 12,
-    },
-    soldoutText: {
-      color: theme.primary,
-      fontSize: 12,
-    },
-    soldoutContainer: {
-      paddingVertical: 16,
-      position: 'absolute',
-      alignSelf: 'center',
-      width: '100%',
-      top: 50,
-      zIndex: 1,
     },
     centeredView: {
       flex: 1,

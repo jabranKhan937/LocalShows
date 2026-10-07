@@ -24,7 +24,7 @@ import { Picker } from '@react-native-picker/picker';
 import moment from 'moment';
 import DateRangePicker from 'react-native-daterange-picker';
 import { leftArrowWhite } from '../../user-profile-basic/src/assets';
-import { androidPickerItemColor, redesignTheme } from '../../utilities/src/Colors';
+import { androidPickerItemColor, lightTheme, redesignTheme } from '../../utilities/src/Colors';
 import PostCreationController, {
   configJSON,
 } from './PostCreationCommonController';
@@ -40,6 +40,10 @@ export interface Props {
 export default class PostCreation extends PostCreationController {
   constructor(props: Props) {
     super(props);
+  }
+
+  get styles() {
+    return this.state.isDarkMode ? darkPostCreationStyles : lightPostCreationStyles;
   }
 
   // Customizable Area Start
@@ -70,43 +74,43 @@ export default class PostCreation extends PostCreationController {
       backgroundColor: 'rgba(8, 8, 15, 0.78)',
     },
     containerStyle: {
-      backgroundColor: redesignTheme.card,
+      backgroundColor: this.getPostTheme().card,
       borderRadius: 16,
       borderWidth: 1,
-      borderColor: redesignTheme.border,
+      borderColor: this.getPostTheme().border,
     },
     headerStyle: {
-      borderBottomColor: redesignTheme.border,
+      borderBottomColor: this.getPostTheme().border,
     },
     headerTextStyle: {
-      color: redesignTheme.foreground,
+      color: this.getPostTheme().foreground,
       fontWeight: '700' as const,
     },
     monthButtonsStyle: {
-      tintColor: redesignTheme.primary,
+      tintColor: this.getPostTheme().primary,
     },
     dayHeaderTextStyle: {
-      color: redesignTheme.muted,
+      color: this.getPostTheme().muted,
       fontWeight: '600' as const,
     },
     dayTextStyle: {
-      color: redesignTheme.foreground,
+      color: this.getPostTheme().foreground,
     },
     selectedStyle: {
-      backgroundColor: redesignTheme.primary,
+      backgroundColor: this.getPostTheme().primary,
     },
     selectedTextStyle: {
       color: '#FFFFFF',
       fontWeight: '700' as const,
     },
     disabledTextStyle: {
-      color: redesignTheme.muted,
+      color: this.getPostTheme().muted,
     },
     monthPrevButton: (
-      <Icon name="chevron-left" size={22} color={redesignTheme.primary} />
+      <Icon name="chevron-left" size={22} color={this.getPostTheme().primary} />
     ),
     monthNextButton: (
-      <Icon name="chevron-right" size={22} color={redesignTheme.primary} />
+      <Icon name="chevron-right" size={22} color={this.getPostTheme().primary} />
     ),
   });
 
@@ -118,18 +122,18 @@ export default class PostCreation extends PostCreationController {
       <TouchableOpacity
         testID="openCameraBtn"
         activeOpacity={0.85}
-        style={styles.photoPicker}
+        style={this.styles.photoPicker}
         onPress={this.handleOpenCameraPopup}
       >
         {hasImage ? (
           <Image
             source={{ uri: this.state.selectedImageData.uri }}
-            style={styles.photoPreview}
+            style={this.styles.photoPreview}
           />
         ) : (
           <>
-            <Icon name="image" size={28} color={redesignTheme.primary} />
-            <Text style={styles.photoPickerText}>Tap to select a photo</Text>
+            <Icon name="image" size={28} color={this.getPostTheme().primary} />
+            <Text style={this.styles.photoPickerText}>Tap to select a photo</Text>
           </>
         )}
       </TouchableOpacity>
@@ -143,28 +147,28 @@ export default class PostCreation extends PostCreationController {
         transparent={true}
         visible={this.state.showCameraGalleryPopup}
       >
-        <View style={styles.centerView}>
-          <View style={styles.cameraGalleryOption}>
+        <View style={this.styles.centerView}>
+          <View style={this.styles.cameraGalleryOption}>
             <TouchableOpacity
               testID="takePhotoBtn"
               onPress={this.handleCameraImage}
             >
-              <Text style={styles.cameraButtonText}>Take photo</Text>
+              <Text style={this.styles.cameraButtonText}>Take photo</Text>
             </TouchableOpacity>
-            <View style={styles.divider} />
+            <View style={this.styles.divider} />
             <TouchableOpacity
               testID="choosePhotoBtn"
               onPress={this.handleGallery}
             >
-              <Text style={styles.cameraButtonText}>Choose photo</Text>
+              <Text style={this.styles.cameraButtonText}>Choose photo</Text>
             </TouchableOpacity>
           </View>
           <TouchableOpacity
             testID="cancelCameraOption"
-            style={styles.cancelCameraPopup}
+            style={this.styles.cancelCameraPopup}
             onPress={this.handleCameraGalleryCancelPopup}
           >
-            <Text style={styles.cancelCameraText}>Cancel</Text>
+            <Text style={this.styles.cancelCameraText}>Cancel</Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -191,16 +195,16 @@ export default class PostCreation extends PostCreationController {
       <TouchableOpacity
         testID="btnStateSelect"
         style={[
-          styles.androidPickerContainer,
-          disableLocation && styles.disabledInput,
+          this.styles.androidPickerContainer,
+          disableLocation && this.styles.disabledInput,
         ]}
         onPress={this.showStatePicker}
         disabled={disableLocation}
       >
-        <Text style={[styles.androidPicker, { paddingTop: 15 }]}>
+        <Text style={[this.styles.androidPicker, { paddingTop: 15 }]}>
           {this.state.selectedState ? stateName : 'Select a state'}
         </Text>
-        <Image source={leftArrowWhite} style={styles.androidPickerDropdown} />
+        <Image source={leftArrowWhite} style={this.styles.androidPickerDropdown} />
       </TouchableOpacity>
     );
   };
@@ -210,14 +214,14 @@ export default class PostCreation extends PostCreationController {
     return (
       <View
         style={[
-          styles.androidPickerContainer,
-          disableLocation && styles.disabledInput,
+          this.styles.androidPickerContainer,
+          disableLocation && this.styles.disabledInput,
         ]}
       >
         <Picker
           testID="statePicker"
-          style={styles.androidPicker}
-          itemStyle={[styles.androidPickerItemStyle]}
+          style={this.styles.androidPicker}
+          itemStyle={[this.styles.androidPickerItemStyle]}
           selectedValue={this.state.selectedState}
           onValueChange={value => this.handleStateValueChange(value)}
           enabled={!disableLocation}
@@ -229,7 +233,7 @@ export default class PostCreation extends PostCreationController {
             ),
           )}
         </Picker>
-        <Image source={leftArrowWhite} style={styles.androidPickerDropdown} />
+        <Image source={leftArrowWhite} style={this.styles.androidPickerDropdown} />
       </View>
     );
   };
@@ -250,16 +254,16 @@ export default class PostCreation extends PostCreationController {
       <TouchableOpacity
         testID="btnCitySelect"
         style={[
-          styles.androidPickerContainer,
-          disableLocation && styles.disabledInput,
+          this.styles.androidPickerContainer,
+          disableLocation && this.styles.disabledInput,
         ]}
         onPress={this.showCityPicker}
         disabled={disableLocation}
       >
-        <Text style={[styles.androidPicker, { paddingTop: 15 }]}>
+        <Text style={[this.styles.androidPicker, { paddingTop: 15 }]}>
           {this.state.selectedCity || 'Select a city'}
         </Text>
-        <Image source={leftArrowWhite} style={styles.androidPickerDropdown} />
+        <Image source={leftArrowWhite} style={this.styles.androidPickerDropdown} />
       </TouchableOpacity>
     );
   };
@@ -269,14 +273,14 @@ export default class PostCreation extends PostCreationController {
     return (
       <View
         style={[
-          styles.androidPickerContainer,
-          disableLocation && styles.disabledInput,
+          this.styles.androidPickerContainer,
+          disableLocation && this.styles.disabledInput,
         ]}
       >
         <Picker
           testID="cityPicker"
-          style={styles.androidPicker}
-          itemStyle={styles.androidPickerItemStyle}
+          style={this.styles.androidPicker}
+          itemStyle={this.styles.androidPickerItemStyle}
           selectedValue={this.state.selectedCity}
           onValueChange={selectedCity =>
             this.handleCityValueChange(selectedCity)
@@ -288,7 +292,7 @@ export default class PostCreation extends PostCreationController {
             <Picker.Item key={name} label={name} value={name} color={androidPickerItemColor} />
           ))}
         </Picker>
-        <Image source={leftArrowWhite} style={styles.androidPickerDropdown} />
+        <Image source={leftArrowWhite} style={this.styles.androidPickerDropdown} />
       </View>
     );
   };
@@ -307,47 +311,47 @@ export default class PostCreation extends PostCreationController {
     return (
       <TouchableOpacity
         testID="btnTimeSelect"
-        style={styles.androidPickerContainer}
+        style={this.styles.androidPickerContainer}
         onPress={this.showTimePicker}
       >
         <Text
           style={[
-            styles.androidPicker,
-            { paddingTop: 15, color: redesignTheme.foreground },
+            this.styles.androidPicker,
+            { paddingTop: 15, color: this.getPostTheme().foreground },
           ]}
         >
           {this.state.time || 'Select time'}
         </Text>
-        <Image source={leftArrowWhite} style={styles.androidPickerDropdown} />
+        <Image source={leftArrowWhite} style={this.styles.androidPickerDropdown} />
       </TouchableOpacity>
     );
   };
 
   renderAndroidTimePicker = () => {
     return (
-      <View style={styles.androidPickerContainer}>
+      <View style={this.styles.androidPickerContainer}>
         <Picker
           testID="timePicker"
-          style={styles.androidPicker}
-          itemStyle={styles.androidPickerItemStyle}
+          style={this.styles.androidPicker}
+          itemStyle={this.styles.androidPickerItemStyle}
           selectedValue={this.state.time}
           onValueChange={time => this.handleTimeValueChange(time)}
         >
           <Picker.Item
             label={'Select time'}
             value={''}
-            color={redesignTheme.foreground}
+            color={this.getPostTheme().foreground}
           />
           {this.state.timeList.map((name: string) => (
             <Picker.Item
               key={name}
               label={name}
               value={name}
-              color={redesignTheme.foreground}
+              color={this.getPostTheme().foreground}
             />
           ))}
         </Picker>
-        <Image source={leftArrowWhite} style={styles.androidPickerDropdown} />
+        <Image source={leftArrowWhite} style={this.styles.androidPickerDropdown} />
       </View>
     );
   };
@@ -366,7 +370,7 @@ export default class PostCreation extends PostCreationController {
           (Platform.OS === 'ios'
             ? this.renderIOSLineUpPicker()
             : this.renderAndroidLineUpPicker())}
-        <View style={styles.lineUpInputContainer}>
+        <View style={this.styles.lineUpInputContainer}>
           <TextInput
             testID="lineUpTxtInput"
             placeholder={
@@ -374,8 +378,8 @@ export default class PostCreation extends PostCreationController {
                 ? 'Or enter Band / Artist name to add new'
                 : 'Enter Band / Artist name & validate'
             }
-            style={styles.lineUpInput}
-            placeholderTextColor={redesignTheme.muted}
+            style={this.styles.lineUpInput}
+            placeholderTextColor={this.getPostTheme().muted}
             value={this.state.lineupText}
             onChangeText={lineupTxt => this.handleLineupTxt(lineupTxt)}
             onSubmitEditing={this.handleLineupSubmit}
@@ -383,15 +387,15 @@ export default class PostCreation extends PostCreationController {
           {this.state.lineupText.trim() !== '' && (
             <TouchableOpacity
               testID="lineUpSaveButton"
-              style={styles.lineUpSaveButton}
+              style={this.styles.lineUpSaveButton}
               onPress={this.handleLineupSubmit}
             >
-              <Text style={styles.lineUpSaveButtonText}>Save</Text>
+              <Text style={this.styles.lineUpSaveButtonText}>Save</Text>
             </TouchableOpacity>
           )}
         </View>
-          <View style={styles.lineUpInfoContainer}>
-            <Text style={styles.lineUpInfoText}>
+          <View style={this.styles.lineUpInfoContainer}>
+            <Text style={this.styles.lineUpInfoText}>
               Validate ONLY ONE
               Band/Artist name at a time
             </Text>
@@ -404,24 +408,24 @@ export default class PostCreation extends PostCreationController {
     return (
       <TouchableOpacity
         testID="btnLineUpSelect"
-        style={styles.androidPickerContainer}
+        style={this.styles.androidPickerContainer}
         onPress={this.showLineUpPicker}
       >
-        <Text style={[styles.androidPicker, { paddingTop: 15 }]}>
+        <Text style={[this.styles.androidPicker, { paddingTop: 15 }]}>
           {'Select from roster'}
         </Text>
-        <Image source={leftArrowWhite} style={styles.androidPickerDropdown} />
+        <Image source={leftArrowWhite} style={this.styles.androidPickerDropdown} />
       </TouchableOpacity>
     );
   };
 
   renderAndroidLineUpPicker = () => {
     return (
-      <View style={styles.androidPickerContainer}>
+      <View style={this.styles.androidPickerContainer}>
         <Picker
           testID="lineUpPicker"
-          style={styles.androidPicker}
-          itemStyle={styles.androidPickerItemStyle}
+          style={this.styles.androidPicker}
+          itemStyle={this.styles.androidPickerItemStyle}
           selectedValue={''}
           onValueChange={value => {
             if (value !== '') {
@@ -438,7 +442,7 @@ export default class PostCreation extends PostCreationController {
             />
           ))}
         </Picker>
-        <Image source={leftArrowWhite} style={styles.androidPickerDropdown} />
+        <Image source={leftArrowWhite} style={this.styles.androidPickerDropdown} />
       </View>
     );
   };
@@ -457,27 +461,29 @@ export default class PostCreation extends PostCreationController {
     return (
       <TouchableOpacity
         testID="btnTypeOfShowsSelect"
-        style={styles.androidPickerContainer}
+        style={this.styles.androidPickerContainer}
         onPress={this.showTypeOfShowPicker}
       >
-        <Text style={[styles.androidPicker, { paddingTop: 15 }]}>
+        <Text style={[this.styles.androidPicker, { paddingTop: 15 }]}>
           {'Select type of show'}
         </Text>
-        <Image source={leftArrowWhite} style={styles.androidPickerDropdown} />
+        <Image source={leftArrowWhite} style={this.styles.androidPickerDropdown} />
       </TouchableOpacity>
     );
   };
 
   renderAndroidTypeOfShowPicker = () => {
     return (
-      <View style={styles.androidPickerContainer}>
+      <View style={this.styles.androidPickerContainer}>
         <Picker
           testID="typeOfShowPicker"
-          style={styles.androidPicker}
-          itemStyle={styles.androidPickerItemStyle}
+          style={this.styles.androidPicker}
+          itemStyle={this.styles.androidPickerItemStyle}
           selectedValue={''}
           onValueChange={selectedTypeOfShow => {
-            this.handleSelectedTypeOfShow(selectedTypeOfShow);
+            if (this.state.selectedTypeOfShows.length < 2) {
+              this.handleSelectedTypeOfShow(selectedTypeOfShow);
+            }
           }}
         >
           <Picker.Item label={'Select type of shows'} value={''} />
@@ -489,7 +495,7 @@ export default class PostCreation extends PostCreationController {
             />
           ))}
         </Picker>
-        <Image source={leftArrowWhite} style={styles.androidPickerDropdown} />
+        <Image source={leftArrowWhite} style={this.styles.androidPickerDropdown} />
       </View>
     );
   };
@@ -508,24 +514,24 @@ export default class PostCreation extends PostCreationController {
     return (
       <TouchableOpacity
         testID="btnGenreSelect"
-        style={styles.androidPickerContainer}
+        style={this.styles.androidPickerContainer}
         onPress={this.showGenrePicker}
       >
-        <Text style={[styles.androidPicker, { paddingTop: 15 }]}>
+        <Text style={[this.styles.androidPicker, { paddingTop: 15 }]}>
           {'Select genre'}
         </Text>
-        <Image source={leftArrowWhite} style={styles.androidPickerDropdown} />
+        <Image source={leftArrowWhite} style={this.styles.androidPickerDropdown} />
       </TouchableOpacity>
     );
   };
 
   renderAndroidGenrePicker = () => {
     return (
-      <View style={styles.androidPickerContainer}>
+      <View style={this.styles.androidPickerContainer}>
         <Picker
           testID="genrePicker"
-          style={styles.androidPicker}
-          itemStyle={styles.androidPickerItemStyle}
+          style={this.styles.androidPicker}
+          itemStyle={this.styles.androidPickerItemStyle}
           onValueChange={selectedGenres => {
             if (this.state.selectedGenres.length < 3)
               this.handleSelectedGenre(selectedGenres);
@@ -541,7 +547,7 @@ export default class PostCreation extends PostCreationController {
             />
           ))}
         </Picker>
-        <Image source={leftArrowWhite} style={styles.androidPickerDropdown} />
+        <Image source={leftArrowWhite} style={this.styles.androidPickerDropdown} />
       </View>
     );
   };
@@ -549,7 +555,7 @@ export default class PostCreation extends PostCreationController {
   renderError = (errorType: string) => {
     return (
       <>
-        {errorType !== '' && <Text style={styles.errorText}>{errorType}</Text>}
+        {errorType !== '' && <Text style={this.styles.errorText}>{errorType}</Text>}
       </>
     );
   };
@@ -564,11 +570,11 @@ export default class PostCreation extends PostCreationController {
         renderItem={({ item }) => {
           const isDefaultBandLineup = item.isDefaultBandLineup === true;
           return (
-            <View style={styles.rowItem}>
+            <View style={this.styles.rowItem}>
               <Text
                 style={[
-                  styles.label,
-                  { fontWeight: '400', color: redesignTheme.primary, marginTop: 1 },
+                  this.styles.label,
+                  { fontWeight: '400', color: this.getPostTheme().primary, marginTop: 1 },
                 ]}
               >
                 {item.first_name}
@@ -582,7 +588,7 @@ export default class PostCreation extends PostCreationController {
                 >
                   <Image
                     source={require('../../../mobile/assets/images/close.png')}
-                    style={styles.crossBtn}
+                    style={this.styles.crossBtn}
                   />
                 </TouchableOpacity>
               )}
@@ -605,11 +611,11 @@ export default class PostCreation extends PostCreationController {
         columnWrapperStyle={{ flexWrap: 'wrap' }}
         renderItem={({ item }) => {
           return (
-            <View style={styles.rowItem}>
+            <View style={this.styles.rowItem}>
               <Text
                 style={[
-                  styles.label,
-                  { fontWeight: '400', color: redesignTheme.primary, marginTop: 1 },
+                  this.styles.label,
+                  { fontWeight: '400', color: this.getPostTheme().primary, marginTop: 1 },
                 ]}
               >
                 {item.attributes ? item.attributes.name : item.name}
@@ -622,7 +628,7 @@ export default class PostCreation extends PostCreationController {
               >
                 <Image
                   source={require('../../../mobile/assets/images/close.png')}
-                  style={styles.crossBtn}
+                  style={this.styles.crossBtn}
                 />
               </TouchableOpacity>
             </View>
@@ -642,11 +648,11 @@ export default class PostCreation extends PostCreationController {
         columnWrapperStyle={{ flexWrap: 'wrap' }}
         renderItem={({ item }) => {
           return (
-            <View style={styles.rowItem}>
+            <View style={this.styles.rowItem}>
               <Text
                 style={[
-                  styles.label,
-                  { fontWeight: '400', color: redesignTheme.primary, marginTop: 1 },
+                  this.styles.label,
+                  { fontWeight: '400', color: this.getPostTheme().primary, marginTop: 1 },
                 ]}
               >
                 {item.attributes ? item.attributes.name : item.name}
@@ -659,7 +665,7 @@ export default class PostCreation extends PostCreationController {
               >
                 <Image
                   source={require('../../../mobile/assets/images/close.png')}
-                  style={styles.crossBtn}
+                  style={this.styles.crossBtn}
                 />
               </TouchableOpacity>
             </View>
@@ -683,12 +689,12 @@ export default class PostCreation extends PostCreationController {
         {this.state.eventId !== '' && (
           <TouchableOpacity
             testID="cancelUpdate"
-            style={[styles.postShowButton, { backgroundColor: redesignTheme.card }]}
+            style={[this.styles.postShowButton, { backgroundColor: this.getPostTheme().card }]}
             onPress={() => {
               this.props.navigation.goBack();
             }}
           >
-            <Text style={[styles.postShowButtonText, { color: redesignTheme.foreground }]}>
+            <Text style={[this.styles.postShowButtonText, { color: this.getPostTheme().foreground }]}>
               {configJSON.cancel}
             </Text>
           </TouchableOpacity>
@@ -759,21 +765,21 @@ export default class PostCreation extends PostCreationController {
     const isEdit = this.state.eventId !== '';
     const isReady = isEdit || this.canPreviewPost();
     return (
-      <View style={styles.previewCtaWrap}>
+      <View style={this.styles.previewCtaWrap}>
         <TouchableOpacity
           testID="postShowBtn"
           style={[
-            styles.postShowButton,
-            isReady ? styles.previewBtnActive : styles.previewBtnInactive,
+            this.styles.postShowButton,
+            isReady ? this.styles.previewBtnActive : this.styles.previewBtnInactive,
           ]}
           onPress={this.handlePreviewPost}
           activeOpacity={isReady ? 0.85 : 1}
         >
-          <View style={styles.previewBtnInner}>
+          <View style={this.styles.previewBtnInner}>
             <Text
               style={[
-                styles.postShowButtonText,
-                !isReady && !isEdit && styles.previewBtnInactiveText,
+                this.styles.postShowButtonText,
+                !isReady && !isEdit && this.styles.previewBtnInactiveText,
               ]}
             >
               {isEdit ? configJSON.save : 'PREVIEW POST'}
@@ -782,13 +788,13 @@ export default class PostCreation extends PostCreationController {
               <Icon
                 name="chevron-right"
                 size={18}
-                color={isReady ? '#FFFFFF' : redesignTheme.muted}
+                color={isReady ? '#FFFFFF' : this.getPostTheme().muted}
               />
             )}
           </View>
         </TouchableOpacity>
         {!isEdit && (
-          <Text style={styles.previewHelp}>
+          <Text style={this.styles.previewHelp}>
             Fill in title, lineup, venue, date, and add a photo
           </Text>
         )}
@@ -804,144 +810,144 @@ export default class PostCreation extends PostCreationController {
     const rawUri = this.state.selectedImageData?.uri;
     const imageUri = Array.isArray(rawUri) ? rawUri[0] : rawUri;
     return (
-      <View style={styles.previewScreen}>
+      <View style={this.styles.previewScreen}>
         <StatusBar
-          barStyle="light-content"
-          backgroundColor={redesignTheme.background}
+          barStyle={this.state.isDarkMode ? 'light-content' : 'dark-content'}
+          backgroundColor={this.getPostTheme().background}
         />
-        <View style={styles.headerContainer}>
+        <View style={this.styles.headerContainer}>
           <TouchableOpacity
             testID="previewBackBtn"
-            style={styles.headerIconBtn}
+            style={this.styles.headerIconBtn}
             onPress={this.handleBackFromPreview}
           >
             <Icon
               name="arrow-left"
               size={18}
-              color={redesignTheme.foreground}
+              color={this.getPostTheme().foreground}
             />
           </TouchableOpacity>
-          <View style={styles.previewHeaderCopy}>
-            <Text style={styles.pageTitle}>PREVIEW</Text>
-            <Text style={styles.previewStepLabel}>
+          <View style={this.styles.previewHeaderCopy}>
+            <Text style={this.styles.pageTitle}>PREVIEW</Text>
+            <Text style={this.styles.previewStepLabel}>
               Step 2 of 2 — Confirm & Publish
             </Text>
           </View>
           <TouchableOpacity
             testID="previewCloseBtn"
-            style={styles.headerIconBtn}
+            style={this.styles.headerIconBtn}
             onPress={() => this.props.navigation.goBack()}
           >
-            <Icon name="x" size={18} color={redesignTheme.muted} />
+            <Icon name="x" size={18} color={this.getPostTheme().muted} />
           </TouchableOpacity>
         </View>
-        <View style={styles.previewProgressTrack}>
-          <View style={styles.previewProgressFill} />
+        <View style={this.styles.previewProgressTrack}>
+          <View style={this.styles.previewProgressFill} />
         </View>
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.previewScroll}
+          contentContainerStyle={this.styles.previewScroll}
         >
-          <Text style={styles.previewIntro}>
+          <Text style={this.styles.previewIntro}>
             This is how your post will appear in the feed:
           </Text>
-          <View style={styles.previewCard}>
-            <View style={styles.previewImageWrap}>
+          <View style={this.styles.previewCard}>
+            <View style={this.styles.previewImageWrap}>
               {imageUri ? (
                 <Image
                   source={{ uri: String(imageUri) }}
-                  style={styles.previewImage}
+                  style={this.styles.previewImage}
                 />
               ) : (
-                <View style={styles.previewImagePlaceholder}>
-                  <Icon name="image" size={32} color={redesignTheme.muted} />
+                <View style={this.styles.previewImagePlaceholder}>
+                  <Icon name="image" size={32} color={this.getPostTheme().muted} />
                 </View>
               )}
               {!!category && (
-                <View style={styles.previewCategoryBadge}>
-                  <Text style={styles.previewCategoryText}>
+                <View style={this.styles.previewCategoryBadge}>
+                  <Text style={this.styles.previewCategoryText}>
                     {String(category).toUpperCase()}
                   </Text>
                 </View>
               )}
             </View>
-            <View style={styles.previewCardBody}>
+            <View style={this.styles.previewCardBody}>
               {!!this.state.eventTitle && (
-                <Text style={styles.previewEventTitle}>
+                <Text style={this.styles.previewEventTitle}>
                   {this.state.eventTitle}
                 </Text>
               )}
               {lineupNames.length > 0 && (
-                <View style={styles.previewLineupRow}>
+                <View style={this.styles.previewLineupRow}>
                   {lineupNames.map((name: string) => (
-                    <View key={name} style={styles.previewLineupChip}>
-                      <Text style={styles.previewLineupChipText}>{name}</Text>
+                    <View key={name} style={this.styles.previewLineupChip}>
+                      <Text style={this.styles.previewLineupChipText}>{name}</Text>
                     </View>
                   ))}
                 </View>
               )}
               {!!this.getPreviewLocationLine() && (
-                <View style={styles.previewLocationRow}>
-                  <View style={styles.previewLocationIconWrap}>
+                <View style={this.styles.previewLocationRow}>
+                  <View style={this.styles.previewLocationIconWrap}>
                     <Icon
                       name="map-pin"
                       size={13}
-                      color={redesignTheme.primary}
+                      color={this.getPostTheme().primary}
                     />
                   </View>
-                  <Text style={styles.previewLocationText}>
+                  <Text style={this.styles.previewLocationText}>
                     {this.getPreviewLocationLine()}
                   </Text>
                 </View>
               )}
-              <View style={styles.previewMetaRow}>
-                <Icon name="calendar" size={13} color={redesignTheme.muted} />
+              <View style={this.styles.previewMetaRow}>
+                <Icon name="calendar" size={13} color={this.getPostTheme().muted} />
                 {!!this.state.dateOfShow && (
-                  <Text style={styles.previewMetaText}>
+                  <Text style={this.styles.previewMetaText}>
                     {this.state.dateOfShow}
                   </Text>
                 )}
                 {!!this.getPreviewTime() && (
-                  <Text style={styles.previewTimeText}>
+                  <Text style={this.styles.previewTimeText}>
                     {this.getPreviewTime()}
                   </Text>
                 )}
                 {lineupNames.length > 0 && (
-                  <View style={styles.previewCountPill}>
-                    <Text style={styles.previewCountText}>
+                  <View style={this.styles.previewCountPill}>
+                    <Text style={this.styles.previewCountText}>
                       {lineupNames.length}
                     </Text>
                   </View>
                 )}
               </View>
               {!!this.state.description && (
-                <Text style={styles.previewDescription}>
+                <Text style={this.styles.previewDescription}>
                   {this.state.description}
                 </Text>
               )}
             </View>
           </View>
-          <View style={styles.visibilityCard}>
-            <Text style={styles.visibilityTitle}>VISIBILITY</Text>
+          <View style={this.styles.visibilityCard}>
+            <Text style={this.styles.visibilityTitle}>VISIBILITY</Text>
             {[
               'Visible on local feed',
               'Notified followers',
               'Searchable by genre & city',
               'Reminder sent day-of to saved fans',
             ].map(item => (
-              <View key={item} style={styles.visibilityRow}>
+              <View key={item} style={this.styles.visibilityRow}>
                 <Icon
                   name="check-circle"
                   size={16}
                   color="#22C55E"
                 />
-                <Text style={styles.visibilityText}>{item}</Text>
+                <Text style={this.styles.visibilityText}>{item}</Text>
               </View>
             ))}
           </View>
           <TouchableOpacity
             testID="publishShowBtn"
-            style={styles.publishBtn}
+            style={this.styles.publishBtn}
             onPress={this.handleCreateShowAPI}
             activeOpacity={0.85}
           >
@@ -950,7 +956,7 @@ export default class PostCreation extends PostCreationController {
             ) : (
               <>
                 <Icon name="star" size={16} color="#FFFFFF" />
-                <Text style={styles.publishBtnText}>PUBLISH NOW</Text>
+                <Text style={this.styles.publishBtnText}>PUBLISH NOW</Text>
               </>
             )}
           </TouchableOpacity>
@@ -958,7 +964,7 @@ export default class PostCreation extends PostCreationController {
             testID="editPreviewBtn"
             onPress={this.handleBackFromPreview}
           >
-            <Text style={styles.editPreviewText}>Go back & edit</Text>
+            <Text style={this.styles.editPreviewText}>Go back & edit</Text>
           </TouchableOpacity>
         </ScrollView>
       </View>
@@ -969,15 +975,15 @@ export default class PostCreation extends PostCreationController {
     return (
       <TouchableOpacity
         testID="btnDateSelector"
-        style={styles.calendarContainer}
+        style={this.styles.calendarContainer}
         onPress={() => this.showDateSelector()}
       >
-        <Text style={styles.dateText}>
+        <Text style={this.styles.dateText}>
           {this.state.dateOfShow !== '' ? this.state.dateOfShow : 'Select date'}
         </Text>
         <Image
           source={require('../../../mobile/assets/images/image_calendar.png')}
-          style={[styles.backBtn, { tintColor: redesignTheme.primary }]}
+          style={[this.styles.backBtn, { tintColor: this.getPostTheme().primary }]}
         />
       </TouchableOpacity>
     );
@@ -987,15 +993,15 @@ export default class PostCreation extends PostCreationController {
     return (
       <TouchableOpacity
         testID="btnEndDateSelector"
-        style={styles.calendarContainer}
+        style={this.styles.calendarContainer}
         onPress={() => this.showEndDateSelector()}
       >
-        <Text style={styles.dateText}>
+        <Text style={this.styles.dateText}>
           {this.state.endDate !== '' ? this.state.endDate : 'Select end date'}
         </Text>
         <Image
           source={require('../../../mobile/assets/images/image_calendar.png')}
-          style={[styles.backBtn, { tintColor: redesignTheme.primary }]}
+          style={[this.styles.backBtn, { tintColor: this.getPostTheme().primary }]}
         />
       </TouchableOpacity>
     );
@@ -1010,12 +1016,12 @@ export default class PostCreation extends PostCreationController {
     }
 
     return (
-      <View style={styles.rosterInputContainer}>
+      <View style={this.styles.rosterInputContainer}>
         <TextInput
           testID="customRuleTextInput"
           placeholder="Enter custom rule or regulation"
-          placeholderTextColor={redesignTheme.muted}
-          style={styles.rosterInput}
+          placeholderTextColor={this.getPostTheme().muted}
+          style={this.styles.rosterInput}
           value={this.state.customRuleTxt}
           onChangeText={text =>
             this.setState({ customRuleTxt: text.replace(/\s{2,}/g, ' ') })
@@ -1025,10 +1031,10 @@ export default class PostCreation extends PostCreationController {
         {this.state.customRuleTxt.trim() !== '' && (
           <TouchableOpacity
             testID="saveCustomRuleBtn"
-            style={styles.rosterSaveButton}
+            style={this.styles.rosterSaveButton}
             onPress={this.handleAddCustomRule}
           >
-            <Text style={styles.rosterSaveButtonText}>Save</Text>
+            <Text style={this.styles.rosterSaveButtonText}>Save</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -1065,7 +1071,7 @@ export default class PostCreation extends PostCreationController {
 
     return (
       <View style={{ marginTop: 0 }}>
-        <Text style={styles.label}>Rules and Regulations</Text>
+        <Text style={this.styles.label}>Rules and Regulations</Text>
         <FlatList
           testID="rulesAndRegulationsIconsFlatlist"
           data={normalizedIcons}
@@ -1078,11 +1084,11 @@ export default class PostCreation extends PostCreationController {
             return (
               <TouchableOpacity
                 testID={isChecked ? 'selectedRulesRegulation' : 'unselectedRulesRegulation'}
-                style={styles.rulesIconItem}
+                style={this.styles.rulesIconItem}
                 onPress={() => this.handleToggleRulesRegulation(itemId)}
                 activeOpacity={0.7}
               >
-                <View style={styles.rulesIconRow}>
+                <View style={this.styles.rulesIconRow}>
                   <TouchableOpacity
                     testID={
                       isChecked
@@ -1090,8 +1096,8 @@ export default class PostCreation extends PostCreationController {
                         : 'unselectedRulesRegulationCheckbox'
                     }
                     style={[
-                      styles.checkbox,
-                      isChecked && styles.checkboxChecked,
+                      this.styles.checkbox,
+                      isChecked && this.styles.checkboxChecked,
                     ]}
                     onPress={() => this.handleToggleRulesRegulation(itemId)}
                   >
@@ -1099,7 +1105,7 @@ export default class PostCreation extends PostCreationController {
                       <Icon name="check" size={14} color="#FFFFFF" />
                     )}
                   </TouchableOpacity>
-                  <Text style={styles.rulesIconText}>{title}</Text>
+                  <Text style={this.styles.rulesIconText}>{title}</Text>
                 </View>
               </TouchableOpacity>
             );
@@ -1127,7 +1133,7 @@ export default class PostCreation extends PostCreationController {
               ? item.attributes.feature_name
               : item.feature_name;
           return (
-            <View style={styles.showFeatureItem}>
+            <View style={this.styles.showFeatureItem}>
               <TouchableOpacity
                 testID={
                   activate_feature
@@ -1135,8 +1141,8 @@ export default class PostCreation extends PostCreationController {
                     : 'unselectedShowFeature'
                 }
                 style={[
-                  styles.checkbox,
-                  activate_feature && styles.checkboxChecked,
+                  this.styles.checkbox,
+                  activate_feature && this.styles.checkboxChecked,
                 ]}
                 onPress={() => {}}
               >
@@ -1146,7 +1152,7 @@ export default class PostCreation extends PostCreationController {
               </TouchableOpacity>
               <Text
                 style={[
-                  styles.label,
+                  this.styles.label,
                   { fontWeight: '400', marginTop: 1, width: '80%' },
                 ]}
               >
@@ -1164,13 +1170,13 @@ export default class PostCreation extends PostCreationController {
     // Customizable Area Start
     // Customizable Area End
     return (
-      <SafeAreaView style={styles.safeAreaView} edges={['top', 'left', 'right']}>
+      <SafeAreaView style={this.styles.safeAreaView} edges={['top', 'left', 'right']}>
         {/* Customizable Area Start */}
         {this.state.isPreviewStep ? (
           this.renderPreviewScreen()
         ) : (
         <KeyboardAvoidingView
-          style={{ flex: 1, backgroundColor: redesignTheme.background }}
+          style={{ flex: 1, backgroundColor: this.getPostTheme().background }}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : undefined}
           behavior={this.isPlatformiOS() ? 'padding' : undefined}
         >
@@ -1185,46 +1191,46 @@ export default class PostCreation extends PostCreationController {
               }}
             >
               <>
-                <View style={styles.container}>
+                <View style={this.styles.container}>
                   <StatusBar
-                    barStyle="light-content"
-                    backgroundColor={redesignTheme.background}
+                    barStyle={this.state.isDarkMode ? 'light-content' : 'dark-content'}
+                    backgroundColor={this.getPostTheme().background}
                   />
-                  <View style={styles.headerContainer}>
+                  <View style={this.styles.headerContainer}>
                     <TouchableOpacity
                       testID="backBtn"
-                      style={styles.headerIconBtn}
+                      style={this.styles.headerIconBtn}
                       onPress={() => this.props.navigation.goBack()}
                     >
                       <Icon
                         name="arrow-left"
                         size={18}
-                        color={redesignTheme.foreground}
+                        color={this.getPostTheme().foreground}
                       />
                     </TouchableOpacity>
-                    <Text style={styles.pageTitle}>
+                    <Text style={this.styles.pageTitle}>
                       {configJSON.postAShowCardTitle}
                     </Text>
                     <TouchableOpacity
                       testID="closeCreateShowBtn"
-                      style={styles.headerIconBtn}
+                      style={this.styles.headerIconBtn}
                       onPress={() => this.props.navigation.goBack()}
                     >
-                      <Icon name="x" size={18} color={redesignTheme.muted} />
+                      <Icon name="x" size={18} color={this.getPostTheme().muted} />
                     </TouchableOpacity>
                   </View>
-                  <Text style={styles.stepLabel}>Step 1 of 2 — Details</Text>
-                  <View style={styles.progressTrack}>
-                    <View style={styles.progressFill} />
+                  <Text style={this.styles.stepLabel}>Step 1 of 2 — Details</Text>
+                  <View style={this.styles.progressTrack}>
+                    <View style={this.styles.progressFill} />
                   </View>
-                  <Text style={styles.photoLabel}>EVENT / SHOW PHOTO</Text>
+                  <Text style={this.styles.photoLabel}>EVENT / SHOW PHOTO</Text>
                   {this.renderEventImage()}
-                  <Text style={styles.label}>Event Title</Text>
+                  <Text style={this.styles.label}>Event Title</Text>
                   <TextInput
                     testID="eventTitleInputText"
                     placeholder="Enter event title"
-                    style={styles.input}
-                    placeholderTextColor={redesignTheme.muted}
+                    style={this.styles.input}
+                    placeholderTextColor={this.getPostTheme().muted}
                     value={this.state.eventTitle}
                     onChangeText={eventTitle =>
                       this.handleTitleInput(eventTitle)
@@ -1237,16 +1243,16 @@ export default class PostCreation extends PostCreationController {
                   )}
 
                 
-                  <Text style={styles.label}>{configJSON.location}</Text>
+                  <Text style={this.styles.label}>{configJSON.location}</Text>
                   <TextInput
                     testID="locationInputText"
                     placeholder="Enter location"
                        style={[
-                      styles.input,
+                      this.styles.input,
                       this.getShouldDisableLocationFields() &&
-                        styles.disabledInput,
+                        this.styles.disabledInput,
                     ]}
-                    placeholderTextColor={redesignTheme.muted}
+                    placeholderTextColor={this.getPostTheme().muted}
                     value={this.state.location}
                     onChangeText={location =>
                       this.handleLocationInput(location)
@@ -1254,38 +1260,38 @@ export default class PostCreation extends PostCreationController {
                     editable={!this.getShouldDisableLocationFields()}
                   />
                   {this.renderError(this.state.locationError)}
-                  <Text style={styles.label}>{configJSON.address}</Text>
+                  <Text style={this.styles.label}>{configJSON.address}</Text>
                   <TextInput
                     testID="addressInputText"
                     placeholder="Enter address"
                     style={[
-                      styles.input,
+                      this.styles.input,
                       this.getShouldDisableLocationFields() &&
-                        styles.disabledInput,
+                        this.styles.disabledInput,
                     ]}
-                    placeholderTextColor={redesignTheme.muted}
+                    placeholderTextColor={this.getPostTheme().muted}
                     value={this.state.address}
                     onChangeText={address => this.handleAddressInput(address)}
                     maxLength={100}
                     editable={!this.getShouldDisableLocationFields()}
                   />
                   {this.renderError(this.state.addressError)}
-                  <Text style={styles.label}>{configJSON.state}</Text>
+                  <Text style={this.styles.label}>{configJSON.state}</Text>
                   {this.renderState()}
                   {this.renderError(this.state.stateError)}
-                  <Text style={styles.label}>{configJSON.city}</Text>
+                  <Text style={this.styles.label}>{configJSON.city}</Text>
                   {this.renderCity()}
                   {this.renderError(this.state.cityError)}
-                  <Text style={styles.label}>{configJSON.zip}</Text>
+                  <Text style={this.styles.label}>{configJSON.zip}</Text>
                   <TextInput
                     testID="zipInputText"
                     placeholder="Enter zip"
                     style={[
-                      styles.input,
+                      this.styles.input,
                       this.getShouldDisableLocationFields() &&
-                        styles.disabledInput,
+                        this.styles.disabledInput,
                     ]}
-                    placeholderTextColor={redesignTheme.muted}
+                    placeholderTextColor={this.getPostTheme().muted}
                     value={this.state.zipCode}
                     onChangeText={this.onZipcodeTextChange}
                     maxLength={5}
@@ -1293,17 +1299,17 @@ export default class PostCreation extends PostCreationController {
                     editable={!this.getShouldDisableLocationFields()}
                   />
                   {this.renderError(this.state.zipError)}
-                  <Text style={styles.label}>{configJSON.dateOfTheShow}</Text>
+                  <Text style={this.styles.label}>{configJSON.dateOfTheShow}</Text>
                   {this.renderDate()}
                   {this.renderError(this.state.dateOfShowError)}
-                  <Text style={styles.label}>{configJSON.endDate}</Text>
+                  <Text style={this.styles.label}>{configJSON.endDate}</Text>
                   {this.renderEndDate()}
                   {this.renderError(this.state.endDateError)}
-                  <Text style={styles.label}>{configJSON.time}</Text>
+                  <Text style={this.styles.label}>{configJSON.time}</Text>
                   {this.renderTime()}
                   {this.renderError(this.state.timeError)}
                   <View style={{ flexDirection: 'row' }}>
-                    <Text style={styles.label}>{configJSON.lineUp}</Text>
+                    <Text style={this.styles.label}>{configJSON.lineUp}</Text>
                     <TouchableOpacity
                       testID="infoIcon"
                       onPress={() => {
@@ -1317,7 +1323,7 @@ export default class PostCreation extends PostCreationController {
                       <Image
                         source={require('../../../mobile/assets/images/info_icon.png')}
                         style={[
-                          styles.backBtn,
+                          this.styles.backBtn,
                           { marginLeft: 10, marginTop: 20 },
                         ]}
                       />
@@ -1326,32 +1332,35 @@ export default class PostCreation extends PostCreationController {
                   {this.renderLineUp()}
                   {this.renderError(this.state.lineUpError)}
                   {this.renderLineUpFlatlist()}
-                  <Text style={styles.label}>{configJSON.typeOfShows}</Text>
+                  <Text style={this.styles.label}>
+                    {configJSON.typeOfShows}
+                    <Text style={this.styles.normalFont}>{configJSON.max2}</Text>
+                  </Text>
                   {this.renderTypeOfShow()}
                   {this.renderError(this.state.typeOfShowError)}
                   {this.renderTypeOfShowFlatlist()}
-                  <Text style={styles.label}>
+                  <Text style={this.styles.label}>
                     {configJSON.genre}
-                    <Text style={styles.normalFont}>{configJSON.max3}</Text>
+                    <Text style={this.styles.normalFont}>{configJSON.max3}</Text>
                   </Text>
                   {this.renderGenre()}
                   {this.renderError(this.state.genreError)}
                   {this.renderGenreFlatlist()}
-                  <Text style={styles.label}>
+                  <Text style={this.styles.label}>
                     {configJSON.description}
-                    <Text style={styles.normalFont}>{configJSON.max300}</Text>
+                    <Text style={this.styles.normalFont}>{configJSON.max2000}</Text>
                   </Text>
                   <TextInput
                     testID="descriptionInputText"
                     placeholder="Enter description"
                     style={[
-                      styles.input,
+                      this.styles.input,
                       { height: 100, textAlignVertical: 'top' },
                     ]}
                     multiline
-                    placeholderTextColor={redesignTheme.muted}
+                    placeholderTextColor={this.getPostTheme().muted}
                     value={this.state.description}
-                    maxLength={300}
+                    maxLength={2000}
                     onChangeText={description =>
                       this.handleDescriptionInput(description)
                     }
@@ -1383,26 +1392,26 @@ export default class PostCreation extends PostCreationController {
                     
                     return isType1Venue ? (
                       <>
-                        <Text style={styles.ticketLinkPromoText}>
+                        <Text style={this.styles.ticketLinkPromoText}>
                           For a limited time, FREE Link to your tickets
                         </Text>
                         {!this.state.verified && (
-                          <Text style={styles.ticketLinkVerifyText}>
+                          <Text style={this.styles.ticketLinkVerifyText}>
                             VERIFY YOUR ACCOUNT
                           </Text>
                         )}
                         <TextInput
                           testID="ticketLinkInputText"
                           placeholder="Enter Show Ticket link"
-                          style={styles.ticketLinkInput}
-                          placeholderTextColor={redesignTheme.muted}
+                          style={this.styles.ticketLinkInput}
+                          placeholderTextColor={this.getPostTheme().muted}
                           value={this.state.ticketLink}
                           onChangeText={ticketLink =>
                             this.setState({ ticketLink })
                           }
                         />
                         {!this.state.verified && (
-                          <Text style={styles.ticketLinkDisclaimer}>
+                          <Text style={this.styles.ticketLinkDisclaimer}>
                             Verification process can take up to 3 days
                           </Text>
                         )}
@@ -1426,18 +1435,18 @@ export default class PostCreation extends PostCreationController {
                     testID="hideStateModal"
                     onPress={this.hideStateModal}
                   >
-                    <View style={styles.modalContainer}>
+                    <View style={this.styles.modalContainer}>
                       <TouchableWithoutFeedback>
-                        <View style={styles.modal}>
+                        <View style={this.styles.modal}>
                           <Picker
                             testID="statePickerModal"
                             selectedValue={this.state.selectedState}
                             onValueChange={selectedState =>
                               this.handleStateValueChange(selectedState)
                             }
-                            itemStyle={styles.pickerModalItemStyle}
+                            itemStyle={this.styles.pickerModalItemStyle}
                             themeVariant="dark"
-                            style={styles.pickerModal}
+                            style={this.styles.pickerModal}
                           >
                             {this.state.statesList.map(
                               ({
@@ -1451,7 +1460,7 @@ export default class PostCreation extends PostCreationController {
                                   key={key}
                                   label={name}
                                   value={key}
-                                  color={redesignTheme.foreground}
+                                  color={this.getPostTheme().foreground}
                                 />
                               ),
                             )}
@@ -1470,25 +1479,25 @@ export default class PostCreation extends PostCreationController {
                     testID="hideCityModal"
                     onPress={this.hideCityModal}
                   >
-                    <View style={styles.modalContainer}>
+                    <View style={this.styles.modalContainer}>
                       <TouchableWithoutFeedback>
-                        <View style={styles.modal}>
+                        <View style={this.styles.modal}>
                           <Picker
                             testID="cityPickerModal"
                             selectedValue={this.state.selectedCity}
                             onValueChange={selectedCity =>
                               this.handleCityValueChange(selectedCity)
                             }
-                            itemStyle={styles.pickerModalItemStyle}
+                            itemStyle={this.styles.pickerModalItemStyle}
                             themeVariant="dark"
-                            style={styles.pickerModal}
+                            style={this.styles.pickerModal}
                           >
                             {this.state.citiesList?.map((name: string) => (
                               <Picker.Item
                                 key={name}
                                 value={name}
                                 label={name}
-                                color={redesignTheme.foreground}
+                                color={this.getPostTheme().foreground}
                               />
                             ))}
                           </Picker>
@@ -1502,21 +1511,21 @@ export default class PostCreation extends PostCreationController {
                   transparent={true}
                   visible={this.state.openTimePicker}
                 >
-                  <View style={styles.modalContainer}>
+                  <View style={this.styles.modalContainer}>
                     <TouchableWithoutFeedback
                       testID="hideTimeModal"
                       onPress={this.hideTimeModal}
                     >
                       <View style={StyleSheet.absoluteFill} />
                     </TouchableWithoutFeedback>
-                    <View style={styles.modal}>
-                      <Text style={styles.pickerModalTitle}>Select time</Text>
-                      <Text style={styles.pickerModalSelectedValue}>
+                    <View style={this.styles.modal}>
+                      <Text style={this.styles.pickerModalTitle}>Select time</Text>
+                      <Text style={this.styles.pickerModalSelectedValue}>
                         {this.state.time || '00h00'}
                       </Text>
                       <ScrollView
                         testID="timePickerModal"
-                        style={styles.timePickerList}
+                        style={this.styles.timePickerList}
                         showsVerticalScrollIndicator={false}
                         keyboardShouldPersistTaps="handled"
                         {...{
@@ -1534,15 +1543,15 @@ export default class PostCreation extends PostCreationController {
                                 this.handleTimeValueChange(name)
                               }
                               style={[
-                                styles.timePickerOption,
-                                selected && styles.timePickerOptionSelected,
+                                this.styles.timePickerOption,
+                                selected && this.styles.timePickerOptionSelected,
                               ]}
                             >
                               <Text
                                 style={[
-                                  styles.timePickerOptionText,
+                                  this.styles.timePickerOptionText,
                                   selected &&
-                                    styles.timePickerOptionTextSelected,
+                                    this.styles.timePickerOptionTextSelected,
                                 ]}
                               >
                                 {name}
@@ -1563,17 +1572,17 @@ export default class PostCreation extends PostCreationController {
                     testID="hideTypeOfShowModal"
                     onPress={this.hideTypeOfShowModal}
                   >
-                    <View style={styles.modalContainer}>
+                    <View style={this.styles.modalContainer}>
                       <TouchableWithoutFeedback>
-                        <View style={styles.modal}>
+                        <View style={this.styles.modal}>
                           <Picker
                             testID="typeOfShowsPickerModal"
                             onValueChange={(value: string) =>
                               this.handleIosTypeValueChange(value)
                             }
-                            itemStyle={styles.pickerModalItemStyle}
+                            itemStyle={this.styles.pickerModalItemStyle}
                             themeVariant="dark"
-                            style={styles.pickerModal}
+                            style={this.styles.pickerModal}
                           >
                             {this.state.typeOfShowsList?.map((item: any) => (
                               <Picker.Item
@@ -1584,7 +1593,7 @@ export default class PostCreation extends PostCreationController {
                                     : item.name
                                 }
                                 value={item}
-                                color={redesignTheme.foreground}
+                                color={this.getPostTheme().foreground}
                               />
                             ))}
                           </Picker>
@@ -1602,17 +1611,17 @@ export default class PostCreation extends PostCreationController {
                     testID="hideGenreModal"
                     onPress={this.hideGenreModal}
                   >
-                    <View style={styles.modalContainer}>
+                    <View style={this.styles.modalContainer}>
                       <TouchableWithoutFeedback>
-                        <View style={styles.modal}>
+                        <View style={this.styles.modal}>
                           <Picker
                             testID="genrePickerModal"
                             onValueChange={(value: string) =>
                               this.handleIosGenreValueChange(value)
                             }
-                            itemStyle={styles.pickerModalItemStyle}
+                            itemStyle={this.styles.pickerModalItemStyle}
                             themeVariant="dark"
-                            style={styles.pickerModal}
+                            style={this.styles.pickerModal}
                           >
                             {this.state.genreList?.map((item: any) => (
                               <Picker.Item
@@ -1623,7 +1632,7 @@ export default class PostCreation extends PostCreationController {
                                     : item.name
                                 }
                                 value={item}
-                                color={redesignTheme.foreground}
+                                color={this.getPostTheme().foreground}
                               />
                             ))}
                           </Picker>
@@ -1641,29 +1650,29 @@ export default class PostCreation extends PostCreationController {
                     testID="hideLineUpModal"
                     onPress={this.hideLineUpPicker}
                   >
-                    <View style={styles.modalContainer}>
+                    <View style={this.styles.modalContainer}>
                       <TouchableWithoutFeedback>
-                        <View style={styles.modal}>
+                        <View style={this.styles.modal}>
                           <Picker
                             testID="lineUpPickerModal"
                             onValueChange={(value: any) =>
                               this.handleIosLineUpValueChange(value)
                             }
-                            itemStyle={styles.pickerModalItemStyle}
+                            itemStyle={this.styles.pickerModalItemStyle}
                             themeVariant="dark"
-                            style={styles.pickerModal}
+                            style={this.styles.pickerModal}
                           >
                             <Picker.Item
                               label={'Select from roster'}
                               value={''}
-                              color={redesignTheme.foreground}
+                              color={this.getPostTheme().foreground}
                             />
                             {this.state.rosterLineUpList?.map((item: any) => (
                               <Picker.Item
                                 key={item.id || item.first_name}
                                 label={item.first_name}
                                 value={item}
-                                color={redesignTheme.foreground}
+                                color={this.getPostTheme().foreground}
                               />
                             ))}
                           </Picker>
@@ -1675,12 +1684,12 @@ export default class PostCreation extends PostCreationController {
               </>
             </TouchableWithoutFeedback>
           </ScrollView>
-          {/* {this.state.isLoading && <View style={styles.loadingContainer}>
+          {/* {this.state.isLoading && <View style={this.styles.loadingContainer}>
             <ActivityIndicator size={'large'} color="black" />
           </View>} */}
           {this.state.showDateSelector && (
             <>
-              <View style={styles.calendarModal}>
+              <View style={this.styles.calendarModal}>
                 <DateRangePicker
                   testID="DateRangePicker"
                   open={this.state.showDateSelector}
@@ -1696,16 +1705,16 @@ export default class PostCreation extends PostCreationController {
               </View>
               <TouchableOpacity
                 testID="hideCalendar"
-                style={styles.cancelDateSelectionBtn}
+                style={this.styles.cancelDateSelectionBtn}
                 onPress={this.hideDateSelector}
               >
-                <Icon name="x" size={30} color={redesignTheme.foreground} />
+                <Icon name="x" size={30} color={this.getPostTheme().foreground} />
               </TouchableOpacity>
             </>
           )}
           {this.state.showEndDateSelector && (
             <>
-              <View style={styles.calendarModal}>
+              <View style={this.styles.calendarModal}>
                 <DateRangePicker
                   testID="EndDateRangePicker"
                   open={this.state.showEndDateSelector}
@@ -1725,10 +1734,10 @@ export default class PostCreation extends PostCreationController {
               </View>
               <TouchableOpacity
                 testID="hideEndCalendar"
-                style={styles.cancelDateSelectionBtn}
+                style={this.styles.cancelDateSelectionBtn}
                 onPress={this.hideEndDateSelector}
               >
-                <Icon name="x" size={30} color={redesignTheme.foreground} />
+                <Icon name="x" size={30} color={this.getPostTheme().foreground} />
               </TouchableOpacity>
             </>
           )}
@@ -1741,16 +1750,16 @@ export default class PostCreation extends PostCreationController {
 }
 
 // Customizable Area Start
-const styles = StyleSheet.create({
+const createPostCreationStyles = (theme: typeof redesignTheme | typeof lightTheme) => StyleSheet.create({
   safeAreaView: {
     flex: 1,
     width: '100%',
     height: '100%',
     alignSelf: 'center',
-    backgroundColor: redesignTheme.background,
+    backgroundColor: theme.background,
   },
   container: {
-    backgroundColor: redesignTheme.background,
+    backgroundColor: theme.background,
     paddingHorizontal: 16,
     paddingBottom: 40,
   },
@@ -1764,9 +1773,9 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: theme.input,
     borderWidth: 1,
-    borderColor: redesignTheme.border,
+    borderColor: theme.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1779,12 +1788,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     lineHeight: 24,
     fontWeight: '900',
-    color: redesignTheme.foreground,
+    color: theme.foreground,
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
   stepLabel: {
-    color: redesignTheme.muted,
+    color: theme.muted,
     fontSize: 14,
     marginTop: 10,
     marginBottom: 10,
@@ -1792,17 +1801,17 @@ const styles = StyleSheet.create({
   progressTrack: {
     height: 3,
     borderRadius: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: theme.border,
     overflow: 'hidden',
     marginBottom: 8,
   },
   progressFill: {
     width: '50%',
     height: '100%',
-    backgroundColor: redesignTheme.primary,
+    backgroundColor: theme.primary,
   },
   photoLabel: {
-    color: redesignTheme.primary,
+    color: theme.primary,
     fontSize: 13,
     fontWeight: '800',
     letterSpacing: 0.6,
@@ -1814,8 +1823,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderColor: 'rgba(255, 255, 255, 0.16)',
-    backgroundColor: redesignTheme.card,
+    borderColor: theme.border,
+    backgroundColor: theme.card,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -1826,7 +1835,7 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   photoPickerText: {
-    color: redesignTheme.primary,
+    color: theme.primary,
     fontSize: 14,
     fontWeight: '600',
     marginTop: 8,
@@ -1840,7 +1849,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '800',
-    color: redesignTheme.primary,
+    color: theme.primary,
     marginTop: 20,
     letterSpacing: 0.4,
   },
@@ -1850,9 +1859,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: redesignTheme.border,
-    backgroundColor: redesignTheme.input,
-    color: redesignTheme.foreground,
+    borderColor: theme.border,
+    backgroundColor: theme.input,
+    color: theme.foreground,
     height: 50,
     fontSize: 16,
     marginTop: 10,
@@ -1868,9 +1877,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: redesignTheme.border,
-    backgroundColor: redesignTheme.input,
-    color: redesignTheme.foreground,
+    borderColor: theme.border,
+    backgroundColor: theme.input,
+    color: theme.foreground,
     height: 50,
     fontSize: 16,
   },
@@ -1879,7 +1888,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     height: 50,
     borderRadius: 12,
-    backgroundColor: redesignTheme.primary,
+    backgroundColor: theme.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1897,11 +1906,11 @@ const styles = StyleSheet.create({
   },
   lineUpInfoText: {
     fontSize: 14,
-    color: redesignTheme.muted,
+    color: theme.muted,
     fontWeight: '600',
   },
   lineUpInfoStrong: {
-    color: redesignTheme.primary,
+    color: theme.primary,
     fontWeight: '700',
   },
   androidPickerContainer: {
@@ -1909,8 +1918,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: redesignTheme.border,
-    backgroundColor: redesignTheme.input,
+    borderColor: theme.border,
+    backgroundColor: theme.input,
     height: 50,
     justifyContent: 'center',
     marginTop: 10,
@@ -1919,13 +1928,13 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingHorizontal: 10,
     borderRadius: 12,
-    color: redesignTheme.foreground,
+    color: theme.foreground,
     height: 50,
     justifyContent: 'center',
   },
   androidPickerItemStyle: {
     alignSelf: 'flex-start',
-    color: redesignTheme.foreground,
+    color: theme.foreground,
     fontSize: 16,
   },
   androidPickerDropdown: {
@@ -1935,7 +1944,7 @@ const styles = StyleSheet.create({
     width: 8,
     transform: [{ rotate: '-90deg' }],
     resizeMode: 'contain',
-    tintColor: redesignTheme.primary,
+    tintColor: theme.primary,
   },
   normalFont: {
     fontWeight: '400',
@@ -1945,15 +1954,15 @@ const styles = StyleSheet.create({
     width: 20,
     borderWidth: 1.5,
     borderRadius: 5,
-    borderColor: redesignTheme.muted,
+    borderColor: theme.muted,
     backgroundColor: 'transparent',
     marginRight: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
   checkboxChecked: {
-    borderColor: redesignTheme.primary,
-    backgroundColor: redesignTheme.primary,
+    borderColor: theme.primary,
+    backgroundColor: theme.primary,
   },
   postShowButton: {
     borderRadius: 28,
@@ -1968,11 +1977,11 @@ const styles = StyleSheet.create({
   previewBtnInactive: {
     backgroundColor: '#1A1A28',
     borderWidth: 1,
-    borderColor: redesignTheme.border,
+    borderColor: theme.border,
   },
   previewBtnActive: {
-    backgroundColor: redesignTheme.primary,
-    shadowColor: redesignTheme.primary,
+    backgroundColor: theme.primary,
+    shadowColor: theme.primary,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.55,
     shadowRadius: 12,
@@ -1984,10 +1993,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   previewBtnInactiveText: {
-    color: redesignTheme.muted,
+    color: theme.muted,
   },
   previewHelp: {
-    color: redesignTheme.muted,
+    color: theme.muted,
     fontSize: 13,
     textAlign: 'center',
     marginTop: 10,
@@ -2011,7 +2020,7 @@ const styles = StyleSheet.create({
   },
   crossBtn: {
     marginLeft: 10,
-    tintColor: redesignTheme.primary,
+    tintColor: theme.primary,
     width: 10,
     height: 10,
     resizeMode: 'contain',
@@ -2032,21 +2041,21 @@ const styles = StyleSheet.create({
     padding: 15,
     height: '38%',
     justifyContent: 'space-between',
-    backgroundColor: redesignTheme.card,
+    backgroundColor: theme.card,
     borderTopEndRadius: 20,
     zIndex: 2,
   },
   pickerModal: {
-    color: redesignTheme.foreground,
+    color: theme.foreground,
     backgroundColor: 'transparent',
   },
   pickerModalItemStyle: {
-    color: redesignTheme.foreground,
+    color: theme.foreground,
     fontSize: 22,
     fontWeight: '600',
   },
   pickerModalTitle: {
-    color: redesignTheme.muted,
+    color: theme.muted,
     fontSize: 13,
     fontWeight: '700',
     textAlign: 'center',
@@ -2055,7 +2064,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   pickerModalSelectedValue: {
-    color: redesignTheme.foreground,
+    color: theme.foreground,
     fontSize: 28,
     fontWeight: '800',
     textAlign: 'center',
@@ -2073,15 +2082,15 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   timePickerOptionSelected: {
-    backgroundColor: redesignTheme.primarySoft,
+    backgroundColor: theme.primarySoft,
   },
   timePickerOptionText: {
-    color: redesignTheme.foreground,
+    color: theme.foreground,
     fontSize: 20,
     fontWeight: '600',
   },
   timePickerOptionTextSelected: {
-    color: redesignTheme.primary,
+    color: theme.primary,
     fontWeight: '800',
   },
   calendarContainer: {
@@ -2089,8 +2098,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: redesignTheme.border,
-    backgroundColor: redesignTheme.input,
+    borderColor: theme.border,
+    backgroundColor: theme.input,
     justifyContent: 'space-between',
     alignItems: 'center',
     flexDirection: 'row',
@@ -2099,7 +2108,7 @@ const styles = StyleSheet.create({
   },
   dateText: {
     alignSelf: 'center',
-    color: redesignTheme.foreground,
+    color: theme.foreground,
     fontSize: 16,
   },
   calendarModal: {
@@ -2127,7 +2136,7 @@ const styles = StyleSheet.create({
     right: 20,
     width: 50,
     height: 50,
-    backgroundColor: redesignTheme.card,
+    backgroundColor: theme.card,
     zIndex: 2147483647,
     alignItems: 'center',
     justifyContent: 'center',
@@ -2137,7 +2146,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     marginTop: 8,
-    backgroundColor: redesignTheme.input,
+    backgroundColor: theme.input,
     borderRadius: 8,
   },
   rulesIconRow: {
@@ -2146,24 +2155,24 @@ const styles = StyleSheet.create({
   },
   rulesIconText: {
     fontSize: 14,
-    color: redesignTheme.foreground,
+    color: theme.foreground,
     flex: 1,
   },
   disabledInput: {
     opacity: 0.6,
-    backgroundColor: redesignTheme.input,
+    backgroundColor: theme.input,
   },
   ticketLinkPromoText: {
     fontSize: 16,
     fontWeight: '700',
-    color: redesignTheme.accent,
+    color: theme.accent,
     textAlign: 'center',
     marginTop: 24,
   },
   ticketLinkVerifyText: {
     fontSize: 16,
     fontWeight: '700',
-    color: redesignTheme.foreground,
+    color: theme.foreground,
     textAlign: 'center',
     marginTop: 8,
     letterSpacing: 0.5,
@@ -2174,9 +2183,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: redesignTheme.border,
-    backgroundColor: redesignTheme.input,
-    color: redesignTheme.foreground,
+    borderColor: theme.border,
+    backgroundColor: theme.input,
+    color: theme.foreground,
     height: 50,
     fontSize: 16,
     marginTop: 12,
@@ -2184,7 +2193,7 @@ const styles = StyleSheet.create({
   ticketLinkDisclaimer: {
     fontSize: 14,
     fontWeight: '400',
-    color: redesignTheme.muted,
+    color: theme.muted,
     textAlign: 'center',
     marginTop: 10,
   },
@@ -2199,15 +2208,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: redesignTheme.border,
-    backgroundColor: redesignTheme.input,
-    color: redesignTheme.foreground,
+    borderColor: theme.border,
+    backgroundColor: theme.input,
+    color: theme.foreground,
     height: 50,
     fontSize: 16,
     marginRight: 10,
   },
   rosterSaveButton: {
-    backgroundColor: redesignTheme.primary,
+    backgroundColor: theme.primary,
     borderRadius: 12,
     paddingHorizontal: 20,
     height: 50,
@@ -2227,17 +2236,17 @@ const styles = StyleSheet.create({
   },
   cameraGalleryOption: {
     borderRadius: 14,
-    backgroundColor: redesignTheme.card,
+    backgroundColor: theme.card,
     alignItems: 'center',
   },
   cameraButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: redesignTheme.primary,
+    color: theme.primary,
     marginVertical: 16,
   },
   divider: {
-    backgroundColor: redesignTheme.border,
+    backgroundColor: theme.border,
     height: 1,
     width: '100%',
   },
@@ -2245,18 +2254,18 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 20,
     borderRadius: 14,
-    backgroundColor: redesignTheme.card,
+    backgroundColor: theme.card,
     alignItems: 'center',
     paddingVertical: 16,
   },
   cancelCameraText: {
     fontSize: 16,
     fontWeight: '700',
-    color: redesignTheme.foreground,
+    color: theme.foreground,
   },
   previewScreen: {
     flex: 1,
-    backgroundColor: redesignTheme.background,
+    backgroundColor: theme.background,
     paddingHorizontal: 16,
   },
   previewHeaderCopy: {
@@ -2265,7 +2274,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   previewStepLabel: {
-    color: redesignTheme.muted,
+    color: theme.muted,
     fontSize: 12,
     marginTop: 2,
     textAlign: 'center',
@@ -2273,35 +2282,35 @@ const styles = StyleSheet.create({
   previewProgressTrack: {
     height: 3,
     borderRadius: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: theme.border,
     overflow: 'hidden',
     marginTop: 12,
   },
   previewProgressFill: {
     width: '100%',
     height: '100%',
-    backgroundColor: redesignTheme.primary,
+    backgroundColor: theme.primary,
   },
   previewScroll: {
     paddingTop: 16,
     paddingBottom: 40,
   },
   previewIntro: {
-    color: redesignTheme.muted,
+    color: theme.muted,
     fontSize: 14,
     marginBottom: 14,
   },
   previewCard: {
-    backgroundColor: redesignTheme.card,
+    backgroundColor: theme.card,
     borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: redesignTheme.border,
+    borderColor: theme.border,
   },
   previewImageWrap: {
     width: '100%',
     height: 180,
-    backgroundColor: redesignTheme.input,
+    backgroundColor: theme.input,
   },
   previewImage: {
     width: '100%',
@@ -2317,7 +2326,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 12,
     left: 12,
-    backgroundColor: redesignTheme.primary,
+    backgroundColor: theme.primary,
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -2332,7 +2341,7 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   previewEventTitle: {
-    color: redesignTheme.foreground,
+    color: theme.foreground,
     fontSize: 24,
     fontWeight: '900',
     textTransform: 'uppercase',
@@ -2345,7 +2354,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   previewLineupChip: {
-    backgroundColor: redesignTheme.primary,
+    backgroundColor: theme.primary,
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -2376,27 +2385,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   previewLocationText: {
-    color: redesignTheme.muted,
+    color: theme.muted,
     fontSize: 13,
     lineHeight: 18,
     flex: 1,
     flexShrink: 1,
   },
   previewMetaText: {
-    color: redesignTheme.muted,
+    color: theme.muted,
     fontSize: 13,
     marginLeft: 6,
     flexShrink: 1,
   },
   previewTimeText: {
-    color: redesignTheme.accent,
+    color: theme.accent,
     fontSize: 14,
     fontWeight: '800',
     marginLeft: 8,
   },
   previewCountPill: {
     marginLeft: 8,
-    backgroundColor: redesignTheme.input,
+    backgroundColor: theme.input,
     borderRadius: 10,
     minWidth: 22,
     height: 22,
@@ -2405,25 +2414,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   previewCountText: {
-    color: redesignTheme.foreground,
+    color: theme.foreground,
     fontSize: 11,
     fontWeight: '700',
   },
   previewDescription: {
-    color: redesignTheme.muted,
+    color: theme.muted,
     fontSize: 14,
     marginTop: 10,
   },
   visibilityCard: {
     marginTop: 14,
-    backgroundColor: redesignTheme.card,
+    backgroundColor: theme.card,
     borderRadius: 16,
     padding: 14,
     borderWidth: 1,
-    borderColor: redesignTheme.border,
+    borderColor: theme.border,
   },
   visibilityTitle: {
-    color: redesignTheme.muted,
+    color: theme.muted,
     fontSize: 13,
     fontWeight: '800',
     letterSpacing: 0.8,
@@ -2435,19 +2444,19 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   visibilityText: {
-    color: redesignTheme.foreground,
+    color: theme.foreground,
     fontSize: 14,
     marginLeft: 8,
   },
   publishBtn: {
     marginTop: 22,
-    backgroundColor: redesignTheme.primary,
+    backgroundColor: theme.primary,
     borderRadius: 16,
     minHeight: 52,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: redesignTheme.primary,
+    shadowColor: theme.primary,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.55,
     shadowRadius: 12,
@@ -2461,10 +2470,13 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   editPreviewText: {
-    color: redesignTheme.foreground,
+    color: theme.foreground,
     fontSize: 14,
     textAlign: 'center',
     marginTop: 14,
   },
 });
+
+const darkPostCreationStyles = createPostCreationStyles(redesignTheme);
+const lightPostCreationStyles = createPostCreationStyles(lightTheme);
 // Customizable Area End

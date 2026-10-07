@@ -10,6 +10,8 @@ import {
   ActivityIndicator,
   Modal,
   ScrollView,
+  Pressable,
+  Dimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/Feather";
@@ -24,6 +26,8 @@ import PhotoLibraryDetailController, {
 } from "./PhotoLibraryDetailController";
 
 export default class PhotoLibraryDetail extends PhotoLibraryDetailController {
+  detailImageAspectRatio: number | null = null;
+
   constructor(props: Props) {
     super(props);
     // Customizable Area Start
@@ -46,11 +50,103 @@ export default class PhotoLibraryDetail extends PhotoLibraryDetailController {
     )
   }
 
+  openImageModal = () => {
+    if (!this.state.pictures?.uri) {
+      return;
+    }
+    this.setState({ showImageModal: true });
+  };
+
+  closeImageModal = () => {
+    this.setState({ showImageModal: false });
+  };
+
+  handleImageLoad = (event: any) => {
+    const imageWidth = Number(event?.nativeEvent?.width);
+    const imageHeight = Number(event?.nativeEvent?.height);
+    if (!imageWidth || !imageHeight) {
+      return;
+    }
+    const ratio = imageHeight / imageWidth;
+    if (this.detailImageAspectRatio === ratio) {
+      return;
+    }
+    this.detailImageAspectRatio = ratio;
+    this.forceUpdate();
+  };
+
+  getImageModalSize = () => {
+    const { width, height } = Dimensions.get("window");
+    const maxWidth = width - 48;
+    const maxHeight = height - 160;
+    const ratio =
+      this.detailImageAspectRatio && this.detailImageAspectRatio > 0
+        ? this.detailImageAspectRatio
+        : 5 / 4;
+    let imageWidth = maxWidth;
+    let imageHeight = Math.round(imageWidth * ratio);
+    if (imageHeight > maxHeight) {
+      imageHeight = maxHeight;
+      imageWidth = Math.round(imageHeight / ratio);
+    }
+    return { width: imageWidth, height: imageHeight };
+  };
+
+  renderImageModal = () => {
+    const imageUri = this.state.pictures?.uri;
+    const imageSize = this.getImageModalSize();
+    return (
+      <Modal
+        visible={this.state.showImageModal}
+        transparent
+        animationType="fade"
+        onRequestClose={this.closeImageModal}
+        statusBarTranslucent
+      >
+        <Pressable
+          testID="imageModalBackdrop"
+          style={styles.imageModalBackdrop}
+          onPress={this.closeImageModal}
+        >
+          {imageUri ? (
+            <Pressable
+              onPress={() => undefined}
+              style={[styles.imageModalWrap, imageSize]}
+            >
+              <FastImage
+                style={styles.imageModalImage}
+                source={{
+                  uri: imageUri,
+                  priority: FastImage.priority.high,
+                }}
+                resizeMode={FastImage.resizeMode.contain}
+              />
+              <TouchableOpacity
+                testID="closeImageModal"
+                style={styles.imageModalCloseBtn}
+                onPress={this.closeImageModal}
+                activeOpacity={0.8}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Icon name="x" size={18} color="#FFFFFF" />
+              </TouchableOpacity>
+            </Pressable>
+          ) : null}
+        </Pressable>
+      </Modal>
+    );
+  };
+
   renderPicture = () => {
     const imageUri = this.state.pictures?.uri;
     const isExplicit = !!this.state.pictureDetail?.is_explicit;
     return (
-      <View style={styles.imageCard}>
+      <Pressable
+        testID="pictureImageBtn"
+        style={styles.imageCard}
+        onPress={this.openImageModal}
+        disabled={!imageUri}
+      >
         {imageUri ? (
           <FastImage
             source={{
@@ -59,6 +155,7 @@ export default class PhotoLibraryDetail extends PhotoLibraryDetailController {
             }}
             resizeMode={FastImage.resizeMode.cover}
             style={styles.image}
+            onLoad={this.handleImageLoad}
           />
         ) : (
           <View style={styles.imagePlaceholder}>
@@ -66,11 +163,11 @@ export default class PhotoLibraryDetail extends PhotoLibraryDetailController {
           </View>
         )}
         {isExplicit && (
-          <View style={styles.lockBadge}>
+          <View style={styles.lockBadge} pointerEvents="none">
             <Icon name="lock" size={12} color="#FFFFFF" />
           </View>
         )}
-      </View>
+      </Pressable>
     )
   }
 
@@ -177,6 +274,7 @@ export default class PhotoLibraryDetail extends PhotoLibraryDetailController {
           </View>
         </TouchableWithoutFeedback>
         {this.renderSignupLoginPopup()}
+        {this.renderImageModal()}
         {this.state.isLoading && <View style={styles.loadingContainer}>
           <ActivityIndicator size={'large'} color={redesignTheme.primary} />
         </View>}
@@ -253,6 +351,34 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+  },
+  imageModalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(8, 8, 15, 0.62)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  imageModalWrap: {
+    overflow: "hidden",
+  },
+  imageModalImage: {
+    width: "100%",
+    height: "100%",
+  },
+  imageModalCloseBtn: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    zIndex: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255, 255, 255, 0.22)",
   },
   lockBadge: {
     position: "absolute",

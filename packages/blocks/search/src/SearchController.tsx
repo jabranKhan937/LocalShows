@@ -1666,13 +1666,35 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
     )}`.trim();
   };
 
+  getShowRecordId = (show: any) => {
+    const id = show?.id ?? show?.attributes?.id;
+    if (id === null || id === undefined || String(id).trim() === '') {
+      return '';
+    }
+    return String(id);
+  };
+
+  hasShowDate = (show: any) => {
+    const attrs = show?.attributes || show || {};
+    const raw = attrs.date_of_the_show || attrs.show_date || attrs.date;
+    if (typeof raw !== 'string' || !raw.trim()) {
+      return false;
+    }
+    return !Number.isNaN(new Date(raw).getTime());
+  };
+
+  isListableShow = (show: any) => {
+    return Boolean(this.getShowRecordId(show)) && this.hasShowDate(show);
+  };
+
   handleNearMeShowPress = (item: any) => {
-    if (!item?.id) {
+    const eventId = this.getShowRecordId(item);
+    if (!eventId || !this.hasShowDate(item)) {
       return;
     }
     const attrs = item.attributes || {};
     this.handleNavigationSearch('AllEventDetailScreen', {
-      eventId: item.id,
+      eventId,
       eventState: attrs.state || item.state || '',
     });
   };
@@ -2115,23 +2137,9 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
       this.setState({ showComments: false, showReplies: false });
       await setStorageData('profileIdToLoad', `${accountId}`);
       await setStorageData('IsFromCommentSearch', JSON.stringify(true));
-      const screenToNav =
-        accountType === 'Band' ||
-        accountType === 'Artist' ||
-        accountType === 'Venue' ||
-        accountType === 'Club' ||
-        accountType === 'Theater' ||
-        accountType === 'Museum' ||
-        accountType === 'Record_Label' ||
-        accountType === 'Promoter' ||
-        accountType === 'Bar' ||
-        accountType === 'Gallery' ||
-        accountType === 'Casino' ||
-        accountType === 'Booking_Agent' ||
-        accountType === 'Agency' ||
-        accountType === 'Record_Store'
-          ? 'UserProfileBasicBlockArtist3'
-          : 'UserProfileBasicBlock3';
+      const screenToNav = this.isBusinessAccountType(accountType)
+        ? 'UserProfileBasicBlockArtist3'
+        : 'UserProfileBasicBlock3';
       if (this.state.userId === accountId.toString())
         this.props.navigation.navigate('Profile', {
           isOtherUser: false,
@@ -2238,7 +2246,10 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
 
   getSearchUserList = async (query: string, token: any) => {
     const trimmed = (query || '').trim();
-    const accountTypes = this.getAccountTypesForFilter(this.state.searchFilter);
+    const accountTypes =
+      this.state.searchFilter === 'All'
+        ? ['', ...this.getAllSearchAccountTypes()]
+        : this.getAccountTypesForFilter(this.state.searchFilter);
     if (!trimmed && accountTypes.length === 0) {
       this.userSearchGeneration += 1;
       this.setState({
@@ -2399,6 +2410,7 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
         LoadingUsers: false,
       },
       () => {
+        this.applyCatalogShowResults();
         this.enrichVenueSearchResults();
       },
     );
@@ -2465,6 +2477,13 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
     }
   };
 
+  isBusinessAccountType = (accountType: any) =>
+    this.matchesAccountType(accountType, [
+      ...this.getBandAccountTypes(),
+      ...this.getVenueAccountTypes(),
+      ...this.getProfileAccountTypes(),
+    ]);
+
   renderProfileUserSearch = async (accountId: string, accountType: string) => {
     console.log('this is account type', accountType, accountId);
 
@@ -2475,23 +2494,9 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
       this.setState({ loginPopup: true });
     } else {
       await setStorageData('profileIdToLoad', `${accountId}`);
-      const screen =
-        accountType === 'Band' ||
-        accountType === 'Artist' ||
-        accountType === 'Venue' ||
-        accountType === 'Club' ||
-        accountType === 'Theater' ||
-        accountType === 'Museum' ||
-        accountType === 'Record_Label' ||
-        accountType === 'Promoter' ||
-        accountType === 'Bar' ||
-        accountType === 'Gallery' ||
-        accountType === 'Casino' ||
-        accountType === 'Booking_Agent' ||
-        accountType === 'Agency' ||
-        accountType === 'Record_Store'
-          ? 'UserProfileBasicBlockArtist3'
-          : 'UserProfileBasicBlock3';
+      const screen = this.isBusinessAccountType(accountType)
+        ? 'UserProfileBasicBlockArtist3'
+        : 'UserProfileBasicBlock3';
       if (this.state.userId === accountId.toString()) {
         this.props.navigation.navigate('Profile', {
           isOtherUser: false,
@@ -2837,9 +2842,33 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
 
   getBandAccountTypes = () => ['Band', 'Artist'];
 
-  getVenueAccountTypes = () => ['Venue'];
+  getVenueAccountTypes = () => [
+    'Venue',
+    'Club',
+    'Theater',
+    'Museum',
+    'Bar',
+    'Gallery',
+    'Casino',
+    'Cabaret',
+    'Record_Store',
+  ];
 
   getFanAccountTypes = () => ['Fan'];
+
+  getProfileAccountTypes = () => [
+    'Record_Label',
+    'Promoter',
+    'Booking_Agent',
+    'Agency',
+  ];
+
+  getAllSearchAccountTypes = () => [
+    ...this.getBandAccountTypes(),
+    ...this.getVenueAccountTypes(),
+    ...this.getFanAccountTypes(),
+    ...this.getProfileAccountTypes(),
+  ];
 
   getAccountTypesForFilter = (filter: string) => {
     if (filter === 'Bands') {
@@ -2864,7 +2893,29 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
     if (Array.isArray(data?.users)) {
       return data.users;
     }
-    return [];
+    const groupedSource =
+      data?.data && typeof data.data === 'object' && !Array.isArray(data.data)
+        ? data.data
+        : data;
+    return this.collectGroupedSearchUsers(groupedSource);
+  };
+
+  collectGroupedSearchUsers = (source: any) => {
+    if (!source || typeof source !== 'object' || Array.isArray(source)) {
+      return [];
+    }
+    const collected: any[] = [];
+    Object.values(source).forEach((value: any) => {
+      if (!Array.isArray(value)) {
+        return;
+      }
+      value.forEach((item: any) => {
+        if (item && typeof item === 'object') {
+          collected.push(item);
+        }
+      });
+    });
+    return collected;
   };
 
   resolveSearchAccountType = (item: any) => {
@@ -2888,12 +2939,20 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
     return '';
   };
 
+  normalizeAccountTypeKey = (accountType: any) => {
+    if (typeof accountType !== 'string') {
+      return '';
+    }
+    return accountType.trim().toLowerCase().replace(/[\s-]+/g, '_');
+  };
+
   matchesAccountType = (accountType: any, types: string[]) => {
-    if (typeof accountType !== 'string' || !accountType.trim()) {
+    const normalized = this.normalizeAccountTypeKey(accountType);
+    if (!normalized) {
       return false;
     }
     return types.some(
-      typeName => typeName.toLowerCase() === accountType.toLowerCase(),
+      typeName => this.normalizeAccountTypeKey(typeName) === normalized,
     );
   };
 
@@ -2906,8 +2965,25 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
   isPeopleAccountType = (accountType: any) =>
     this.matchesAccountType(accountType, this.getFanAccountTypes());
 
+  userMatchesSearchQuery = (item: any, query: string) => {
+    const needle = (query || '').trim().toLowerCase();
+    if (!needle) {
+      return true;
+    }
+    const attrs = item?.attributes || item || {};
+    const fullName = this.getName(attrs.first_name, attrs.last_name);
+    const haystack = [fullName, attrs.user_name, attrs.name, item?.name]
+      .filter(part => typeof part === 'string' && part.trim())
+      .join(' ')
+      .toLowerCase();
+    return haystack.includes(needle);
+  };
+
   filterUsersForSearch = (list: any[]) => {
-    const users = Array.isArray(list) ? list : [];
+    const query = this.state.searchText || '';
+    const users = (Array.isArray(list) ? list : []).filter((item: any) =>
+      this.userMatchesSearchQuery(item, query),
+    );
     const filter = this.state.searchFilter;
     if (filter === 'Bands') {
       return users.filter((item: any) =>
@@ -2927,7 +3003,9 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
     return users;
   };
 
-  getUsersForGroup = (group: 'bands' | 'venues' | 'people') => {
+  getUsersForGroup = (
+    group: 'bands' | 'venues' | 'people' | 'profiles',
+  ) => {
     const list = Array.isArray(this.state.UserList) ? this.state.UserList : [];
     return list.filter((item: any) => {
       const accountType = this.resolveSearchAccountType(item);
@@ -2937,7 +3015,14 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
       if (group === 'venues') {
         return this.isVenueAccountType(accountType);
       }
-      return this.isPeopleAccountType(accountType);
+      if (group === 'people') {
+        return this.isPeopleAccountType(accountType);
+      }
+      return (
+        !this.isBandAccountType(accountType) &&
+        !this.isVenueAccountType(accountType) &&
+        !this.isPeopleAccountType(accountType)
+      );
     });
   };
 
@@ -3194,18 +3279,79 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
     return this.getUserCityStateLabel(attrs);
   };
 
+  readSearchName = (value: any): string => {
+    if (typeof value === 'string') {
+      return value.trim();
+    }
+    if (!value || typeof value !== 'object') {
+      return '';
+    }
+    const attrs =
+      value.attributes && typeof value.attributes === 'object'
+        ? value.attributes
+        : {};
+    const candidates = [
+      value.name,
+      value.first_name,
+      value.band_name,
+      value.event_title,
+      value.title,
+      attrs.name,
+      attrs.first_name,
+      attrs.band_name,
+      attrs.event_title,
+      attrs.title,
+    ];
+    for (let index = 0; index < candidates.length; index += 1) {
+      const candidate = candidates[index];
+      if (typeof candidate === 'string' && candidate.trim()) {
+        return candidate.trim();
+      }
+    }
+    const firstName = value.first_name || attrs.first_name;
+    const lastName = value.last_name || attrs.last_name;
+    return [firstName, lastName]
+      .filter(part => typeof part === 'string' && part.trim())
+      .join(' ')
+      .trim();
+  };
+
+  getShowLineupNames = (show: any): string[] => {
+    const attrs = show?.attributes || show || {};
+    const raw = attrs.line_ups;
+    if (typeof raw === 'string') {
+      return raw
+        .split(',')
+        .map(part => part.trim())
+        .filter(Boolean);
+    }
+    if (!Array.isArray(raw)) {
+      return [];
+    }
+    return raw
+      .map((item: any) => this.readSearchName(item))
+      .filter(Boolean);
+  };
+
+  getShowIdentityNames = (show: any): string[] => {
+    const attrs = show?.attributes || show || {};
+    return [
+      this.readSearchName(attrs.event_title),
+      this.readSearchName(attrs.name),
+      this.readSearchName(attrs.band_name),
+      this.readSearchName(attrs.title),
+      ...this.getShowLineupNames(show),
+    ].filter(Boolean);
+  };
+
   getShowSearchHaystack = (show: any) => {
     const attrs = show?.attributes || show || {};
-    const lineUps = Array.isArray(attrs.line_ups) ? attrs.line_ups : [];
     const parts = [
-      attrs.event_title,
-      attrs.name,
-      attrs.band_name,
+      ...this.getShowIdentityNames(show),
       attrs.location,
       attrs.city,
       attrs.state,
       attrs.venue,
-      ...lineUps,
       ...this.getShowGenreNames(show),
     ];
     return parts
@@ -3222,23 +3368,51 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
     return shows.filter(show => this.getShowSearchHaystack(show).includes(needle));
   };
 
+  buildCatalogShowResults = (query: string) => {
+    const accountNames = new Set(
+      (Array.isArray(this.state.UserList) ? this.state.UserList : [])
+        .map((item: any) => {
+          const attrs = item?.attributes || {};
+          return this.getName(attrs.first_name, attrs.last_name)
+            .trim()
+            .toLowerCase();
+        })
+        .filter(Boolean),
+    );
+    return this.filterCatalogShows(this.catalogShowsCache, query).filter(
+      show => {
+        if (!this.isListableShow(show)) {
+          return false;
+        }
+        const attrs = show?.attributes || show || {};
+        const title =
+          this.getShowLineupNames(show)[0] ||
+          this.readSearchName(attrs.band_name) ||
+          this.readSearchName(attrs.event_title) ||
+          this.readSearchName(attrs.name);
+        if (title && accountNames.has(title.trim().toLowerCase())) {
+          return false;
+        }
+        return true;
+      },
+    );
+  };
+
   mergeCatalogShowsCache = (shows: any[]) => {
     if (!Array.isArray(shows) || shows.length === 0) {
       return;
     }
     const byId = new Map<string, any>();
-    this.catalogShowsCache.forEach(show => {
+    const storeShow = (show: any) => {
       const id = String(show?.id ?? show?.attributes?.id ?? '');
-      if (id) {
-        byId.set(id, show);
+      const key = id || `name:${this.getShowSearchHaystack(show)}`;
+      if (!key || key === 'name:') {
+        return;
       }
-    });
-    shows.forEach(show => {
-      const id = String(show?.id ?? show?.attributes?.id ?? '');
-      if (id) {
-        byId.set(id, show);
-      }
-    });
+      byId.set(key, show);
+    };
+    this.catalogShowsCache.forEach(storeShow);
+    shows.forEach(storeShow);
     this.catalogShowsCache = Array.from(byId.values());
   };
 
@@ -3251,7 +3425,7 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
     }
     const query = (this.state.searchText || '').trim();
     this.setState({
-      catalogShowResults: this.filterCatalogShows(this.catalogShowsCache, query),
+      catalogShowResults: this.buildCatalogShowResults(query),
       loadingCatalogShows: false,
     });
   };
@@ -3262,14 +3436,11 @@ export default class SearchController extends BlockComponent<Props, S, SS> {
       this.setState({ catalogShowResults: [], loadingCatalogShows: false });
       return;
     }
-    if (this.catalogShowsCache.length > 0) {
-      this.setState({
-        catalogShowResults: this.filterCatalogShows(this.catalogShowsCache, query),
-        loadingCatalogShows: false,
-      });
-      return;
-    }
-    this.setState({ loadingCatalogShows: true, catalogShowResults: [] });
+    const cachedResults = this.buildCatalogShowResults(query);
+    this.setState({
+      catalogShowResults: cachedResults,
+      loadingCatalogShows: cachedResults.length === 0,
+    });
     this.fetchAllShowsForSearch();
   };
 

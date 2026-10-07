@@ -366,14 +366,6 @@ export default class AllEventDetailScreen extends AllEventController {
   getDetailHeroHeight = () => {
     const { width, height } = Dimensions.get("window");
     const maxHeight = Math.round(height * 0.62);
-    const uri = this.state.eventDetail?.attributes?.profile_image || null;
-    const ratio =
-      uri && uri === this.lastHeroImageUri
-        ? this.detailHeroAspectRatio
-        : null;
-    if (ratio && ratio > 0) {
-      return Math.min(Math.round(width * ratio), maxHeight);
-    }
     return Math.min(Math.round(width * (5 / 4)), maxHeight);
   };
 
@@ -510,27 +502,56 @@ export default class AllEventDetailScreen extends AllEventController {
     );
   };
 
+  renderStatusCard = (
+    iconName: string,
+    title: string,
+    subtitle: string,
+  ) => {
+    return (
+      <View style={this.styles.detailStatusCard}>
+        <View style={this.styles.detailStatusIconWrap}>
+          <MaterialCommunityIcons name={iconName} size={22} color="#FFFFFF" />
+        </View>
+        <View style={this.styles.detailStatusTextWrap}>
+          <Text style={this.styles.detailStatusTitle}>{title}</Text>
+          <Text style={this.styles.detailStatusSubtitle}>{subtitle}</Text>
+        </View>
+      </View>
+    );
+  };
+
   renderTitle = () => {
     const attributes = this.getDetailAttributes();
     const showPostponed = attributes?.date_of_the_show === "2999-12-31";
     const showSoldOut = Boolean(attributes?.sold_out);
-    if (!showPostponed && !showSoldOut) {
+    const showCanceled = Boolean(attributes?.is_canceled);
+    if (!showPostponed && !showSoldOut && !showCanceled) {
       return <View />;
     }
     return (
-      <View style={[this.styles.detailSection, this.styles.detailBadgeRow]}>
-        {showPostponed && (
-          <Image
-            source={require("../../../mobile/assets/images/postponed.png")}
-            style={this.styles.detailStatusBadge}
-          />
-        )}
-        {showSoldOut && (
-          <Image
-            source={require("../../../mobile/assets/images/sold_out.png")}
-            style={this.styles.detailSoldOutBadge}
-          />
-        )}
+      <View style={this.styles.detailSection}>
+        {showCanceled
+          ? this.renderStatusCard(
+              "close",
+              "Show Canceled",
+              "This show will not take place",
+            )
+          : null}
+        {showSoldOut
+          ? this.renderStatusCard(
+              "ticket-confirmation",
+              "Sold Out",
+              "Tickets for this show are sold out",
+            )
+          : null}
+        {showPostponed ? (
+          <View style={this.styles.detailBadgeRow}>
+            <Image
+              source={require("../../../mobile/assets/images/postponed.png")}
+              style={this.styles.detailStatusBadge}
+            />
+          </View>
+        ) : null}
       </View>
     );
   };
@@ -548,7 +569,7 @@ export default class AllEventDetailScreen extends AllEventController {
             uri: this.state.eventDetail.attributes.profile_image,
             priority: FastImage.priority.high,
           }}
-          resizeMode={FastImage.resizeMode.contain}
+          resizeMode={FastImage.resizeMode.cover}
           onLoad={this.handleDetailHeroLoad}
         />
       </Pressable>
@@ -835,12 +856,6 @@ export default class AllEventDetailScreen extends AllEventController {
           "Show type",
           this.getShowTypeDisplay(),
           "typeOfShowFlatlist",
-        )}
-        {this.renderDetailMetaRow(
-          "music",
-          "Genre",
-          this.getGenreRowDisplay(),
-          "genreFlatlist",
         )}
         {websiteDetail?.value
           ? this.renderClickableItem(websiteDetail, 4)

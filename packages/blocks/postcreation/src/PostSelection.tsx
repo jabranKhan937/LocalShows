@@ -11,7 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle, Path } from "react-native-svg";
 
 import PostCreationCommonController, { configJSON } from "./PostCreationCommonController";
-import { redesignTheme } from "../../utilities/src/Colors";
+import { lightTheme, redesignTheme } from "../../utilities/src/Colors";
 
 const SHOW_ACCENT = "#FF2D6B";
 const PHOTO_ACCENT = "#B56BFF";
@@ -90,7 +90,12 @@ export default class PostSelection extends PostCreationCommonController {
   constructor(props: Props) {
     super(props);
   }
+
+  get styles() {
+    return this.state.isDarkMode ? darkPostSelectionStyles : lightPostSelectionStyles;
+  }
   async componentDidMount() {
+    await this.loadPostTheme();
     this.setState({optionSelected:''})
     const resetOption = () => {
       this.setState({optionSelected:''})
@@ -141,13 +146,13 @@ export default class PostSelection extends PostCreationCommonController {
       <TouchableOpacity
         testID={testID}
         activeOpacity={0.85}
-        style={[styles.optionCard, cardStyle]}
+        style={[this.styles.optionCard, cardStyle]}
         onPress={() => this.selectPostOption(option)}
       >
-        <View style={[styles.iconWrap, iconWrapStyle]}>{icon}</View>
-        <View style={styles.optionCopy}>
-          <Text style={styles.optionTitle}>{title}</Text>
-          <Text style={styles.optionDescription}>{description}</Text>
+        <View style={[this.styles.iconWrap, iconWrapStyle]}>{icon}</View>
+        <View style={this.styles.optionCopy}>
+          <Text style={this.styles.optionTitle}>{title}</Text>
+          <Text style={this.styles.optionDescription}>{description}</Text>
         </View>
         <IconChevronRight color={accent} />
       </TouchableOpacity>
@@ -159,25 +164,25 @@ export default class PostSelection extends PostCreationCommonController {
     // Customizable Area Start
     // Customizable Area End
     return (
-      <SafeAreaView style={styles.safeAreaView} edges={["top", "left", "right"]}>
+      <SafeAreaView style={this.styles.safeAreaView} edges={["top", "left", "right"]}>
         {/* Customizable Area Start */}
         <StatusBar
-          barStyle="light-content"
-          backgroundColor={redesignTheme.background}
+          barStyle={this.state.isDarkMode ? 'light-content' : 'dark-content'}
+          backgroundColor={this.getPostTheme().background}
         />
-        <View style={styles.header}>
-          <Text style={styles.title}>{configJSON.createPostTitle}</Text>
+        <View style={this.styles.header}>
+          <Text style={this.styles.title}>{configJSON.createPostTitle}</Text>
           <TouchableOpacity
             testID="closeBtn"
-            style={styles.closeBtn}
+            style={this.styles.closeBtn}
             onPress={this.closeCreatePost}
             activeOpacity={0.8}
           >
-            <IconX color={redesignTheme.muted} />
+            <IconX color={this.getPostTheme().muted} />
           </TouchableOpacity>
         </View>
-        <View style={styles.content}>
-          <Text style={styles.subtitle}>{configJSON.whatAreYouPosting}</Text>
+        <View style={this.styles.content}>
+          <Text style={this.styles.subtitle}>{configJSON.whatAreYouPosting}</Text>
           {this.renderOptionCard({
             testID: "showBtn",
             accent: SHOW_ACCENT,
@@ -185,8 +190,8 @@ export default class PostSelection extends PostCreationCommonController {
             title: configJSON.postAShowCardTitle,
             description: configJSON.postAShowCardDescription,
             option: "show",
-            cardStyle: styles.showCard,
-            iconWrapStyle: styles.showIconWrap,
+            cardStyle: this.styles.showCard,
+            iconWrapStyle: this.styles.showIconWrap,
           })}
           {this.renderOptionCard({
             testID: "pictureBtn",
@@ -195,16 +200,16 @@ export default class PostSelection extends PostCreationCommonController {
             title: configJSON.shareAPhotoCardTitle,
             description: configJSON.shareAPhotoCardDescription,
             option: "picture",
-            cardStyle: styles.photoCard,
-            iconWrapStyle: styles.photoIconWrap,
+            cardStyle: this.styles.photoCard,
+            iconWrapStyle: this.styles.photoIconWrap,
           })}
-          <View style={styles.infoBox}>
-            <View style={styles.infoIcon}>
-              <IconSparkles color={redesignTheme.accent} />
+          <View style={this.styles.infoBox}>
+            <View style={this.styles.infoIcon}>
+              <IconSparkles color={this.getPostTheme().accent} />
             </View>
-            <Text style={styles.infoText}>
+            <Text style={this.styles.infoText}>
               {configJSON.postingAvailableTo}
-              <Text style={styles.infoRoles}>{configJSON.postingRoles}</Text>
+              <Text style={this.styles.infoRoles}>{configJSON.postingRoles}</Text>
               {configJSON.postingFansNote}
             </Text>
           </View>
@@ -216,10 +221,10 @@ export default class PostSelection extends PostCreationCommonController {
 }
 
 // Customizable Area Start
-const styles = StyleSheet.create({
+const createPostSelectionStyles = (theme: typeof redesignTheme | typeof lightTheme) => StyleSheet.create({
   safeAreaView: {
     flex: 1,
-    backgroundColor: redesignTheme.background,
+    backgroundColor: theme.background,
   },
   header: {
     flexDirection: "row",
@@ -230,7 +235,7 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   title: {
-    color: redesignTheme.foreground,
+    color: theme.foreground,
     fontSize: 24,
     lineHeight: 32,
     fontWeight: "900",
@@ -241,9 +246,9 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    backgroundColor: theme.input,
     borderWidth: 1,
-    borderColor: redesignTheme.border,
+    borderColor: theme.border,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -253,7 +258,7 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   subtitle: {
-    color: redesignTheme.muted,
+    color: theme.muted,
     fontSize: 16,
     lineHeight: 22,
     fontWeight: "400",
@@ -294,7 +299,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   optionTitle: {
-    color: redesignTheme.foreground,
+    color: theme.foreground,
     fontSize: 16,
     lineHeight: 24,
     fontWeight: "900",
@@ -302,7 +307,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   optionDescription: {
-    color: redesignTheme.muted,
+    color: theme.muted,
     fontSize: 14,
     lineHeight: 21,
     fontWeight: "500",
@@ -314,9 +319,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 14,
-    backgroundColor: "rgba(255, 255, 255, 0.04)",
+    backgroundColor: theme.input,
     borderWidth: 1,
-    borderColor: redesignTheme.border,
+    borderColor: theme.border,
   },
   infoIcon: {
     marginTop: 1,
@@ -324,13 +329,16 @@ const styles = StyleSheet.create({
   },
   infoText: {
     flex: 1,
-    color: redesignTheme.muted,
+    color: theme.muted,
     fontSize: 14,
     lineHeight: 21,
     fontWeight: "400",
   },
   infoRoles: {
-    color: redesignTheme.foreground,
+    color: theme.foreground,
   },
 });
+
+const darkPostSelectionStyles = createPostSelectionStyles(redesignTheme);
+const lightPostSelectionStyles = createPostSelectionStyles(lightTheme);
 // Customizable Area End

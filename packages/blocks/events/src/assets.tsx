@@ -62,3 +62,4 @@ export const website = require("../assets/website.png");
 export const hamburger = require("../assets/hamburger.png");
 export const backIcon = require("../assets/backIcon.png");
 export const emojiIcon = require("../assets/emoji.png");
+export const appLogo = require("../../splashscreen/assets/app-logo.png");

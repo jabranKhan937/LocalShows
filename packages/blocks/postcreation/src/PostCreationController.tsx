@@ -12,7 +12,7 @@ const RULES_AND_REGULATIONS_ICONS_API =
 export default class PostCreationController extends PostCreationCommonController {
   // Customizable Area Start
   // Customizable Area End
-
+                                                                                                                                      
   fetchOfficialRulesAndRegulationsIcons = async () => {
     try {
       const authToken = await getStorageData('authToken');
